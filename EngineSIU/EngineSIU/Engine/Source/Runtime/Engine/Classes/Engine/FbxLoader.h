@@ -18,6 +18,9 @@ class USkeletalMesh;
 struct FSkeletalMeshRenderData;
 struct FFbxLoadResult;
 struct FMatrix;
+struct FAnimationCurveData;
+class UAnimDataModel;
+struct FBoneAnimationTrack;
 
 class FFbxLoader
 {
@@ -83,6 +86,19 @@ private:
     
     FMatrix ConvertFbxMatrixToFMatrix(const FbxAMatrix& FbxMatrix) const;
     // End Mesh
+
+    // Begin Animation
+    void ProcessAnimation(FbxNode* Node, FFbxLoadResult& OutResult);
+
+    void CollectAnimationStacks(FbxScene* Scene, TArray<FbxAnimStack*>& OutAnimationStacks);
+
+    UAnimDataModel* CreateAnimDataModelFromFbxAnimStack(FbxAnimStack* AnimStack, FbxTime::EMode TimeNode, const TArray<FbxNode*>& BoneNodes);
+
+    FAnimationCurveData ExtractAnimationCurveData(FbxAnimStack* AnimStack);
+
+    void ExtractBoneAnimationTracks(FbxAnimStack* AnimStack, const TArray<FbxNode*> BoneNodes, TArray<FBoneAnimationTrack>& BoneAnimationTracks);
+    
+    void AddCurveDataFromFbx(FbxAnimCurve* FbxCurve, const FName& curveFName, FAnimationCurveData& outAnimationCurveData);
 
     // 좌표계 변환 메소드
     void ConvertSceneToLeftHandedZUpXForward(FbxScene* Scene);

@@ -174,7 +174,7 @@ void UAssetManager::LoadContentFiles()
             // ObjFileNames.push_back(UGTLStringLibrary::StringToWString(Entry.path().string()));
             // FObjManager::LoadObjStaticMeshAsset(UGTLStringLibrary::StringToWString(Entry.path().string()));
         }
-        else if (Entry.is_regular_file() && Entry.path().extension() == ".fbx")
+        else if (Entry.is_regular_file() && (Entry.path().extension() == ".fbx" || Entry.path().extension() == ".FBX"))
         {
             // TODO : ControlEditorPanel Viwer Open과 코드 중복 다수
             // 경로, 이름 준비

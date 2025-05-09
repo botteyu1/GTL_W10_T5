@@ -11,6 +11,7 @@
 #include "SkeletalMesh.h"
 #include "Asset/StaticMeshAsset.h"
 #include "Container/String.h"
+#include "Classes/Animation/AnimDataModel.h"
 
 struct FVertexKey
 {
@@ -313,6 +314,8 @@ FFbxLoadResult FFbxLoader::LoadFBX(const FString& InFilePath)
     ProcessSkeletonHierarchy(RootNode, Result);
 
     ProcessMeshes(RootNode, Result);
+
+    ProcessAnimation(RootNode, Result);
     
     return Result;
 }
@@ -1396,6 +1399,232 @@ FMatrix FFbxLoader::ConvertFbxMatrixToFMatrix(const FbxAMatrix& FbxMatrix) const
         }
     }
     return Result;
+}
+
+void FFbxLoader::ProcessAnimation(FbxNode* Node, FFbxLoadResult& OutResult)
+{
+    if (!Node)
+        return;
+    // 본 노드들 뽑아오기.
+    // !TODO : 메시 뽑아올 때 캐시해놓기
+    TArray<FbxNode*> BoneNodes;
+    CollectSkeletonBoneNodes(Node, BoneNodes);
+
+    // 이 모드를 통해 NumberOfFrames 및 NumberOfKeys를 계산 가능
+    FbxTime::EMode TimeMode = Node->GetScene()->GetGlobalSettings().GetTimeMode();
+
+    TArray<FbxAnimStack*> AnimStacks;
+    CollectAnimationStacks(Scene, AnimStacks);
+
+    // AnimStack 하나당 AnimDataModel 하나
+    for (FbxAnimStack* AnimStack : AnimStacks)
+    {
+        if (AnimStack)
+        {
+            // 애니메이션 스택을 처리
+            UAnimDataModel* AnimDataModel = CreateAnimDataModelFromFbxAnimStack(AnimStack, TimeMode, BoneNodes);
+            OutResult.AnimDataModels.Add(AnimDataModel);
+        }
+    }
+}
+
+void FFbxLoader::CollectAnimationStacks(FbxScene* Scene, TArray<FbxAnimStack*>& OutAnimationStacks)
+{
+    if (!Scene)
+        return;
+
+    int numAnimStacks = Scene->GetSrcObjectCount<FbxAnimStack>();
+
+    for (int i = 0; i < numAnimStacks; i++)
+    {
+        FbxAnimStack* AnimStack = Scene->GetSrcObject<FbxAnimStack>(i);
+        if (AnimStack)
+        {
+            OutAnimationStacks.Add(AnimStack);
+        }
+    }
+}
+
+UAnimDataModel* FFbxLoader::CreateAnimDataModelFromFbxAnimStack(FbxAnimStack* AnimStack, FbxTime::EMode TimeMode, const TArray<FbxNode*>& BoneNodes)
+{
+    if (!AnimStack)
+    {
+        return nullptr;
+    }
+
+    UAnimDataModel* AnimDataModel = FObjectFactory::ConstructObject<UAnimDataModel>(nullptr);
+
+    FString AnimStackName = AnimStack->GetName();
+    FbxTimeSpan TimeSpan = AnimStack->GetLocalTimeSpan();
+    // !TODO : FrameRate 구조체 만들기
+    FFrameRate FrameRate;
+    FrameRate.FrameRate = FbxTime::GetFrameRate(TimeMode);
+    AnimDataModel->FrameRate = FrameRate;
+    AnimDataModel->PlayLength = static_cast<float>(TimeSpan.GetDuration().GetSecondDouble());
+    ExtractBoneAnimationTracks(AnimStack, BoneNodes, AnimDataModel->BoneAnimationTracks);
+    AnimDataModel->CurveData = ExtractAnimationCurveData(AnimStack); // !TODO : 아직 하는 일 없음
+    AnimDataModel->NumberOfFrames = static_cast<int32>(AnimDataModel->PlayLength * FrameRate.FrameRate);
+
+    return AnimDataModel;
+}
+
+FAnimationCurveData FFbxLoader::ExtractAnimationCurveData(FbxAnimStack* AnimStack)
+{
+    if (!AnimStack)
+    {
+        return FAnimationCurveData();
+    }
+
+    FAnimationCurveData AnimationCurveData = FAnimationCurveData(AnimStack->GetName());
+
+    // !TODO : 스켈레탈 애니메이션 외의 애니메이션 데이터 처리
+
+    return AnimationCurveData;
+}
+
+void FFbxLoader::ExtractBoneAnimationTracks(FbxAnimStack* AnimStack, const TArray<FbxNode*> BoneNodes, TArray<FBoneAnimationTrack>& BoneAnimationTracks)
+{
+    if (!AnimStack)
+    {
+        return;
+    }
+
+    // !TODO : 멀티 레이어 지원
+    FbxAnimLayer* AnimLayer = AnimStack->GetMember<FbxAnimLayer>();
+
+    if (!AnimLayer)
+    {
+        return;
+    }
+
+    // 애니메이션 레이어에서 본 애니메이션 트랙을 추출
+    // NOTE : 잘 안되면 여기먼저 볼 것
+    for (FbxNode* BoneFbxNode : BoneNodes)
+    {
+        if (!BoneFbxNode)
+        {
+            continue;
+        }
+        FBoneAnimationTrack BoneTrack;
+        BoneTrack.Name = FName(BoneFbxNode->GetName());
+        FRawAnimSequenceTrack& RawTrack = BoneTrack.InternalTrack;
+
+        // Translation
+        FbxAnimCurveNode* TranslationCurveNode = BoneFbxNode->LclTranslation.GetCurveNode(AnimLayer);
+        if (TranslationCurveNode)
+        {
+            FbxAnimCurve* curveX = TranslationCurveNode->GetCurve(0);
+            FbxAnimCurve* curveY = TranslationCurveNode->GetCurve(1);
+            FbxAnimCurve* curveZ = TranslationCurveNode->GetCurve(2);
+
+            // 일단 X채널 하나만 사용
+            // !TODO : X,Y,Z 채널에서 고유한 키 시간을 수집 및 정렬하여 각 시간에서 평가
+
+            if (curveX && curveX->KeyGetCount() > 0)
+            {
+                for (int k = 0; k < curveX->KeyGetCount(); ++k)
+                {
+                    FbxTime keyTime = curveX->KeyGetTime(k);
+                    float posX = curveX->KeyGetValue(k); // X는 직접 키 값 사용
+                    // Y, Z는 해당 시간에 평가. 커브가 없거나 키가 없으면 기본 로컬 변환 값 사용.
+                    float posY = curveY ? curveY->Evaluate(keyTime) : static_cast<float>(BoneFbxNode->LclTranslation.Get()[1]);
+                    float posZ = curveZ ? curveZ->Evaluate(keyTime) : static_cast<float>(BoneFbxNode->LclTranslation.Get()[2]);
+                    RawTrack.PosKeys.Add(FVectorKey(static_cast<float>(keyTime.GetSecondDouble()), FVector(posX, posY, posZ)));
+                }
+            }
+        }
+
+        // Rotation(Euler -> Quaternion)
+        FbxAnimCurveNode* rotationCurveNode = BoneFbxNode->LclRotation.GetCurveNode(AnimLayer);
+        if (rotationCurveNode)
+        {
+            FbxAnimCurve* curveRotX = rotationCurveNode->GetCurve(0);
+            FbxAnimCurve* curveRotY = rotationCurveNode->GetCurve(1);
+            FbxAnimCurve* curveRotZ = rotationCurveNode->GetCurve(2);
+
+            FbxEuler::EOrder rotationOrder;
+            BoneFbxNode->GetRotationOrder(FbxNode::eSourcePivot, rotationOrder);
+
+            if (curveRotX && curveRotX->KeyGetCount() > 0)
+            {
+                for (int k = 0; k < curveRotX->KeyGetCount(); ++k)
+                {
+                    FbxTime keyTime = curveRotX->KeyGetTime(k);
+
+                    double eulerX_deg = curveRotX->Evaluate(keyTime);
+                    double eulerY_deg = curveRotY ? curveRotY->Evaluate(keyTime) : BoneFbxNode->LclRotation.Get()[1];
+                    double eulerZ_deg = curveRotZ ? curveRotZ->Evaluate(keyTime) : BoneFbxNode->LclRotation.Get()[2];
+
+                    // 라디안
+                    double eulerX_rad = FMath::DegreesToRadians(eulerX_deg);
+                    double eulerY_rad = FMath::DegreesToRadians(eulerY_deg);
+                    double eulerZ_rad = FMath::DegreesToRadians(eulerZ_deg);
+
+                    FbxAMatrix lclMatrix;
+                    lclMatrix.SetR(FbxVector4(eulerX_rad, eulerY_rad, eulerZ_rad), rotationOrder);
+                    FbxQuaternion fbxQuat = lclMatrix.GetQ();
+
+                    RawTrack.RotKeys.Add(FQuatKey(
+                        static_cast<float>(keyTime.GetSecondDouble()),
+                        FQuat(
+                            static_cast<float>(fbxQuat[0]), 
+                            static_cast<float>(fbxQuat[1]),
+                            static_cast<float>(fbxQuat[2]), 
+                            static_cast<float>(fbxQuat[3]))
+                    ));
+                }
+            }
+        }
+
+        // Scale
+        FbxAnimCurveNode* scalingCurveNode = BoneFbxNode->LclScaling.GetCurveNode(AnimLayer);
+        if (scalingCurveNode)
+        {
+            FbxAnimCurve* curveScaleX = scalingCurveNode->GetCurve(0);
+            FbxAnimCurve* curveScaleY = scalingCurveNode->GetCurve(1);
+            FbxAnimCurve* curveScaleZ = scalingCurveNode->GetCurve(2);
+
+            if (curveScaleX && curveScaleX->KeyGetCount() > 0)
+            {
+                for (int k = 0; k < curveScaleX->KeyGetCount(); ++k)
+                {
+                    FbxTime keyTime = curveScaleX->KeyGetTime(k);
+                    float scaleX = curveScaleX->Evaluate(keyTime);
+                    float scaleY = curveScaleY ? curveScaleY->Evaluate(keyTime) : static_cast<float>(BoneFbxNode->LclScaling.Get()[1]);
+                    float scaleZ = curveScaleZ ? curveScaleZ->Evaluate(keyTime) : static_cast<float>(BoneFbxNode->LclScaling.Get()[2]);
+                    RawTrack.ScaleKeys.Add(FVectorKey(static_cast<float>(keyTime.GetSecondDouble()), FVector(scaleX, scaleY, scaleZ)));
+                }
+            }
+        }
+
+        // 실제 데이터가 있는 트랙만 추가
+        if (!RawTrack.IsEmpty())
+        {
+            BoneAnimationTracks.Add(BoneTrack);
+        }
+    }
+}
+
+void FFbxLoader::AddCurveDataFromFbx(FbxAnimCurve* FbxCurve, const FName& curveFName, FAnimationCurveData& outAnimationCurveData)
+{
+    if (!FbxCurve)
+    {
+        return;
+    }
+
+    FNamedFloatCurve NewCurveTrack(curveFName);
+    for (int i = 0; i < FbxCurve->KeyGetCount(); ++i)
+    {
+        FbxTime keyTime = FbxCurve->KeyGetTime(i);
+        float keyValue = FbxCurve->KeyGetValue(i);
+
+        NewCurveTrack.Keys.Add(FFloatKey(static_cast<float>(keyTime.GetSecondDouble()), keyValue));
+    }
+
+    if (NewCurveTrack.Keys.Num() > 0)
+    {
+        outAnimationCurveData.FloatCurves.Add(NewCurveTrack);
+    }
 }
 
 void FFbxLoader::ConvertSceneToLeftHandedZUpXForward(FbxScene* Scene)

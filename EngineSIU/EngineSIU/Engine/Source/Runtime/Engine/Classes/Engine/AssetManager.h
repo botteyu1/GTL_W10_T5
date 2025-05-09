@@ -5,6 +5,7 @@
 
 class USkeleton;
 class USkeletalMesh;
+class UAnimDataModel;
 
 enum class EAssetType : uint8
 {
@@ -36,6 +37,7 @@ struct FFbxLoadResult
     TArray<UStaticMesh*> StaticMeshes;
     TArray<UMaterial*> Materials;
     // TArray<UAnimation*> Animations;
+    TArray<UAnimDataModel*> AnimDataModels;
 };
 
 class UAssetManager : public UObject

@@ -1659,6 +1659,8 @@
     <ClCompile Include="Engine\Source\Runtime\Core\Math\Transform.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Animation\AnimSequence.cpp" />
     <ClCompile Include="Engine\Source\Editor\PropertyEditor\BoneHierarchyViewerPanel.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Engine\World\SkeletalViewerWorld.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Animation\AnimDataModel.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="EngineSIU.natvis" />
@@ -1693,6 +1695,10 @@
     <ClInclude Include="Engine\Source\Runtime\Core\Math\Transform.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Animation\AnimSequence.h" />
     <ClInclude Include="Engine\Source\Editor\PropertyEditor\BoneHierarchyViewerPanel.h" />
+    <ClInclude Include="Engine\Source\Runtime\Engine\World\SkeletalViewerWorld.h" />
+    <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Animation\AnimDataModel.h" />
+    <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Animation\AnimRawData.h" />
+    <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Engine\Asset\AnimationAsset.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\CompositingShader.hlsl" />

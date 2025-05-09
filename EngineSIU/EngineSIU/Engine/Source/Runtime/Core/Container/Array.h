@@ -143,6 +143,10 @@ public:
     /** Count만큼 초기화되지 않은 공간을 확장합니다. */
     SizeType AddUninitialized(SizeType Count);
 
+    /** Array의 마지막 요소를 반환합니다. */
+    T& Last();
+    const T& Last() const;
+
     void Sort();
     template <typename Compare>
         requires std::is_invocable_r_v<bool, Compare, const T&, const T&>
@@ -386,6 +390,22 @@ typename TArray<T, Allocator>::SizeType TArray<T, Allocator>::AddUninitialized(S
 
     // 새 크기를 반환
     return OldSize;
+}
+
+template<typename T, typename Allocator>
+inline T& TArray<T, Allocator>::Last()
+{
+    assert(!ContainerPrivate.empty());
+
+    return ContainerPrivate.back();
+}
+
+template<typename T, typename Allocator>
+inline const T& TArray<T, Allocator>::Last() const
+{
+    assert(!ContainerPrivate.empty());
+
+    return ContainerPrivate.back();
 }
 
 template <typename T, typename Allocator>
