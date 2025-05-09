@@ -72,5 +72,4 @@ protected:
 
     const int32 MaxBoneNum = 1024;
 
-    bool bIsCPUSkinning = false; // CPU 스키닝 여부
 };

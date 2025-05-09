@@ -139,7 +139,7 @@ void FSkeletalMeshRenderPassBase::RenderAllSkeletalMeshes(const std::shared_ptr<
 
         UpdateObjectConstant(WorldMatrix, UUIDColor, bIsSelected);
 
-        if (bIsCPUSkinning == false)
+        if (FRenderingSettings::bIsCPUSkinning == false)
         {
             UpdateBone(Comp);
             
@@ -249,7 +249,7 @@ void FSkeletalMeshRenderPassBase::UpdateObjectConstant(const FMatrix& WorldMatri
     ObjectData.InverseTransposedWorld = FMatrix::Transpose(FMatrix::Inverse(WorldMatrix));
     ObjectData.UUIDColor = UUIDColor;
     ObjectData.bIsSelected = bIsSelected;
-    ObjectData.bIsCPUSkinning = bIsCPUSkinning;
+    ObjectData.bIsCPUSkinning = FRenderingSettings::bIsCPUSkinning;
 
     BufferManager->UpdateConstantBuffer(TEXT("FObjectConstantBuffer"), ObjectData);
 }
