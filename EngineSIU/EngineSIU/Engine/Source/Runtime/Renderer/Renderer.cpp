@@ -406,8 +406,8 @@ void FRenderer::RenderWorldScene(const std::shared_ptr<FEditorViewportClient>& V
     if (ShowFlag & EEngineShowFlags::SF_SkeletalMesh)
     {
         {
-            // QUICK_SCOPE_CYCLE_COUNTER(SkeletalMeshPass_CPU)
-            // QUICK_GPU_SCOPE_CYCLE_COUNTER(SkeletalMeshPass_GPU, *GPUTimingManager)
+            QUICK_SCOPE_CYCLE_COUNTER(SkeletalMeshPass_CPU)
+            QUICK_GPU_SCOPE_CYCLE_COUNTER(SkeletalMeshPass_GPU, *GPUTimingManager)
             SkeletalMeshRenderPass->Render(Viewport);
         }
     }
