@@ -2,6 +2,7 @@
 #include "IRenderPass.h"
 #include "Container/Array.h"
 #include "D3D11RHI/DXDShaderManager.h"
+#include "Engine/Asset/SkeletalMeshAsset.h"
 
 class USkeletalMesh;
 class UMaterial;
@@ -42,6 +43,8 @@ protected:
     void RenderAllSkeletalMeshes(const std::shared_ptr<FEditorViewportClient>& Viewport);
 
     void RenderSkeletalMesh(const FSkeletalMeshRenderData* RenderData) const;
+    
+    void RenderCPUSkinningSkeletalMesh(const USkeletalMeshComponent* SkeletalMeshComponent) const;
 
     void RenderSkeletalMesh(ID3D11Buffer* Buffer, UINT VerticesNum) const;
 
@@ -50,6 +53,12 @@ protected:
     void UpdateObjectConstant(const FMatrix& WorldMatrix, const FVector4& UUIDColor, bool bIsSelected) const;
 
     void UpdateBone(const USkeletalMeshComponent* SkeletalMeshComponent);
+
+    void ComputeCPUSkinningForMesh(const USkeletalMeshComponent* SkeletalMeshComponent, TArray<FSkeletalMeshVertex>& OutVertices) const;
+
+    FSkeletalMeshVertex ComputeCPUSkinningForVertex(const FSkeletalMeshVertex& InVertex, const TArray<FMatrix>& InSkinningBoneMatrices) const;
+
+    void ComputeSkinningMatrices(const USkeletalMeshComponent* SkeletalMeshComponent, TArray<FMatrix>& OutSkinningMatrices) const;
 
     FDXDBufferManager* BufferManager;
     FGraphicsDevice* Graphics;
@@ -62,4 +71,6 @@ protected:
     ID3D11ShaderResourceView* BoneSRV;
 
     const int32 MaxBoneNum = 1024;
+
+    bool bIsCPUSkinning = false; // CPU 스키닝 여부
 };

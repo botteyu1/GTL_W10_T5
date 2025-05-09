@@ -128,7 +128,9 @@ cbuffer ObjectBuffer : register(b12)
     float4 UUID;
     
     bool bIsSelected;
-    float3 ObjectPadding;
+    bool bIsCPUSkinning;
+    float ObjectPadding;
+    float ObjectPadding2;
 };
 
 /**
