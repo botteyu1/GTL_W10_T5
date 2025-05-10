@@ -15,6 +15,38 @@ struct FVectorKey
         : Time(InTime), Value(InValue)
     {
     }
+
+    static FVector Interpolate(const TArray<FVectorKey>& Keys, float CurrentTime)
+    {
+        if (Keys.Num() == 0) 
+            return FVector::ZeroVector;
+
+        if (Keys.Num() == 1 || CurrentTime <= Keys[0].Time) 
+            return Keys[0].Value;
+
+        if (CurrentTime >= Keys.Last().Time) 
+            return Keys.Last().Value;
+
+        int32 PrevKeyIndex = 0;
+        for (int32 i = 0; i < Keys.Num() - 1; ++i) 
+        {
+            if (Keys[i].Time <= CurrentTime && Keys[i + 1].Time >= CurrentTime) 
+            {
+                PrevKeyIndex = i;
+                break;
+            }
+        }
+
+        const FVectorKey& Key1 = Keys[PrevKeyIndex];
+        const FVectorKey& Key2 = Keys[PrevKeyIndex + 1];
+
+        if (Key2.Time <= Key1.Time) 
+            return Key1.Value; // 시간이 같거나 순서가 잘못된 경우
+
+        float Alpha = (CurrentTime - Key1.Time) / (Key2.Time - Key1.Time);
+
+        return FMath::Lerp(Key1.Value, Key2.Value, Alpha); 
+    }
 };
 
 /**
@@ -28,6 +60,37 @@ struct FQuatKey
     FQuatKey(float InTime = 0.0f, const FQuat& InValue = FQuat::Identity)
         : Time(InTime), Value(InValue)
     {
+    }
+
+    static FQuat Interpolate(const TArray<FQuatKey>& Keys, float CurrentTime)
+    {
+        if (Keys.Num() == 0)
+            return FQuat::Identity;
+
+        if (Keys.Num() == 1 || CurrentTime <= Keys[0].Time)
+            return Keys[0].Value;
+
+        if (CurrentTime >= Keys.Last().Time)
+            return Keys.Last().Value;
+
+        int32 PrevKeyIndex = 0;
+        for (int32 i = 0; i < Keys.Num() - 1; ++i) 
+        {
+            if (Keys[i].Time <= CurrentTime && Keys[i + 1].Time >= CurrentTime) 
+            {
+                PrevKeyIndex = i;
+                break;
+            }
+        }
+        const FQuatKey& Key1 = Keys[PrevKeyIndex];
+        const FQuatKey& Key2 = Keys[PrevKeyIndex + 1];
+
+        if (Key2.Time <= Key1.Time)
+            return Key1.Value; // 시간이 같거나 순서가 잘못된 경우
+
+        float Alpha = (CurrentTime - Key1.Time) / (Key2.Time - Key1.Time);
+
+        return FQuat::Slerp(Key1.Value, Key2.Value, Alpha);
     }
 };
 
@@ -49,6 +112,7 @@ struct FFloatKey
         : Time(InTime), Value(InValue)
     {
     }
+
 };
 
 

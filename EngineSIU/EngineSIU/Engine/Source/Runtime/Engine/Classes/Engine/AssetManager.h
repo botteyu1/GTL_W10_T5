@@ -12,7 +12,7 @@ enum class EAssetType : uint8
     StaticMesh,
     SkeletalMesh,
     Skeleton,
-    Animation,
+    AnimSequence,
     Texture2D,
     Material,
 };
@@ -68,11 +68,13 @@ public:
     UStaticMesh* GetStaticMesh(const FName& Name);
     USkeleton* GetSkeleton(const FName& Name);
     UMaterial* GetMaterial(const FName& Name);
+    UAnimDataModel* GetAnimDataModel(const FName& Name);
 
     void AddAssetInfo(const FAssetInfo& Info);
     void AddSkeleton(const FName& Key, USkeleton* Skeleton);
     void AddSkeletalMesh(const FName& Key, USkeletalMesh* Mesh);
     void AddMaterial(const FName& Key, UMaterial* Material);
+    void AddAnimation(const FName& Key, UAnimDataModel* Animation);
 
 private:
     void LoadContentFiles();
@@ -81,5 +83,6 @@ private:
     inline static TMap<FName, USkeletalMesh*> SkeletalMeshMap;
     inline static TMap<FName, UStaticMesh*> StaticMeshMap;
     inline static TMap<FName, UMaterial*> MaterialMap;
+    inline static TMap<FName, UAnimDataModel*> AnimationMap;
     // inline static TMap<FName, UAnimation*> AnimationMap;
 };

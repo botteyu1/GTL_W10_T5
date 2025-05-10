@@ -11,7 +11,23 @@ struct FBoneAnimationTrack
 
 struct FFrameRate
 {
-    double FrameRate;
+    uint32 Numerator;
+    uint32 Denominator;
+
+    bool IsValid() const
+    {
+        return Numerator > 0;
+    }
+
+    double AsInterval() const
+    {
+        return double(Denominator) / double(Numerator);
+    }
+
+    double AsDecimal() const
+    {
+        return double(Numerator) / double(Denominator);
+    }
 };
 
 struct FNamedFloatCurve
@@ -34,6 +50,7 @@ struct FAnimationCurveData
     }
 };
 
+class USkeleton;
 
 class UAnimDataModel : public UObject
 {
@@ -42,6 +59,7 @@ public:
     UAnimDataModel();
     virtual ~UAnimDataModel() = default;
 
+    FName Name;
     TArray<FBoneAnimationTrack> BoneAnimationTracks;
     float PlayLength;
     FFrameRate FrameRate;
@@ -49,5 +67,10 @@ public:
     int32 NumberOfKeys;
     FAnimationCurveData CurveData;
 
+
+    // !TODO : 이거 어떻게 사용해야 하는지 고민
+    USkeleton* TargetSkeleton;
+
     virtual const TArray<FBoneAnimationTrack>& GetBoneAnimationTracks() const;
+
 };

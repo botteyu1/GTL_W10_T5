@@ -21,6 +21,7 @@ struct FMatrix;
 struct FAnimationCurveData;
 class UAnimDataModel;
 struct FBoneAnimationTrack;
+struct FFrameRate;
 
 class FFbxLoader
 {
@@ -99,6 +100,8 @@ private:
     void ExtractBoneAnimationTracks(FbxAnimStack* AnimStack, const TArray<FbxNode*> BoneNodes, TArray<FBoneAnimationTrack>& BoneAnimationTracks);
     
     void AddCurveDataFromFbx(FbxAnimCurve* FbxCurve, const FName& curveFName, FAnimationCurveData& outAnimationCurveData);
+
+    FFrameRate GetFrameRateFromFbxTimeMode(FbxTime::EMode TimeMode);
 
     // 좌표계 변환 메소드
     void ConvertSceneToLeftHandedZUpXForward(FbxScene* Scene);

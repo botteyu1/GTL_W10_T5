@@ -2,6 +2,7 @@
 #include "AnimSequence.h"
 
 #include "Math/Transform.h"
+#include "Animation/AnimDataModel.h"
 
 UAnimSequence::UAnimSequence()
 {
@@ -68,3 +69,4 @@ UAnimSequence::UAnimSequence()
         Anim.Add(Track);
     }
 }
+

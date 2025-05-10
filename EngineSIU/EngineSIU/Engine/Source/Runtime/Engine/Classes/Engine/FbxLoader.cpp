@@ -1456,14 +1456,13 @@ UAnimDataModel* FFbxLoader::CreateAnimDataModelFromFbxAnimStack(FbxAnimStack* An
 
     FString AnimStackName = AnimStack->GetName();
     FbxTimeSpan TimeSpan = AnimStack->GetLocalTimeSpan();
-    // !TODO : FrameRate 구조체 만들기
-    FFrameRate FrameRate;
-    FrameRate.FrameRate = FbxTime::GetFrameRate(TimeMode);
-    AnimDataModel->FrameRate = FrameRate;
+
+    AnimDataModel->FrameRate = GetFrameRateFromFbxTimeMode(TimeMode);
+    AnimDataModel->Name = FName(AnimStackName);
     AnimDataModel->PlayLength = static_cast<float>(TimeSpan.GetDuration().GetSecondDouble());
     ExtractBoneAnimationTracks(AnimStack, BoneNodes, AnimDataModel->BoneAnimationTracks);
     AnimDataModel->CurveData = ExtractAnimationCurveData(AnimStack); // !TODO : 아직 하는 일 없음
-    AnimDataModel->NumberOfFrames = static_cast<int32>(AnimDataModel->PlayLength * FrameRate.FrameRate);
+    AnimDataModel->NumberOfFrames = static_cast<int32>(AnimDataModel->PlayLength * AnimDataModel->FrameRate.AsDecimal());
 
     return AnimDataModel;
 }
@@ -1489,7 +1488,7 @@ void FFbxLoader::ExtractBoneAnimationTracks(FbxAnimStack* AnimStack, const TArra
         return;
     }
 
-    // !TODO : 멀티 레이어 지원
+    // !TODO : 멀티 레이어 지원. 지금은 0번 레이어만 사용
     FbxAnimLayer* AnimLayer = AnimStack->GetMember<FbxAnimLayer>();
 
     if (!AnimLayer)
@@ -1506,6 +1505,7 @@ void FFbxLoader::ExtractBoneAnimationTracks(FbxAnimStack* AnimStack, const TArra
             continue;
         }
         FBoneAnimationTrack BoneTrack;
+        // 본 이름을 이 트랙의 이름으로 사용
         BoneTrack.Name = FName(BoneFbxNode->GetName());
         FRawAnimSequenceTrack& RawTrack = BoneTrack.InternalTrack;
 
@@ -1564,13 +1564,19 @@ void FFbxLoader::ExtractBoneAnimationTracks(FbxAnimStack* AnimStack, const TArra
                     lclMatrix.SetR(FbxVector4(eulerX_rad, eulerY_rad, eulerZ_rad), rotationOrder);
                     FbxQuaternion fbxQuat = lclMatrix.GetQ();
 
+                    FRotator Rotator = FRotator(eulerY_deg, eulerZ_deg, eulerX_deg);
+                    FQuat Quat = Rotator.Quaternion();
+                    //RawTrack.RotKeys.Add(FQuatKey(
+                    //    static_cast<float>(keyTime.GetSecondDouble()),
+                    //    FQuat(
+                    //        static_cast<float>(fbxQuat[0]), 
+                    //        static_cast<float>(fbxQuat[1]),
+                    //        static_cast<float>(fbxQuat[2]), 
+                    //        static_cast<float>(fbxQuat[3]))
+                    //));
                     RawTrack.RotKeys.Add(FQuatKey(
                         static_cast<float>(keyTime.GetSecondDouble()),
-                        FQuat(
-                            static_cast<float>(fbxQuat[0]), 
-                            static_cast<float>(fbxQuat[1]),
-                            static_cast<float>(fbxQuat[2]), 
-                            static_cast<float>(fbxQuat[3]))
+                        Quat
                     ));
                 }
             }
@@ -1625,6 +1631,61 @@ void FFbxLoader::AddCurveDataFromFbx(FbxAnimCurve* FbxCurve, const FName& curveF
     {
         outAnimationCurveData.FloatCurves.Add(NewCurveTrack);
     }
+}
+
+FFrameRate FFbxLoader::GetFrameRateFromFbxTimeMode(FbxTime::EMode TimeMode)
+{
+    FFrameRate FrameRate;
+    switch (TimeMode)
+    {
+    case FbxTime::eFrames24: // 24 FPS (Film)
+        FrameRate.Numerator = 24;
+        FrameRate.Denominator = 1;
+        break;
+    case FbxTime::eFrames30: // 30 FPS
+    case FbxTime::eFrames30Drop: // 30 FPS Drop (FFrameRate에서는 단순 30 FPS로 처리 가능)
+        FrameRate.Numerator = 30;
+        FrameRate.Denominator = 1;
+        break;
+    case FbxTime::eNTSCDropFrame: // 29.97 FPS (NTSC Drop Frame)
+    case FbxTime::eNTSCFullFrame: // 29.97 FPS (NTSC Full Frame)
+        // (30000.0 / 1001.0) 또는 (29.97 / 1.0) -> 정밀도를 위해 큰 정수 사용
+        FrameRate.Numerator = 30000;
+        FrameRate.Denominator = 1001;
+        break;
+    case FbxTime::eFrames48: // 48 FPS
+        FrameRate.Numerator = 48;
+        FrameRate.Denominator = 1;
+        break;
+    case FbxTime::eFrames50: // 50 FPS (Double PAL)
+        FrameRate.Numerator = 50;
+        FrameRate.Denominator = 1;
+        break;
+    case FbxTime::eFrames60: // 60 FPS
+        FrameRate.Numerator = 60;
+        FrameRate.Denominator = 1;
+        break;
+    case FbxTime::eFrames100: // 100 FPS
+        FrameRate.Numerator = 100;
+        FrameRate.Denominator = 1;
+        break;
+    case FbxTime::eFrames120: // 120 FPS
+        FrameRate.Numerator = 120;
+        FrameRate.Denominator = 1;
+        break;
+    case FbxTime::eFilmFullFrame: // 24 FPS (일반적으로 eFrames24와 동일)
+        FrameRate.Numerator = 24;
+        FrameRate.Denominator = 1;
+        break;
+    case FbxTime::eCustom:
+    case FbxTime::eDefaultMode:
+    default:
+        // 처리되지 않은 TimeMode
+        FrameRate.Numerator = 30; // 기본값
+        FrameRate.Denominator = 1;
+        break;
+    }
+    return FrameRate;
 }
 
 void FFbxLoader::ConvertSceneToLeftHandedZUpXForward(FbxScene* Scene)

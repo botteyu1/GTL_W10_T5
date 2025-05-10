@@ -6,10 +6,12 @@
 #include "Animation/Skeleton.h"
 #include "Engine/SkeletalMesh.h"
 #include "Engine/Asset/SkeletalMeshAsset.h"
-
+#include "Animation/AnimSequence.h"
+#include "Animation/AnimDataModel.h"
+#include "UObject/ObjectFactory.h"
 USkeletalMeshComponent::USkeletalMeshComponent()
 {
-    AnimSequence = new UAnimSequence();
+    AnimSequence = FObjectFactory::ConstructObject<UAnimSequence>(this);
 }
 
 USkeletalMeshComponent::~USkeletalMeshComponent()
@@ -27,13 +29,8 @@ void USkeletalMeshComponent::TickComponent(float DeltaTime)
 {
     USkinnedMeshComponent::TickComponent(DeltaTime);
 
-    if (bPlayAnimation)
-    {
-        ElapsedTime += DeltaTime;
-    }
-
-    ProcessAnimation(DeltaTime);
-
+    //ProcessAnimation(DeltaTime);
+    ProcessAnimation2(DeltaTime);
 }
 
 void USkeletalMeshComponent::SetSkeletalMeshAsset(USkeletalMesh* InSkeletalMeshAsset)
@@ -96,6 +93,12 @@ void USkeletalMeshComponent::SetAnimationEnabled(bool bEnable)
 
 void USkeletalMeshComponent::ProcessAnimation(float DeltaTime)
 {
+    if (bPlayAnimation)
+    {
+        ElapsedTime += DeltaTime;
+    }
+
+
     BoneTransforms = BoneBindPoseTransforms;
 
     if (bPlayAnimation && AnimSequence && SkeletalMeshAsset && SkeletalMeshAsset->GetSkeleton())
@@ -131,6 +134,91 @@ void USkeletalMeshComponent::ProcessAnimation(float DeltaTime)
                 // 다음 키프레임에 본 데이터가 없으면 현재 트랜스폼만 사용
                 BoneTransforms[BoneIdx] = BoneBindPoseTransforms[BoneIdx] * CurrentTransform;
             }
+        }
+    }
+}
+
+void USkeletalMeshComponent::ProcessAnimation2(float DeltaTime)
+{
+    if (!bPlayAnimation || !AnimSequence || !SkeletalMeshAsset || !SkeletalMeshAsset->GetSkeleton() || !AnimSequence->GetAnimDataModel()) 
+    {
+        return;
+    }
+
+    UAnimDataModel* AnimDataModel = AnimSequence->GetAnimDataModel();
+    ElapsedTime += DeltaTime;
+
+    float CurrentAnimTime = ElapsedTime;
+    if (AnimSequence->GetPlayLength() > 0.f)
+    {
+        CurrentAnimTime = FMath::Fmod(ElapsedTime, AnimSequence->GetPlayLength());
+    }
+
+    const USkeleton* Skeleton = SkeletalMeshAsset->GetSkeleton();
+    const TArray<FMeshBoneInfo>& SkeletonBones = Skeleton->GetReferenceSkeleton().RawRefBoneInfo;
+
+    if (BoneTransforms.Num() != SkeletonBones.Num())
+    {
+        BoneTransforms.SetNum(SkeletonBones.Num());
+        for (int32 i = 0; i < SkeletonBones.Num(); ++i)
+        {
+            BoneTransforms[i] = FTransform::Identity;
+        }
+    }
+
+    TArray<FTransform> LocalAnimatedTransforms;
+    LocalAnimatedTransforms.SetNum(SkeletonBones.Num());
+
+    // 본 별 로컬 변환 계산
+    for (int32 BoneIdx = 0; BoneIdx < SkeletonBones.Num(); ++BoneIdx)
+    {
+        const FName CurrentBoneName = SkeletonBones[BoneIdx].Name;
+        const FBoneAnimationTrack* BoneTrack = nullptr;
+
+        // 트랙 찾기
+        for (const FBoneAnimationTrack& Track : AnimDataModel->GetBoneAnimationTracks())
+        {
+            if (Track.Name == CurrentBoneName)
+            {
+                BoneTrack = &Track;
+                break;
+            }
+        }
+
+        if (BoneTrack && !BoneTrack->InternalTrack.IsEmpty())
+        {
+            // 애니메이션의 Transform을 그대로 사용하는 것인지, 곱해주는 것인지 판단해야 함
+            FVector FinalPos = FVectorKey::Interpolate(BoneTrack->InternalTrack.PosKeys, CurrentAnimTime);
+            FQuat FinalRot = FQuatKey::Interpolate(BoneTrack->InternalTrack.RotKeys, CurrentAnimTime);
+            FVector FinalScale = FVectorKey::Interpolate(BoneTrack->InternalTrack.ScaleKeys, CurrentAnimTime);
+
+            LocalAnimatedTransforms[BoneIdx] = FTransform(FinalRot, FinalPos, FinalScale);
+        }
+        else
+        {
+            // 애니메이션 트랙이 없거나 비어있으면, 해당 뼈의 로컬 바인드 포즈 사용
+            // USkeleton 또는 FBoneInfo에 로컬 바인드 포즈 정보가 있어야 함
+            // 예: LocalAnimatedTransforms[BoneIdx] = SkeletonBones[BoneIdx].LocalBindTransform;
+            // BoneBindPoseTransforms가 로컬 공간 기준이고, 인덱스가 일치한다면 사용 가능
+
+            LocalAnimatedTransforms[BoneIdx] = FTransform::Identity; // 안전장치
+        }
+    }
+
+    for (uint32 BoneIdx = 0; BoneIdx < SkeletonBones.Num(); ++BoneIdx)
+    {
+        uint32 ParentIndex = SkeletonBones[BoneIdx].ParentIndex;
+
+        if (ParentIndex != INDEX_NONE && ParentIndex >= 0 && ParentIndex < BoneIdx)
+        {
+            // !NOTE : 곱셈 순서 확인!!!
+            BoneTransforms[BoneIdx] = LocalAnimatedTransforms[BoneIdx];
+        }
+        else
+        {
+            // 부모가 없거나 루트 본인 경우
+            //BoneTransforms[BoneIdx] = BoneBindPoseTransforms[BoneIdx];
+            BoneTransforms[BoneIdx] = LocalAnimatedTransforms[BoneIdx];
         }
     }
 }

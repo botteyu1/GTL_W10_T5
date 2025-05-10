@@ -31,6 +31,8 @@ public:
 
     void ProcessAnimation(float DeltaTime);
 
+    void ProcessAnimation2(float DeltaTime);
+
 private:
     
     USkeletalMesh* SkeletalMeshAsset = nullptr;
