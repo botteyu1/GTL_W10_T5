@@ -10,6 +10,7 @@
 #include "Engine/FObjLoader.h"
 #include "UObject/Casts.h"
 #include "Asset/SkeletalMeshAsset.h"
+#include "Animation/AnimDataModel.h"
 
 UAssetManager::~UAssetManager()
 {
@@ -131,6 +132,15 @@ UMaterial* UAssetManager::GetMaterial(const FName& Name)
     return nullptr;
 }
 
+UAnimDataModel* UAssetManager::GetAnimDataModel(const FName& Name)
+{
+    if (AnimationMap.Contains(Name))
+    {
+        return AnimationMap[Name];
+    }
+    return nullptr;
+}
+
 void UAssetManager::AddAssetInfo(const FAssetInfo& Info)
 {
     AssetRegistry->PathNameToAssetInfo.Add(Info.AssetName, Info);
@@ -149,6 +159,11 @@ void UAssetManager::AddSkeletalMesh(const FName& Key, USkeletalMesh* Mesh)
 void UAssetManager::AddMaterial(const FName& Key, UMaterial* Material)
 {
     MaterialMap.Add(Key, Material);
+}
+
+void UAssetManager::AddAnimation(const FName& Key, UAnimDataModel* Animation)
+{
+    AnimationMap.Add(Key, Animation);
 }
 
 void UAssetManager::LoadContentFiles()
@@ -174,7 +189,7 @@ void UAssetManager::LoadContentFiles()
             // ObjFileNames.push_back(UGTLStringLibrary::StringToWString(Entry.path().string()));
             // FObjManager::LoadObjStaticMeshAsset(UGTLStringLibrary::StringToWString(Entry.path().string()));
         }
-        else if (Entry.is_regular_file() && Entry.path().extension() == ".fbx")
+        else if (Entry.is_regular_file() && (Entry.path().extension() == ".fbx" || Entry.path().extension() == ".FBX"))
         {
             // TODO : ControlEditorPanel Viwer Open과 코드 중복 다수
             // 경로, 이름 준비
@@ -244,6 +259,20 @@ void UAssetManager::LoadContentFiles()
 
                 FString Key = Info.PackagePath.ToString() + "/" + Info.AssetName.ToString();
                 MaterialMap.Add(Key, Material);
+            }
+            // Animation들 등록
+            for (int32 i = 0; i < Result.AnimDataModels.Num(); ++i)
+            {
+                UAnimDataModel* AnimDataModel = Result.AnimDataModels[i];
+                FName AnimName = AnimDataModel->Name;
+
+                FAssetInfo Info = AssetInfo;
+                Info.AssetName = AnimName;
+                Info.AssetType = EAssetType::AnimSequence;
+
+                AssetRegistry->PathNameToAssetInfo.Add(Info.AssetName, Info);
+
+                AnimationMap.Add(AnimName, AnimDataModel);
             }
         }
     }
