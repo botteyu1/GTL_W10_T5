@@ -4,6 +4,8 @@
 #include "UnrealEd/EditorPanel.h"
 #include <ImGui/ImSequencer.h>
 
+#include "Animation/AnimSequence.h"
+
 
 class UAnimSequence;
 // ImSequencer를 사용하기 위한 간단한 SequenceInterface 구현체
@@ -15,6 +17,7 @@ public:
     int SelectedEntry = -1; // 선택된 트랙 인덱스 (예시)
 
     MySequence(UAnimSequence* InSequence) : CurrentSequence(InSequence) {}
+    MySequence() {}
 
     virtual int GetFrameMin() const override
     {
@@ -36,7 +39,7 @@ public:
         if (CurrentSequence)
         {
             // 예시: 본 트랙의 수를 반환하거나, 표시할 주요 트랙(예: 루트 모션, 커브) 수를 반환
-            // return CurrentSequence->GetBoneAnimationTracks().Num(); // 만약 모든 본 트랙을 표시한다면
+          //return CurrentSequence->GetBoneAnimationTracks().Num(); // 만약 모든 본 트랙을 표시한다면
             return 1; // 단순화를 위해 하나의 마스터 트랙만 있다고 가정
         }
         return 0;

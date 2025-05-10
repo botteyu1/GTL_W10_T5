@@ -11,6 +11,7 @@
      SetSupportedWorldTypes(EWorldTypeBitFlag::Editor|EWorldTypeBitFlag::PIE|EWorldTypeBitFlag::SkeletalViewer);
      // 초기화 시 LastFrameTime 설정
      LastFrameTime = static_cast<float>(ImGui::GetTime());
+     SequencerData = new MySequence();
  }
 
  AnimationSequenceViewerPanel::~AnimationSequenceViewerPanel()
@@ -34,6 +35,7 @@
      else
      {
          SequencerData = nullptr;
+         SequencerData = new MySequence(); // 기본값으로 초기화
      }
  }
 
@@ -92,26 +94,26 @@
      //     CurrentFrame = std::max(SequencerData->GetFrameMin(), std::min(CurrentFrame, SequencerData->GetFrameMax()));
      // }
 
-     //if (ImSequencer::Sequencer(SequencerData, &CurrentFrame, &bIsExpanded, &SelectedSequencerEntry, &FirstFrame, sequenceOptions))
-     //{
-         // 시퀀서에서 프레임이 변경된 경우 (예: 사용자가 재생 헤드를 드래그)
-         // if (CurrentAnimSequence && CurrentAnimSequence->GetFrameRate().AsDecimal() > 0.0f)
-         // {
-         //     PlaybackTime = static_cast<float>(CurrentFrame) / CurrentAnimSequence->GetFrameRate().AsDecimal();
-         //     // TODO: 이 시간에 맞춰 스켈레탈 메쉬의 포즈를 업데이트하는 로직 호출
-         //     // Engine->SkeletalMeshViewerWorld->SetAnimationTime(PlaybackTime); (가상)
-         //     if (USkeletalMeshComponent* SkelComp = Engine->SkeletalMeshViewerWorld->GetSkeletalMeshComponent()) // 가상
-         //     {
-         //         SkelComp->SetAnimationTime(PlaybackTime); // USkeletalMeshComponent에 해당 함수 추가 필요
-         //     }
-         // }
-     //}
+     if (ImSequencer::Sequencer(SequencerData, &CurrentFrame, &bIsExpanded, &SelectedSequencerEntry, &FirstFrame, sequenceOptions))
+     {
+          //시퀀서에서 프레임이 변경된 경우 (예: 사용자가 재생 헤드를 드래그)
+          // if (CurrentAnimSequence && CurrentAnimSequence->GetFrameRate().AsDecimal() > 0.0f)
+          // {
+          //     PlaybackTime = static_cast<float>(CurrentFrame) / CurrentAnimSequence->GetFrameRate().AsDecimal();
+          //     // TODO: 이 시간에 맞춰 스켈레탈 메쉬의 포즈를 업데이트하는 로직 호출
+          //     // Engine->SkeletalMeshViewerWorld->SetAnimationTime(PlaybackTime); (가상)
+          //     if (USkeletalMeshComponent* SkelComp = Engine->SkeletalMeshViewerWorld->GetSkeletalMeshComponent()) // 가상
+          //     {
+          //         SkelComp->SetAnimationTime(PlaybackTime); // USkeletalMeshComponent에 해당 함수 추가 필요
+          //     }
+          // }
+     }
      
      // 선택된 트랙 정보 표시 (예시)
-     // if (SelectedSequencerEntry != -1)
-     // {
-     //     ImGui::Text("Selected Track: %s", SequencerData->GetItemLabel(SelectedSequencerEntry));
-     // }
+     if (SelectedSequencerEntry != -1)
+     {
+         ImGui::Text("Selected Track: %s", SequencerData->GetItemLabel(SelectedSequencerEntry));
+     }
 
      ImGui::End();
  }
@@ -143,12 +145,12 @@
          PlaybackTime = 0.0f;
          CurrentFrame = 0;
          bIsPlaying = false; // 처음으로 가면 일단 정지
-         // TODO: 스켈레탈 메쉬 포즈 업데이트
-         UEditorEngine* Engine = Cast<UEditorEngine>(GEngine);
-         if (USkeletalMeshComponent* SkelComp = Engine->SkeletalMeshViewerWorld->GetSkeletalMeshComponent())
-         {
-             //SkelComp->SetAnimationTime(PlaybackTime);
-         }
+         // // TODO: 스켈레탈 메쉬 포즈 업데이트
+         // UEditorEngine* Engine = Cast<UEditorEngine>(GEngine);
+         // if (USkeletalMeshComponent* SkelComp = Engine->SkeletalMeshViewerWorld->GetSkeletalMeshComponent())
+         // {
+         //     //SkelComp->SetAnimationTime(PlaybackTime);
+         // }
      }
      ImGui::SameLine();
 
@@ -221,11 +223,11 @@
      UEditorEngine* Engine = Cast<UEditorEngine>(GEngine);
      if (Engine && Engine->SkeletalMeshViewerWorld)
      {
-         if (USkeletalMeshComponent* SkelComp = Engine->SkeletalMeshViewerWorld->GetSkeletalMeshComponent()) // 가상
-         {
-             //SkelComp->SetAnimationTime(PlaybackTime); // USkeletalMeshComponent에 해당 함수 추가 필요
-             // 또는 SkelComp->TickAnimation(DeltaTime, bLooping); 같은 함수 호출
-         }
+         // if (USkeletalMeshComponent* SkelComp = Engine->SkeletalMeshViewerWorld->GetSkeletalMeshComponent()) // 가상
+         // {
+         //     //SkelComp->SetAnimationTime(PlaybackTime); // USkeletalMeshComponent에 해당 함수 추가 필요
+         //     // 또는 SkelComp->TickAnimation(DeltaTime, bLooping); 같은 함수 호출
+         // }
      }
  }
 
