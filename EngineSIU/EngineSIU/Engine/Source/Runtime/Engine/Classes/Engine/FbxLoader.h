@@ -18,6 +18,10 @@ class USkeletalMesh;
 struct FSkeletalMeshRenderData;
 struct FFbxLoadResult;
 struct FMatrix;
+struct FAnimationCurveData;
+class UAnimDataModel;
+struct FBoneAnimationTrack;
+struct FFrameRate;
 
 class FFbxLoader
 {
@@ -59,7 +63,7 @@ private:
 
     void CollectBoneData(FbxNode* Node, FReferenceSkeleton& OutReferenceSkeleton, int32 ParentIndex, FbxPose* BindPose);
 
-    FTransform ConvertFbxTransformToFTransform(FbxNode* Node) const;
+    FTransform ConvertFbxTransformToFTransform(FbxNode* Node, FbxTime Time = FBXSDK_TIME_INFINITE) const;
     // End Skeleton
     
     // Begin Mesh
@@ -83,6 +87,21 @@ private:
     
     FMatrix ConvertFbxMatrixToFMatrix(const FbxAMatrix& FbxMatrix) const;
     // End Mesh
+
+    // Begin Animation
+    void ProcessAnimation(FbxNode* Node, FFbxLoadResult& OutResult);
+
+    void CollectAnimationStacks(FbxScene* Scene, TArray<FbxAnimStack*>& OutAnimationStacks);
+
+    UAnimDataModel* CreateAnimDataModelFromFbxAnimStack(FbxAnimStack* AnimStack, FbxTime::EMode TimeNode, const TArray<FbxNode*>& BoneNodes);
+
+    FAnimationCurveData ExtractAnimationCurveData(FbxAnimStack* AnimStack);
+
+    void ExtractBoneAnimationTracks(FbxAnimStack* AnimStack, const TArray<FbxNode*> BoneNodes, UAnimDataModel* AnimDataModel);
+    
+    void AddCurveDataFromFbx(FbxAnimCurve* FbxCurve, const FName& curveFName, FAnimationCurveData& outAnimationCurveData);
+
+    FFrameRate GetFrameRateFromFbxTimeMode(FbxTime::EMode TimeMode);
 
     // 좌표계 변환 메소드
     void ConvertSceneToLeftHandedZUpXForward(FbxScene* Scene);

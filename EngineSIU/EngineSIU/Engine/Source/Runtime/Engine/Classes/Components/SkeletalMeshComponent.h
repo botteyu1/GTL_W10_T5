@@ -28,7 +28,11 @@ public:
     void GetCurrentGlobalBoneMatrices(TArray<FMatrix>& OutBoneMatrices) const;
 
     void SetAnimationEnabled(bool bEnable);
-    
+
+    void ProcessAnimation(float DeltaTime);
+
+    void ProcessAnimation2(float DeltaTime);
+
 private:
     
     USkeletalMesh* SkeletalMeshAsset = nullptr;

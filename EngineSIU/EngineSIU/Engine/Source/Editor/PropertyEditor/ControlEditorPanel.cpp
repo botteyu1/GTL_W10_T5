@@ -46,6 +46,7 @@
 #include "Renderer/CompositingPass.h"
 #include <Engine/FbxLoader.h>
 #include "Engine/Classes/Engine/AssetManager.h"
+#include "Engine/Classes/Animation/AnimDataModel.h"
 
 ControlEditorPanel::ControlEditorPanel()
 {
@@ -260,6 +261,19 @@ void ControlEditorPanel::CreateMenuButton(const ImVec2 ButtonSize, ImFont* IconF
                     Info.AssetType = EAssetType::Material;
                     AM.AddAssetInfo(Info);
                     AM.AddMaterial(KeyName, Mat);
+                }
+
+                // Animation들 등록
+                for (int32 i = 0; i < Result.AnimDataModels.Num(); ++i)
+                {
+                    UAnimDataModel* AnimDataModel = Result.AnimDataModels[i];
+                    FName AnimName = AnimDataModel->Name;
+                    FAssetInfo Info = AssetInfo;
+                    Info.AssetName = AnimName;
+                    Info.AssetType = EAssetType::AnimSequence;
+
+                    AM.AddAssetInfo(Info);
+                    AM.AddAnimation(AnimName, AnimDataModel);
                 }
 
                 // 뷰어 실행

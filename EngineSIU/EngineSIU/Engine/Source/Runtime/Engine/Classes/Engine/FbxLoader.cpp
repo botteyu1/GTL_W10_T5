@@ -11,6 +11,8 @@
 #include "SkeletalMesh.h"
 #include "Asset/StaticMeshAsset.h"
 #include "Container/String.h"
+#include "Classes/Animation/AnimDataModel.h"
+#include <set>
 
 struct FVertexKey
 {
@@ -313,6 +315,8 @@ FFbxLoadResult FFbxLoader::LoadFBX(const FString& InFilePath)
     ProcessSkeletonHierarchy(RootNode, Result);
 
     ProcessMeshes(RootNode, Result);
+
+    ProcessAnimation(RootNode, Result);
     
     return Result;
 }
@@ -729,9 +733,9 @@ void FFbxLoader::CollectBoneData(FbxNode* Node, FReferenceSkeleton& OutReference
     }
 }
 
-FTransform FFbxLoader::ConvertFbxTransformToFTransform(FbxNode* Node) const
+FTransform FFbxLoader::ConvertFbxTransformToFTransform(FbxNode* Node, FbxTime Time) const
 {
-    FbxAMatrix LocalMatrix = Node->EvaluateLocalTransform();
+    FbxAMatrix LocalMatrix = Node->EvaluateLocalTransform(Time);
 
     // FBX 행렬에서 스케일, 회전, 위치 추출
     FbxVector4 T = LocalMatrix.GetT();
@@ -1396,6 +1400,248 @@ FMatrix FFbxLoader::ConvertFbxMatrixToFMatrix(const FbxAMatrix& FbxMatrix) const
         }
     }
     return Result;
+}
+
+void FFbxLoader::ProcessAnimation(FbxNode* Node, FFbxLoadResult& OutResult)
+{
+    if (!Node)
+        return;
+    // 본 노드들 뽑아오기.
+    // !TODO : 메시 뽑아올 때 캐시해놓기
+    TArray<FbxNode*> BoneNodes;
+    CollectSkeletonBoneNodes(Node, BoneNodes);
+
+    // 이 모드를 통해 NumberOfFrames 및 NumberOfKeys를 계산 가능
+    FbxTime::EMode TimeMode = Node->GetScene()->GetGlobalSettings().GetTimeMode();
+
+    TArray<FbxAnimStack*> AnimStacks;
+    CollectAnimationStacks(Scene, AnimStacks);
+
+    // AnimStack 하나당 AnimDataModel 하나
+    for (FbxAnimStack* AnimStack : AnimStacks)
+    {
+        if (AnimStack)
+        {
+            // 애니메이션 스택을 처리
+            Scene->SetCurrentAnimationStack(AnimStack);
+            UAnimDataModel* AnimDataModel = CreateAnimDataModelFromFbxAnimStack(AnimStack, TimeMode, BoneNodes);
+            OutResult.AnimDataModels.Add(AnimDataModel);
+        }
+    }
+}
+
+void FFbxLoader::CollectAnimationStacks(FbxScene* Scene, TArray<FbxAnimStack*>& OutAnimationStacks)
+{
+    if (!Scene)
+        return;
+
+    int numAnimStacks = Scene->GetSrcObjectCount<FbxAnimStack>();
+
+    for (int i = 0; i < numAnimStacks; i++)
+    {
+        FbxAnimStack* AnimStack = Scene->GetSrcObject<FbxAnimStack>(i);
+        if (AnimStack)
+        {
+            OutAnimationStacks.Add(AnimStack);
+        }
+    }
+}
+
+UAnimDataModel* FFbxLoader::CreateAnimDataModelFromFbxAnimStack(FbxAnimStack* AnimStack, FbxTime::EMode TimeMode, const TArray<FbxNode*>& BoneNodes)
+{
+    if (!AnimStack)
+    {
+        return nullptr;
+    }
+
+    UAnimDataModel* AnimDataModel = FObjectFactory::ConstructObject<UAnimDataModel>(nullptr);
+
+    FString AnimStackName = AnimStack->GetName();
+    FbxTimeSpan TimeSpan = AnimStack->GetLocalTimeSpan();
+
+    AnimDataModel->FrameRate = GetFrameRateFromFbxTimeMode(TimeMode);
+    AnimDataModel->Name = FName(AnimStackName);
+    AnimDataModel->PlayLength = static_cast<float>(TimeSpan.GetDuration().GetSecondDouble());
+    AnimDataModel->NumberOfFrames = static_cast<int32>(AnimDataModel->PlayLength * AnimDataModel->FrameRate.AsDecimal()) + 1;
+
+    ExtractBoneAnimationTracks(AnimStack, BoneNodes, AnimDataModel);
+    AnimDataModel->CurveData = ExtractAnimationCurveData(AnimStack); // !TODO : 아직 하는 일 없음
+
+    return AnimDataModel;
+}
+
+FAnimationCurveData FFbxLoader::ExtractAnimationCurveData(FbxAnimStack* AnimStack)
+{
+    if (!AnimStack)
+    {
+        return FAnimationCurveData();
+    }
+
+    FAnimationCurveData AnimationCurveData = FAnimationCurveData(AnimStack->GetName());
+
+    // !TODO : 스켈레탈 애니메이션 외의 애니메이션 데이터 처리
+
+    return AnimationCurveData;
+}
+
+void FFbxLoader::ExtractBoneAnimationTracks(FbxAnimStack* AnimStack, const TArray<FbxNode*> BoneNodes, UAnimDataModel* AnimDataModel)
+{
+    if (!AnimStack)
+    {
+        return;
+    }
+
+    // !TODO : 멀티 레이어 지원. 지금은 0번 레이어만 사용
+    FbxAnimLayer* AnimLayer = AnimStack->GetMember<FbxAnimLayer>();
+
+    if (!AnimLayer)
+    {
+        return;
+    }
+
+    uint32 NumberOfFrames = AnimDataModel->NumberOfFrames;
+    float PlayLength = AnimDataModel->PlayLength;
+
+    float TimeInterval = 0.0f;
+    if (AnimDataModel->FrameRate.IsValid())
+    {
+        TimeInterval = AnimDataModel->FrameRate.AsInterval();
+    }
+    // 애니메이션 레이어에서 본 애니메이션 트랙을 추출
+    // NOTE : 잘 안되면 여기먼저 볼 것
+    for (FbxNode* BoneFbxNode : BoneNodes)
+    {
+        if (!BoneFbxNode)
+        {
+            continue;
+        }
+        FBoneAnimationTrack BoneTrack;
+        // 본 이름을 이 트랙의 이름으로 사용
+        BoneTrack.Name = FName(BoneFbxNode->GetName());
+        FRawAnimSequenceTrack& RawTrack = BoneTrack.InternalTrack;
+
+        // !TODO : NumberOfFrames과 PlayLength로 FbxTime들을 생성
+        for (int32 frameIndex = 0; frameIndex < NumberOfFrames; ++frameIndex)
+        {
+            float sampleTimeSeconds;
+
+            if (NumberOfFrames == 1) 
+            {
+                // 정적 포즈: 시간 0에서 샘플링
+                sampleTimeSeconds = 0.0f;
+            }
+            else 
+            {
+                // 일반적인 경우: 현재 프레임 인덱스에 해당하는 시간 계산
+                sampleTimeSeconds = static_cast<float>(frameIndex) * TimeInterval;
+            }
+
+            // 샘플링 시간이 애니메이션 총 길이를 넘지 않도록 보정
+            // 특히 마지막 프레임이 정확히 PlayLengthInSeconds가 되도록 함
+            if (frameIndex == NumberOfFrames - 1 && NumberOfFrames > 1) 
+            {
+                sampleTimeSeconds = PlayLength;
+            }
+            else 
+            {
+                // 중간 프레임들은 PlayLengthInSeconds를 넘지 않도록 클램핑 (부동 소수점 오차 대비)
+                sampleTimeSeconds = FMath::Min(sampleTimeSeconds, PlayLength);
+            }
+
+            FbxTime fbxSampleTime;
+            fbxSampleTime.SetSecondDouble(sampleTimeSeconds);
+
+            FbxAMatrix TransformMatrix = BoneFbxNode->EvaluateLocalTransform(fbxSampleTime);
+
+            FTransform Transform = FTransform(ConvertFbxTransformToFTransform(BoneFbxNode, fbxSampleTime));
+
+            RawTrack.PosKeys.Add(FVectorKey(sampleTimeSeconds, Transform.GetTranslation()));
+            RawTrack.RotKeys.Add(FQuatKey(sampleTimeSeconds, Transform.GetRotation()));
+            RawTrack.ScaleKeys.Add(FVectorKey(sampleTimeSeconds, Transform.GetScale3D()));
+        }
+
+        if (!RawTrack.IsEmpty())
+        {
+            AnimDataModel->BoneAnimationTracks.Add(BoneTrack);
+        }
+    }
+}
+
+void FFbxLoader::AddCurveDataFromFbx(FbxAnimCurve* FbxCurve, const FName& curveFName, FAnimationCurveData& outAnimationCurveData)
+{
+    if (!FbxCurve)
+    {
+        return;
+    }
+
+    FNamedFloatCurve NewCurveTrack(curveFName);
+    for (int i = 0; i < FbxCurve->KeyGetCount(); ++i)
+    {
+        FbxTime keyTime = FbxCurve->KeyGetTime(i);
+        float keyValue = FbxCurve->KeyGetValue(i);
+
+        NewCurveTrack.Keys.Add(FFloatKey(static_cast<float>(keyTime.GetSecondDouble()), keyValue));
+    }
+
+    if (NewCurveTrack.Keys.Num() > 0)
+    {
+        outAnimationCurveData.FloatCurves.Add(NewCurveTrack);
+    }
+}
+
+FFrameRate FFbxLoader::GetFrameRateFromFbxTimeMode(FbxTime::EMode TimeMode)
+{
+    FFrameRate FrameRate;
+    switch (TimeMode)
+    {
+    case FbxTime::eFrames24: // 24 FPS (Film)
+        FrameRate.Numerator = 24;
+        FrameRate.Denominator = 1;
+        break;
+    case FbxTime::eFrames30: // 30 FPS
+    case FbxTime::eFrames30Drop: // 30 FPS Drop (FFrameRate에서는 단순 30 FPS로 처리 가능)
+        FrameRate.Numerator = 30;
+        FrameRate.Denominator = 1;
+        break;
+    case FbxTime::eNTSCDropFrame: // 29.97 FPS (NTSC Drop Frame)
+    case FbxTime::eNTSCFullFrame: // 29.97 FPS (NTSC Full Frame)
+        // (30000.0 / 1001.0) 또는 (29.97 / 1.0) -> 정밀도를 위해 큰 정수 사용
+        FrameRate.Numerator = 30000;
+        FrameRate.Denominator = 1001;
+        break;
+    case FbxTime::eFrames48: // 48 FPS
+        FrameRate.Numerator = 48;
+        FrameRate.Denominator = 1;
+        break;
+    case FbxTime::eFrames50: // 50 FPS (Double PAL)
+        FrameRate.Numerator = 50;
+        FrameRate.Denominator = 1;
+        break;
+    case FbxTime::eFrames60: // 60 FPS
+        FrameRate.Numerator = 60;
+        FrameRate.Denominator = 1;
+        break;
+    case FbxTime::eFrames100: // 100 FPS
+        FrameRate.Numerator = 100;
+        FrameRate.Denominator = 1;
+        break;
+    case FbxTime::eFrames120: // 120 FPS
+        FrameRate.Numerator = 120;
+        FrameRate.Denominator = 1;
+        break;
+    case FbxTime::eFilmFullFrame: // 24 FPS (일반적으로 eFrames24와 동일)
+        FrameRate.Numerator = 24;
+        FrameRate.Denominator = 1;
+        break;
+    case FbxTime::eCustom:
+    case FbxTime::eDefaultMode:
+    default:
+        // 처리되지 않은 TimeMode
+        FrameRate.Numerator = 30; // 기본값
+        FrameRate.Denominator = 1;
+        break;
+    }
+    return FrameRate;
 }
 
 void FFbxLoader::ConvertSceneToLeftHandedZUpXForward(FbxScene* Scene)

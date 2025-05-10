@@ -39,6 +39,8 @@
 #include "imgui/imgui_bezier.h"
 #include "imgui/imgui_curve.h"
 #include "Math/Transform.h"
+#include "Animation/AnimSequence.h"
+#include "Animation/AnimDataModel.h"
 
 PropertyEditorPanel::PropertyEditorPanel()
 {
@@ -463,6 +465,41 @@ void PropertyEditorPanel::RenderForSkeletalMesh(USkeletalMeshComponent* Skeletal
         }
 
         ImGui::TreePop();
+
+        ImGui::Text("Animation");
+        ImGui::SameLine();
+
+        PreviewName = FString("None");
+        if (UAnimSequence* AnimSequence = SkeletalMeshComp->AnimSequence)
+        {
+            if (AnimSequence->GetAnimDataModel())
+            {
+                PreviewName = AnimSequence->GetAnimDataModel()->Name.ToString();
+            }
+        }
+
+        if (ImGui::BeginCombo("##AnimSequence", GetData(PreviewName), ImGuiComboFlags_None))
+        {
+            for (const auto& Asset : Assets)
+            {
+                if (Asset.Value.AssetType != EAssetType::AnimSequence)
+                {
+                    continue;
+                }
+
+                if (ImGui::Selectable(GetData(Asset.Value.AssetName.ToString()), false))
+                {
+                    FName AnimName = Asset.Value.AssetName;
+                    UAnimDataModel* AnimDataModel = UAssetManager::Get().GetAnimDataModel(AnimName);
+                    if (AnimDataModel)
+                    {
+                        // !TODO : AnimStateMachine 이후에는 AnimStateMachine에 추가하는 로직으로 변경
+                        SkeletalMeshComp->AnimSequence->SetAnimDataModel(AnimDataModel);
+                    }
+                }
+            }
+            ImGui::EndCombo();
+        }
 
         if (ImGui::Button("Play Animation"))
         {
