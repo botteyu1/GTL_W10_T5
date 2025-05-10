@@ -46,6 +46,12 @@ class FDepthPrePass;
 class FTileLightCullingPass;
 class FGPUTimingManager;
 
+class FRenderingSettings
+{
+public:
+    static bool bIsCPUSkinning; 
+};
+
 class FRenderer
 {
 public:

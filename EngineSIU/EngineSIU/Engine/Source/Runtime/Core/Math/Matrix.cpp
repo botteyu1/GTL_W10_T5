@@ -384,6 +384,15 @@ FVector FMatrix::TransformPosition(const FVector& vector) const
     return w != 0.0f ? FVector{x / w, y / w, z / w} : FVector{x, y, z};
 }
 
+FVector FMatrix::TransformDirection(const FVector& V) const
+{
+    return FVector(
+    V.X * M[0][0] + V.Y * M[1][0] + V.Z * M[2][0],
+    V.X * M[0][1] + V.Y * M[1][1] + V.Z * M[2][1],
+    V.X * M[0][2] + V.Y * M[1][2] + V.Z * M[2][2]
+    );
+}
+
 FMatrix FMatrix::GetScaleMatrix(const FVector& InScale)
 {
     return CreateScaleMatrix(InScale.X, InScale.Y, InScale.Z);

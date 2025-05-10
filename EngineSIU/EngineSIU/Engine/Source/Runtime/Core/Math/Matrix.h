@@ -45,10 +45,13 @@ public:
     static FMatrix CreateScaleMatrix(float scaleX, float scaleY, float scaleZ);
     static FVector TransformVector(const FVector& v, const FMatrix& m);
     static FVector4 TransformVector(const FVector4& v, const FMatrix& m);
+    
     static FMatrix CreateTranslationMatrix(const FVector& position);
 
     FVector4 TransformFVector4(const FVector4& vector) const;
     FVector TransformPosition(const FVector& vector) const;
+    
+    FVector TransformDirection(const FVector& V) const;
 
     static FMatrix GetScaleMatrix(const FVector& InScale);
     static FMatrix GetTranslationMatrix(const FVector& InPosition);

@@ -139,9 +139,17 @@ void FSkeletalMeshRenderPassBase::RenderAllSkeletalMeshes(const std::shared_ptr<
 
         UpdateObjectConstant(WorldMatrix, UUIDColor, bIsSelected);
 
-        UpdateBone(Comp);
+        if (FRenderingSettings::bIsCPUSkinning == false)
+        {
+            UpdateBone(Comp);
+            
+            RenderSkeletalMesh(RenderData);
+        }
+        else
+        {
+            RenderCPUSkinningSkeletalMesh(Comp);
+        }
 
-        RenderSkeletalMesh(RenderData);
 
         if (Viewport->GetShowFlag() & static_cast<uint64>(EEngineShowFlags::SF_AABB))
         {
@@ -185,6 +193,47 @@ void FSkeletalMeshRenderPassBase::RenderSkeletalMesh(const FSkeletalMeshRenderDa
     }
 }
 
+void FSkeletalMeshRenderPassBase::RenderCPUSkinningSkeletalMesh(const USkeletalMeshComponent* SkeletalMeshComponent) const
+{
+    const FSkeletalMeshRenderData* RenderData = SkeletalMeshComponent->GetSkeletalMeshAsset()->GetRenderData();
+
+    TArray<FSkeletalMeshVertex> SkinnedVertices;
+    ComputeCPUSkinningForMesh(SkeletalMeshComponent, SkinnedVertices);
+    
+    UINT Stride = sizeof(FSkeletalMeshVertex);
+    UINT Offset = 0;
+
+    FVertexInfo VertexInfo;
+    BufferManager->CreateDynamicVertexBuffer(RenderData->ObjectName, SkinnedVertices, VertexInfo);
+
+    BufferManager->UpdateDynamicVertexBuffer(RenderData->ObjectName, SkinnedVertices);
+    Graphics->DeviceContext->IASetVertexBuffers(0, 1, &VertexInfo.VertexBuffer, &Stride, &Offset);
+
+    FIndexInfo IndexInfo;
+    BufferManager->CreateIndexBuffer(RenderData->ObjectName, RenderData->Indices, IndexInfo);
+    if (IndexInfo.IndexBuffer)
+    {
+        Graphics->DeviceContext->IASetIndexBuffer(IndexInfo.IndexBuffer, DXGI_FORMAT_R32_UINT, 0);
+    }
+    else
+    {
+        Graphics->DeviceContext->Draw(RenderData->Vertices.Num(), 0);
+        return;
+    }
+
+    for (int SubMeshIndex = 0; SubMeshIndex < RenderData->MaterialSubsets.Num(); SubMeshIndex++)
+    {
+        FName MaterialName = RenderData->MaterialSubsets[SubMeshIndex].MaterialName;
+        UMaterial* Material = UAssetManager::Get().GetMaterial(MaterialName);
+        FMaterialInfo materilinfo = Material->GetMaterialInfo();
+        MaterialUtils::UpdateMaterial(BufferManager, Graphics, materilinfo);
+
+        uint32 StartIndex = RenderData->MaterialSubsets[SubMeshIndex].IndexStart;
+        uint32 IndexCount = RenderData->MaterialSubsets[SubMeshIndex].IndexCount; 
+        Graphics->DeviceContext->DrawIndexed(IndexCount, StartIndex, 0);
+    }
+}
+
 void FSkeletalMeshRenderPassBase::RenderSkeletalMesh(ID3D11Buffer* Buffer, UINT VerticesNum) const
 {
 }
@@ -200,6 +249,7 @@ void FSkeletalMeshRenderPassBase::UpdateObjectConstant(const FMatrix& WorldMatri
     ObjectData.InverseTransposedWorld = FMatrix::Transpose(FMatrix::Inverse(WorldMatrix));
     ObjectData.UUIDColor = UUIDColor;
     ObjectData.bIsSelected = bIsSelected;
+    ObjectData.bIsCPUSkinning = FRenderingSettings::bIsCPUSkinning;
 
     BufferManager->UpdateConstantBuffer(TEXT("FObjectConstantBuffer"), ObjectData);
 }
@@ -213,47 +263,16 @@ void FSkeletalMeshRenderPassBase::UpdateBone(const USkeletalMeshComponent* Skele
         return;
     }
 
-    // Skeleton 정보 가져오기
-    const USkeletalMesh* SkeletalMesh = SkeletalMeshComponent->GetSkeletalMeshAsset();
-    const FReferenceSkeleton& RefSkeleton = SkeletalMesh->GetSkeleton()->GetReferenceSkeleton();
-    //const TArray<FTransform>& BindPose = RefSkeleton.RawRefBonePose; // 로컬
-    //const TArray<FTransform>& CurrentPose = SkeletalMeshComponent->BoneTransforms; // 로컬
-    //const TArray<FMatrix>& InverseBindPoseMatrices = RefSkeleton.InverseBindPoseMatrices; // 글로벌
-    const int32 BoneNum = RefSkeleton.RawRefBoneInfo.Num();
+    TArray<FMatrix> SkinningBoneMatrices;
 
-    // 현재 애니메이션 본 행렬 계산
-    TArray<FMatrix> CurrentGlobalBoneMatrices;
-    SkeletalMeshComponent->GetCurrentGlobalBoneMatrices(CurrentGlobalBoneMatrices);
-    // CurrentGlobalBoneMatrices.SetNum(BoneNum);
-    //
-    // for (int32 BoneIndex = 0; BoneIndex < BoneNum; ++BoneIndex)
-    // {
-    //     // 현재 본의 로컬 변환
-    //     FTransform CurrentLocalTransform = CurrentPose[BoneIndex];
-    //     FMatrix LocalMatrix = CurrentLocalTransform.ToMatrixWithScale(); // FTransform -> FMatrix
-    //     
-    //     // 부모 본의 영향을 적용하여 월드 변환 구성
-    //     int32 ParentIndex = RefSkeleton.RawRefBoneInfo[BoneIndex].ParentIndex;
-    //     if (ParentIndex != INDEX_NONE)
-    //     {
-    //         // 로컬 변환에 부모 월드 변환 적용
-    //         LocalMatrix = LocalMatrix * CurrentGlobalBoneMatrices[ParentIndex];
-    //     }
-    //     
-    //     // 결과 행렬 저장
-    //     CurrentGlobalBoneMatrices[BoneIndex] = LocalMatrix;
-    // }
+    ComputeSkinningMatrices(SkeletalMeshComponent, SkinningBoneMatrices);
     
-    // 최종 스키닝 행렬 계산
-    TArray<FMatrix> FinalBoneMatrices;
-    FinalBoneMatrices.SetNum(BoneNum);
-    
-    for (int32 BoneIndex = 0; BoneIndex < BoneNum; ++BoneIndex)
+
+    // 스트럭처드 버퍼는 row_major와 같은 레이아웃 지정자를 사용할 수 없기에 트랜스포즈해서 전달
+    for (int32 BoneIndex = 0; BoneIndex < SkinningBoneMatrices.Num(); ++BoneIndex)
     {
-        FinalBoneMatrices[BoneIndex] = RefSkeleton.InverseBindPoseMatrices[BoneIndex] * CurrentGlobalBoneMatrices[BoneIndex];
-        FinalBoneMatrices[BoneIndex] = FMatrix::Transpose(FinalBoneMatrices[BoneIndex]);
+        SkinningBoneMatrices[BoneIndex] = FMatrix::Transpose(SkinningBoneMatrices[BoneIndex]);
     }
-    
     // Update
     D3D11_MAPPED_SUBRESOURCE MappedResource;
     HRESULT hr = Graphics->DeviceContext->Map(BoneBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &MappedResource);
@@ -264,6 +283,144 @@ void FSkeletalMeshRenderPassBase::UpdateBone(const USkeletalMeshComponent* Skele
     }
     
     ZeroMemory(MappedResource.pData, sizeof(FMatrix) * MaxBoneNum);
-    memcpy(MappedResource.pData, FinalBoneMatrices.GetData(), sizeof(FMatrix) * BoneNum);
+    memcpy(MappedResource.pData, SkinningBoneMatrices.GetData(), sizeof(FMatrix) * SkinningBoneMatrices.Num());
     Graphics->DeviceContext->Unmap(BoneBuffer, 0); 
 }
+
+
+void FSkeletalMeshRenderPassBase::ComputeSkinningMatrices(const USkeletalMeshComponent* SkeletalMeshComponent,
+    TArray<FMatrix>& OutSkinningMatrices) const
+{
+    if (!SkeletalMeshComponent ||
+        !SkeletalMeshComponent->GetSkeletalMeshAsset() ||
+        !SkeletalMeshComponent->GetSkeletalMeshAsset()->GetSkeleton())
+    {
+        return;
+    }
+
+    // Skeleton 정보 가져오기
+    const USkeletalMesh* SkeletalMesh = SkeletalMeshComponent->GetSkeletalMeshAsset();
+    const FReferenceSkeleton& RefSkeleton = SkeletalMesh->GetSkeleton()->GetReferenceSkeleton();
+    const int32 BoneNum = RefSkeleton.RawRefBoneInfo.Num();
+
+    // 현재 애니메이션 본 행렬 계산
+    TArray<FMatrix> CurrentGlobalBoneMatrices;
+    SkeletalMeshComponent->GetCurrentGlobalBoneMatrices(CurrentGlobalBoneMatrices);
+    
+    // 최종 스키닝 행렬 계산
+    OutSkinningMatrices.SetNum(BoneNum);
+    
+    for (int32 BoneIndex = 0; BoneIndex < BoneNum; ++BoneIndex)
+    {
+        OutSkinningMatrices[BoneIndex] = RefSkeleton.InverseBindPoseMatrices[BoneIndex] * CurrentGlobalBoneMatrices[BoneIndex];
+       // OutSkinningMatrices[BoneIndex] = FMatrix::Transpose(OutSkinningMatrices[BoneIndex]);
+    }
+}
+
+void FSkeletalMeshRenderPassBase::ComputeCPUSkinningForMesh(const USkeletalMeshComponent* SkeletalMeshComponent,
+    TArray<FSkeletalMeshVertex>& OutVertices) const
+{
+
+    const FSkeletalMeshRenderData* RenderData = SkeletalMeshComponent->GetSkeletalMeshAsset()->GetRenderData();
+
+    const TArray<FSkeletalMeshVertex>& InVertices = RenderData->Vertices;
+
+    TArray<FMatrix> SkinningBoneMatrices;
+
+    ComputeSkinningMatrices(SkeletalMeshComponent, SkinningBoneMatrices);
+    
+    OutVertices.SetNum(InVertices.Num()); // 결과 배열 크기 설정
+    
+    for (int32 VertIndex = 0; VertIndex < InVertices.Num(); ++VertIndex)
+    {
+        OutVertices[VertIndex] = ComputeCPUSkinningForVertex(
+            InVertices[VertIndex],SkinningBoneMatrices
+        );
+    }
+
+}
+
+FSkeletalMeshVertex FSkeletalMeshRenderPassBase::ComputeCPUSkinningForVertex(const FSkeletalMeshVertex& InVertex,
+                                                                             const TArray<FMatrix>& InSkinningBoneMatrices) const
+{
+    const FSkeletalMeshVertex& RefVertex = InVertex;
+    FSkeletalMeshVertex OutVertex;
+    const FVector RefPosition = FVector(RefVertex.X, RefVertex.Y, RefVertex.Z); // 모델 공간 위치
+    const FVector RefNormal = FVector(RefVertex.NormalX, RefVertex.NormalY, RefVertex.NormalZ); // 모델 공간 노멀
+
+    // --- 1. 스키닝 처리 (오브젝트 공간) ---
+    FVector SkinnedPosition(0.f, 0.f, 0.f); // Object Space
+    FVector skinnedNormalOS(0.f, 0.f, 0.f);
+    FVector skinnedTangentOS(0.f, 0.f, 0.f); // 탄젠트도 스키닝
+
+    float totalWeight = 0.0f;
+
+    for (int i = 0; i < 4; ++i)
+    {
+        float Weight = InVertex.BoneWeights[i];
+        totalWeight += Weight;
+
+        if (Weight > 0.00001f) // 부동소수점 비교 시 오차 감안
+        {
+            uint32_t boneIdx = InVertex.BoneIndices[i];
+            if (boneIdx >= InSkinningBoneMatrices.Num()) { // 본 인덱스 범위 체크
+                // UE_LOG(LogTemp, Error, TEXT("Invalid bone index: %u"), boneIdx);
+                continue;
+            }
+            const FMatrix& SkinningboneTransform = InSkinningBoneMatrices[boneIdx];
+
+            // 위치 스키닝 (w=1로 변환)
+            SkinnedPosition += SkinningboneTransform.TransformPosition(RefPosition) * Weight;
+            
+            // 법선 스키닝 (w=0으로 변환, 방향 벡터이므로 이동(translation) 무시)
+            skinnedNormalOS += SkinningboneTransform.TransformDirection(RefNormal) * Weight;
+
+            // 탄젠트 스키닝 (w=0으로 변환)
+            FVector tangentXYZ = FVector(InVertex.Tangent.X, InVertex.Tangent.Y, InVertex.Tangent.Z);
+            FVector transformedTangentPart = SkinningboneTransform.TransformDirection(tangentXYZ);
+            skinnedTangentOS.X += Weight * transformedTangentPart.X;
+            skinnedTangentOS.Y += Weight * transformedTangentPart.Y;
+            skinnedTangentOS.Z += Weight * transformedTangentPart.Z;
+        }
+    }
+
+    // 가중치 예외 처리 및 정규화
+    if (totalWeight < 0.001f)
+    {
+        SkinnedPosition = FVector{InVertex.Position.X, InVertex.Position.Y, InVertex.Position.Z};
+        skinnedNormalOS = InVertex.Normal;
+        skinnedTangentOS = FVector{InVertex.Tangent.X, InVertex.Tangent.Y, InVertex.Tangent.Z};
+    }
+    else if (abs(totalWeight - 1.0f) > 0.001f)
+    {
+        SkinnedPosition.X /= totalWeight;
+        SkinnedPosition.Y /= totalWeight;
+        SkinnedPosition.Z /= totalWeight;
+        // 일반적으로 SkinnedPosition.W는 1이 되도록 유지하는 것이 좋으나, HLSL 코드를 따름
+
+        skinnedNormalOS.X /= totalWeight;
+        skinnedNormalOS.Y /= totalWeight;
+        skinnedNormalOS.Z /= totalWeight;
+
+        skinnedTangentOS.X /= totalWeight;
+        skinnedTangentOS.Y /= totalWeight;
+        skinnedTangentOS.Z /= totalWeight;
+    }
+
+    skinnedNormalOS.Normalize();
+    skinnedTangentOS.Normalize();
+    
+    if (!skinnedNormalOS.IsNearlyZero() && !skinnedTangentOS.IsNearlyZero()) // 0벡터 방지
+    {
+        skinnedTangentOS = skinnedTangentOS - skinnedNormalOS * FVector::DotProduct(skinnedNormalOS, skinnedTangentOS);
+    }
+    skinnedTangentOS.Normalize();
+
+    OutVertex.Position = SkinnedPosition;
+    OutVertex.Normal = skinnedNormalOS;
+    OutVertex.Tangent = skinnedTangentOS;
+    OutVertex.TangentW = InVertex.Tangent.W;
+
+    return OutVertex;
+}
+

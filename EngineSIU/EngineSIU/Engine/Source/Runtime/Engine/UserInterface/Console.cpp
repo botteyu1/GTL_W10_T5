@@ -351,10 +351,29 @@ void FConsole::ExecuteCommand(const std::string& Command)
         AddLog(ELogLevel::Display, " - stat fps: Toggle FPS display");
         AddLog(ELogLevel::Display, " - stat memory: Toggle Memory display");
         AddLog(ELogLevel::Display, " - stat none: Hide all stat overlays");
+        AddLog(ELogLevel::Display, " - Skinning.Method cpu: Change skinning method");
+        AddLog(ELogLevel::Display, " - Skinning.Method gpu: Change skinning method");
     }
     else if (Command.starts_with("stat "))
     {
         Overlay.ToggleStat(Command);
+    }
+    else if (Command.starts_with("Skinning.Method "))
+    {
+        if (Command == "Skinning.Method cpu")
+        {
+            FRenderingSettings::bIsCPUSkinning = true;
+            AddLog(ELogLevel::Display, "Skinning method set to CPU");
+        }
+        else if (Command == "Skinning.Method gpu")
+        {
+            FRenderingSettings::bIsCPUSkinning = false;
+            AddLog(ELogLevel::Display, "Skinning method set to GPU");
+        }
+        else
+        {
+            AddLog(ELogLevel::Error, "Unknown skinning method: %s", Command.c_str());
+        }
     }
     else
     {
