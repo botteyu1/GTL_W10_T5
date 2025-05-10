@@ -57,7 +57,7 @@ class UAnimDataModel : public UObject
     DECLARE_CLASS(UAnimDataModel, UObject)
 public:
     UAnimDataModel();
-    virtual ~UAnimDataModel() = default;
+    virtual ~UAnimDataModel() = default; 
 
     FName Name;
     TArray<FBoneAnimationTrack> BoneAnimationTracks;

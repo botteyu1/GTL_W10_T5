@@ -191,6 +191,12 @@ void USkeletalMeshComponent::ProcessAnimation2(float DeltaTime)
             FVector FinalPos = FVectorKey::Interpolate(BoneTrack->InternalTrack.PosKeys, CurrentAnimTime);
             FQuat FinalRot = FQuatKey::Interpolate(BoneTrack->InternalTrack.RotKeys, CurrentAnimTime);
             FVector FinalScale = FVectorKey::Interpolate(BoneTrack->InternalTrack.ScaleKeys, CurrentAnimTime);
+            
+            // scale은 0이 되지 못하도록 예외
+            if (FinalScale.IsZero())
+            {
+                FinalScale = FVector(1.f, 1.f, 1.f);
+            }
 
             LocalAnimatedTransforms[BoneIdx] = FTransform(FinalRot, FinalPos, FinalScale);
         }
@@ -201,7 +207,7 @@ void USkeletalMeshComponent::ProcessAnimation2(float DeltaTime)
             // 예: LocalAnimatedTransforms[BoneIdx] = SkeletonBones[BoneIdx].LocalBindTransform;
             // BoneBindPoseTransforms가 로컬 공간 기준이고, 인덱스가 일치한다면 사용 가능
 
-            LocalAnimatedTransforms[BoneIdx] = FTransform::Identity; // 안전장치
+            LocalAnimatedTransforms[BoneIdx] = BoneBindPoseTransforms[BoneIdx]; // 안전장치
         }
     }
 
@@ -209,16 +215,18 @@ void USkeletalMeshComponent::ProcessAnimation2(float DeltaTime)
     {
         uint32 ParentIndex = SkeletonBones[BoneIdx].ParentIndex;
 
-        if (ParentIndex != INDEX_NONE && ParentIndex >= 0 && ParentIndex < BoneIdx)
-        {
-            // !NOTE : 곱셈 순서 확인!!!
-            BoneTransforms[BoneIdx] = LocalAnimatedTransforms[BoneIdx];
-        }
-        else
-        {
-            // 부모가 없거나 루트 본인 경우
-            //BoneTransforms[BoneIdx] = BoneBindPoseTransforms[BoneIdx];
-            BoneTransforms[BoneIdx] = LocalAnimatedTransforms[BoneIdx];
-        }
+        //if (ParentIndex != INDEX_NONE && ParentIndex >= 0 && ParentIndex < BoneIdx)
+        //{
+        //    // !NOTE : 곱셈 순서 확인!!!
+        //    BoneTransforms[BoneIdx] = BoneBindPoseTransforms[BoneIdx] * LocalAnimatedTransforms[BoneIdx];
+        //}
+        //else
+        //{
+        //    // 부모가 없거나 루트 본인 경우
+        //    //BoneTransforms[BoneIdx] = BoneBindPoseTransforms[BoneIdx];
+        //}
+
+        // !TODO : 오프셋을 로드할 때 구해놓고, 계산할 때 사용하기
+        BoneTransforms[BoneIdx] = LocalAnimatedTransforms[BoneIdx];
     }
 }

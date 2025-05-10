@@ -63,7 +63,7 @@ private:
 
     void CollectBoneData(FbxNode* Node, FReferenceSkeleton& OutReferenceSkeleton, int32 ParentIndex, FbxPose* BindPose);
 
-    FTransform ConvertFbxTransformToFTransform(FbxNode* Node) const;
+    FTransform ConvertFbxTransformToFTransform(FbxNode* Node, FbxTime Time = FBXSDK_TIME_INFINITE) const;
     // End Skeleton
     
     // Begin Mesh
@@ -97,7 +97,7 @@ private:
 
     FAnimationCurveData ExtractAnimationCurveData(FbxAnimStack* AnimStack);
 
-    void ExtractBoneAnimationTracks(FbxAnimStack* AnimStack, const TArray<FbxNode*> BoneNodes, TArray<FBoneAnimationTrack>& BoneAnimationTracks);
+    void ExtractBoneAnimationTracks(FbxAnimStack* AnimStack, const TArray<FbxNode*> BoneNodes, UAnimDataModel* AnimDataModel);
     
     void AddCurveDataFromFbx(FbxAnimCurve* FbxCurve, const FName& curveFName, FAnimationCurveData& outAnimationCurveData);
 
