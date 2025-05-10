@@ -4,6 +4,7 @@
 #include "ImGuiManager.h"
 #include "Font/RawFonts.h"
 #include "Font/IconDefs.h"
+#include "ImGui/ImGuizmo.h"
 
 void UImGuiManager::Initialize(HWND hWnd, ID3D11Device* device, ID3D11DeviceContext* deviceContext)
 {
@@ -44,6 +45,7 @@ void UImGuiManager::BeginFrame() const
     ImGui_ImplDX11_NewFrame();
     ImGui_ImplWin32_NewFrame();
     ImGui::NewFrame();
+    ImGuizmo::BeginFrame();
 }
 
 void UImGuiManager::EndFrame() const

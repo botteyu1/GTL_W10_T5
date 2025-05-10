@@ -1,6 +1,5 @@
 #include "BoneHierarchyViewerPanel.h"
-//#include <ImGui/imgui.h>
-#include "Engine/EditorEngine.h"
+
 #include <ReferenceSkeleton.h>
 #include "Engine/Classes/Engine/SkeletalMesh.h"
 #include "Engine/Classes/Animation/Skeleton.h"
