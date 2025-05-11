@@ -29,7 +29,7 @@ public:
         if (CurrentSequence)
         {
             // 초당 프레임 수와 재생 길이를 기반으로 총 프레임 수 계산
-            //return static_cast<int>(CurrentSequence->GetPlayLength() * CurrentSequence->GetFrameRate().AsDecimal());
+            return static_cast<int>(CurrentSequence->GetPlayLength() * CurrentSequence->GetFrameRate().AsDecimal());
         }
         return 100; // 기본값 또는 시퀀스가 없을 때의 값
     }
@@ -39,8 +39,14 @@ public:
         if (CurrentSequence)
         {
             // 예시: 본 트랙의 수를 반환하거나, 표시할 주요 트랙(예: 루트 모션, 커브) 수를 반환
-          //return CurrentSequence->GetBoneAnimationTracks().Num(); // 만약 모든 본 트랙을 표시한다면
-            return 1; // 단순화를 위해 하나의 마스터 트랙만 있다고 가정
+
+            const TArray<FBoneAnimationTrack>* Track  =  CurrentSequence->GetBoneAnimationTracks();
+            if (Track)
+            {
+                return Track->Num(); // 본 트랙 수
+            }
+            
+            return 0; 
         }
         return 0;
     }
@@ -49,11 +55,22 @@ public:
     {
         if (CurrentSequence)
         {
-            // if (index < CurrentSequence->GetBoneAnimationTracks().Num())
-            // {
-            //     return TCHAR_TO_ANSI(*CurrentSequence->GetBoneAnimationTracks()[index].Name.ToString());
-            // }
-            if (index == 0) return "Master Track"; // 예시 트랙 이름
+            const TArray<FBoneAnimationTrack>* tracksPtr = CurrentSequence->GetBoneAnimationTracks();
+            if (!tracksPtr)
+            {
+                return ""; 
+            }
+            const TArray<FBoneAnimationTrack>& tracksArray = *tracksPtr; // 포인터를 역참조하여 배열 자체에 대한 참조를 얻음
+
+
+            if (index >= 0 && index < tracksArray.Num())
+            {
+                return (*tracksArray[index].Name.ToString());
+            }
+            else if (index == 0 && tracksArray.IsEmpty()) // 본 트랙이 없고 index가 0이면 "Master Track"
+            {
+                return "Master Track";
+            }
         }
         return "";
     }
@@ -122,6 +139,6 @@ private:
     float PlaybackTime = 0.0f; // 초 단위 재생 시간
     float LastFrameTime = 0.0f; // 마지막 프레임 시간 (델타 타임 계산용)
 
-    void RenderTimelineControls();
-    void UpdatePlayback(float DeltaTime);
+    void RenderTimelineControls(USkeletalMeshComponent* SkeletalMeshComp);
+    void UpdatePlayback(float DeltaTime, USkeletalMeshComponent* SkeletalMeshComponent);
 };

@@ -11,7 +11,6 @@
      SetSupportedWorldTypes(EWorldTypeBitFlag::Editor|EWorldTypeBitFlag::PIE|EWorldTypeBitFlag::SkeletalViewer);
      // 초기화 시 LastFrameTime 설정
      LastFrameTime = static_cast<float>(ImGui::GetTime());
-     SequencerData = new MySequence();
  }
 
  AnimationSequenceViewerPanel::~AnimationSequenceViewerPanel()
@@ -42,14 +41,26 @@
  void AnimationSequenceViewerPanel::Render()
  {
      UEditorEngine* Engine = Cast<UEditorEngine>(GEngine);
-     // if (!Engine || !CurrentAnimSequence || !SequencerData) // 엔진 또는 시퀀스 없으면 렌더링 안 함
-     // {
-     //     // 패널은 표시하되, 내용이 없음을 알릴 수 있음
-     //     ImGui::Begin("Animation Sequence Viewer", nullptr, ImGuiWindowFlags_NoCollapse);
-     //     ImGui::Text("No Animation Sequence loaded.");
-     //     ImGui::End();
-     //     return;
-     // }
+     USkeletalMeshComponent* SkeletalMeshComponent = Cast<USkeletalMeshComponent>(Engine->GetSelectedComponent());
+
+     //TODO 테스트 코드
+     if (Engine and SkeletalMeshComponent)
+     {
+         static UAnimSequence* PrevAnim = nullptr;
+         if (PrevAnim != SkeletalMeshComponent->AnimSequence)
+         {
+             SetAnimationSequence(SkeletalMeshComponent->AnimSequence);
+         }
+         PrevAnim = CurrentAnimSequence;
+     }
+     if (!Engine || !CurrentAnimSequence || !SequencerData || !SkeletalMeshComponent) // 엔진 또는 시퀀스 없으면 렌더링 안 함
+     {
+         // 패널은 표시하되, 내용이 없음을 알릴 수 있음
+         ImGui::Begin("Animation Sequence Viewer", nullptr, ImGuiWindowFlags_NoCollapse);
+         ImGui::Text("No Animation Sequence loaded.");
+         ImGui::End();
+         return;
+     }
 
      // 현재 시간 가져오기 및 델타 타임 계산
      float currentTime = static_cast<float>(ImGui::GetTime());
@@ -58,7 +69,7 @@
 
      if (bIsPlaying)
      {
-         UpdatePlayback(deltaTime);
+         UpdatePlayback(deltaTime, SkeletalMeshComponent);
      }
 
      // --- 패널 레이아웃 설정 (PropertyEditorPanel.cpp 참고) ---
@@ -77,7 +88,7 @@
      ImGui::Begin("Animation Sequence Viewer", nullptr, PanelFlags);
 
      // 1. 재생 컨트롤 UI (버튼 등)
-     RenderTimelineControls();
+     RenderTimelineControls(SkeletalMeshComponent);
      ImGui::Separator();
 
      // 2. ImSequencer UI 호출
@@ -87,26 +98,25 @@
      int sequenceOptions = ImSequencer::SEQUENCER_EDIT_STARTEND | ImSequencer::SEQUENCER_CHANGE_FRAME; // 필요한 옵션 설정
      
      // CurrentFrame을 시퀀서에 전달하기 전에 PlaybackTime 기준으로 업데이트
-     // if (CurrentAnimSequence && CurrentAnimSequence->GetFrameRate().AsDecimal() > 0.0f)
-     // {
-     //     CurrentFrame = static_cast<int>(PlaybackTime * CurrentAnimSequence->GetFrameRate().AsDecimal());
-     //     // CurrentFrame이 시퀀스 범위를 벗어나지 않도록 클램핑
-     //     CurrentFrame = std::max(SequencerData->GetFrameMin(), std::min(CurrentFrame, SequencerData->GetFrameMax()));
-     // }
+     if (CurrentAnimSequence && CurrentAnimSequence->GetFrameRate().AsDecimal() > 0.0f)
+     {
+         CurrentFrame = static_cast<int>(PlaybackTime * CurrentAnimSequence->GetFrameRate().AsDecimal());
+         // CurrentFrame이 시퀀스 범위를 벗어나지 않도록 클램핑
+         CurrentFrame = std::max(SequencerData->GetFrameMin(), std::min(CurrentFrame, SequencerData->GetFrameMax()));
+     }
 
      if (ImSequencer::Sequencer(SequencerData, &CurrentFrame, &bIsExpanded, &SelectedSequencerEntry, &FirstFrame, sequenceOptions))
      {
           //시퀀서에서 프레임이 변경된 경우 (예: 사용자가 재생 헤드를 드래그)
-          // if (CurrentAnimSequence && CurrentAnimSequence->GetFrameRate().AsDecimal() > 0.0f)
-          // {
-          //     PlaybackTime = static_cast<float>(CurrentFrame) / CurrentAnimSequence->GetFrameRate().AsDecimal();
-          //     // TODO: 이 시간에 맞춰 스켈레탈 메쉬의 포즈를 업데이트하는 로직 호출
-          //     // Engine->SkeletalMeshViewerWorld->SetAnimationTime(PlaybackTime); (가상)
-          //     if (USkeletalMeshComponent* SkelComp = Engine->SkeletalMeshViewerWorld->GetSkeletalMeshComponent()) // 가상
-          //     {
-          //         SkelComp->SetAnimationTime(PlaybackTime); // USkeletalMeshComponent에 해당 함수 추가 필요
-          //     }
-          // }
+          if (CurrentAnimSequence && CurrentAnimSequence->GetFrameRate().AsDecimal() > 0.0f)
+          {
+              PlaybackTime = static_cast<float>(CurrentFrame) / CurrentAnimSequence->GetFrameRate().AsDecimal();
+              // TODO: 이 시간에 맞춰 스켈레탈 메쉬의 포즈를 업데이트하는 로직 호출
+              //Engine->SkeletalMeshViewerWorld->SetAnimationTime(PlaybackTime); 
+
+              SkeletalMeshComponent->SetAnimationTime(PlaybackTime); // USkeletalMeshComponent에 해당 함수 추가 필요
+              
+          }
      }
      
      // 선택된 트랙 정보 표시 (예시)
@@ -118,7 +128,7 @@
      ImGui::End();
  }
 
- void AnimationSequenceViewerPanel::RenderTimelineControls()
+ void AnimationSequenceViewerPanel::RenderTimelineControls(USkeletalMeshComponent* SkeletalMeshComp)
  {
      // 재생/정지 버튼
      if (bIsPlaying)
@@ -145,12 +155,10 @@
          PlaybackTime = 0.0f;
          CurrentFrame = 0;
          bIsPlaying = false; // 처음으로 가면 일단 정지
-         // // TODO: 스켈레탈 메쉬 포즈 업데이트
-         // UEditorEngine* Engine = Cast<UEditorEngine>(GEngine);
-         // if (USkeletalMeshComponent* SkelComp = Engine->SkeletalMeshViewerWorld->GetSkeletalMeshComponent())
-         // {
-         //     //SkelComp->SetAnimationTime(PlaybackTime);
-         // }
+
+
+         SkeletalMeshComp->SetAnimationTime(PlaybackTime);
+         
      }
      ImGui::SameLine();
 
@@ -159,15 +167,11 @@
      {
          if (CurrentAnimSequence)
          {
-             // PlaybackTime = CurrentAnimSequence->GetPlayLength();
-             // CurrentFrame = SequencerData ? SequencerData->GetFrameMax() : 0;
-             // bIsPlaying = false; // 끝으로 가면 일단 정지
-             // // TODO: 스켈레탈 메쉬 포즈 업데이트
-             // UEditorEngine* Engine = Cast<UEditorEngine>(GEngine);
-             // if (USkeletalMeshComponent* SkelComp = Engine->SkeletalMeshViewerWorld->GetSkeletalMeshComponent())
-             // {
-             //     SkelComp->SetAnimationTime(PlaybackTime);
-             // }
+             PlaybackTime = CurrentAnimSequence->GetPlayLength();
+             CurrentFrame = SequencerData ? SequencerData->GetFrameMax() : 0;
+             bIsPlaying = false; // 끝으로 가면 일단 정지
+             // TODO: 스켈레탈 메쉬 포즈 업데이트
+             SkeletalMeshComp->SetAnimationTime(PlaybackTime);
          }
      }
      ImGui::SameLine();
@@ -175,26 +179,26 @@
      // 현재 시간 / 전체 시간 표시
      if (CurrentAnimSequence)
      {
-        // ImGui::Text("%.2f / %.2f s", PlaybackTime, CurrentAnimSequence->GetPlayLength());
+            ImGui::Text("%.2f / %.2f s", PlaybackTime, CurrentAnimSequence->GetPlayLength());
          ImGui::SameLine();
          ImGui::Text("Frame: %d / %d", CurrentFrame, SequencerData ? SequencerData->GetFrameMax() : 0);
      }
 
      // TODO: 슬라이더로 시간 직접 조절 (ImGui::SliderFloat)
-     // ImGui::PushItemWidth(-1); // 슬라이더가 남은 공간을 꽉 채우도록
-     // if (CurrentAnimSequence && CurrentAnimSequence->GetPlayLength() > 0)
-     // {
-     //     if (ImGui::SliderFloat("##Timeline", &PlaybackTime, 0.0f, CurrentAnimSequence->GetPlayLength(), "%.2f s"))
-     //     {
-     //         bIsPlaying = false; // 슬라이더 조작 시 자동 재생 정지 (선택 사항)
-     //         CurrentFrame = static_cast<int>(PlaybackTime * CurrentAnimSequence->GetFrameRate().AsDecimal());
-     //         // TODO: 스켈레탈 메쉬 포즈 업데이트
-     //     }
-     // }
-     // ImGui::PopItemWidth();
+     ImGui::PushItemWidth(-1); // 슬라이더가 남은 공간을 꽉 채우도록
+     if (CurrentAnimSequence && CurrentAnimSequence->GetPlayLength() > 0)
+     {
+         if (ImGui::SliderFloat("##Timeline", &PlaybackTime, 0.0f, CurrentAnimSequence->GetPlayLength(), "%.2f s"))
+         {
+             bIsPlaying = false; // 슬라이더 조작 시 자동 재생 정지 (선택 사항)
+             CurrentFrame = static_cast<int>(PlaybackTime * CurrentAnimSequence->GetFrameRate().AsDecimal());
+             // TODO: 스켈레탈 메쉬 포즈 업데이트
+         }
+     }
+     ImGui::PopItemWidth();
  }
 
- void AnimationSequenceViewerPanel::UpdatePlayback(float DeltaTime)
+ void AnimationSequenceViewerPanel::UpdatePlayback(float DeltaTime, USkeletalMeshComponent* SkeletalMeshComponent)
  {
      if (!CurrentAnimSequence || !bIsPlaying)
      {
@@ -202,33 +206,30 @@
      }
 
      PlaybackTime += DeltaTime;
-     //float sequenceLength = CurrentAnimSequence->GetPlayLength();
-     float sequenceLength = 10.f;
+     float sequenceLength = CurrentAnimSequence->GetPlayLength();
 
      if (PlaybackTime >= sequenceLength)
      {
          // TODO: 루프 옵션에 따라 처리
-         PlaybackTime = sequenceLength; // 또는 0.0f로 리셋 (루프 시)
+         //PlaybackTime = sequenceLength; // 또는 0.0f로 리셋 (루프 시)
+         PlaybackTime = 0.0f;
          bIsPlaying = false; // 일단 한 번 재생 후 정지 (루프 미구현 시)
      }
 
      // 현재 프레임 업데이트 (ImSequencer는 CurrentFrame을 직접 사용)
-     //CurrentFrame = static_cast<int>(PlaybackTime * CurrentAnimSequence->GetFrameRate().AsDecimal());
+     CurrentFrame = static_cast<int>(PlaybackTime * CurrentAnimSequence->GetFrameRate().AsDecimal());
      CurrentFrame = 0.0f;
      CurrentFrame = std::max(0, std::min(CurrentFrame, SequencerData ? SequencerData->GetFrameMax() : 0));
 
 
      // TODO: 이 시간에 맞춰 스켈레탈 메쉬의 포즈를 업데이트하는 로직 호출
      // 예: GEngine->GetSkeletalMeshViewer()->UpdateAnimationPose(PlaybackTime);
-     UEditorEngine* Engine = Cast<UEditorEngine>(GEngine);
-     if (Engine && Engine->SkeletalMeshViewerWorld)
-     {
-         // if (USkeletalMeshComponent* SkelComp = Engine->SkeletalMeshViewerWorld->GetSkeletalMeshComponent()) // 가상
-         // {
-         //     //SkelComp->SetAnimationTime(PlaybackTime); // USkeletalMeshComponent에 해당 함수 추가 필요
-         //     // 또는 SkelComp->TickAnimation(DeltaTime, bLooping); 같은 함수 호출
-         // }
-     }
+
+
+     SkeletalMeshComponent->SetAnimationTime(PlaybackTime); // USkeletalMeshComponent에 해당 함수 추가 필요
+             // 또는 SkelComp->TickAnimation(DeltaTime, bLooping); 같은 함수 호출
+         
+     
  }
 
 
