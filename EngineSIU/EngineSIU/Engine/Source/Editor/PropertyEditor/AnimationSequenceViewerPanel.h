@@ -25,6 +25,7 @@ public:
     void UpdateLabels()
     {
         ItemLabels.clear();
+        //IMGUI를 위한 char 임시 버퍼 업데이트 
         if (CurrentSequence)
         {
             const TArray<FBoneAnimationTrack>* tracksPtr = CurrentSequence->GetBoneAnimationTracks();
@@ -61,50 +62,23 @@ public:
 
     virtual int GetItemCount() const override
     {
-        if (CurrentSequence)
-        {
-            // 예시: 본 트랙의 수를 반환하거나, 표시할 주요 트랙(예: 루트 모션, 커브) 수를 반환
-
-            const TArray<FBoneAnimationTrack>* Track  =  CurrentSequence->GetBoneAnimationTracks();
-            if (Track)
-            {
-                return Track->Num(); // 본 트랙 수
-            }
-            
-            return 0; 
-        }
-        return 0;
+        return static_cast<int>(ItemLabels.size());
     }
 
     virtual const char* GetItemLabel(int index) const override
     {
-        if (CurrentSequence)
+        if (index >= 0 && index < ItemLabels.size())
         {
-            const TArray<FBoneAnimationTrack>* tracksPtr = CurrentSequence->GetBoneAnimationTracks();
-            if (!tracksPtr)
-            {
-                return ""; 
-            }
-            const TArray<FBoneAnimationTrack>& tracksArray = *tracksPtr; // 포인터를 역참조하여 배열 자체에 대한 참조를 얻음
-
-
-            if (index >= 0 && index < tracksArray.Num())
-            {
-                return *tracksArray[index].Name.ToString();
-            }
-            else if (index == 0 && tracksArray.IsEmpty()) // 본 트랙이 없고 index가 0이면 "Master Track"
-            {
-                return "Master Track";
-            }
+            return ItemLabels[index].c_str(); // std::string의 c_str()은 유효한 포인터 반환
         }
         return "";
     }
-
+    
     virtual void Get(int index, int** start, int** end, int* type, unsigned int* color) override
     {
         // 각 트랙의 시작/끝 프레임, 타입, 색상 등을 설정합니다.
         // 이 예제에서는 하나의 트랙이 전체 시퀀스 길이를 가진다고 가정합니다.
-        if (CurrentSequence && index == 0)
+        if (CurrentSequence && index >= 0 && index < GetItemCount())
         {
             // ImSequencer는 start/end를 int*로 받으므로, 멤버 변수나 static 변수를 사용해야 할 수 있습니다.
             // 여기서는 간단히 시퀀스 전체 길이를 사용하도록 합니다.
@@ -165,6 +139,10 @@ private:
     bool bIsPlaying = false;
     float PlaybackTime = 0.0f; // 초 단위 재생 시간
     float LastFrameTime = 0.0f; // 마지막 프레임 시간 (델타 타임 계산용)
+
+    bool bLooping = false; // 반복 재생 상태
+    bool bIsPlayingReverse = false; // 역재생 상태
+    float FrameStepTime = 0.0f; // 다음/이전 프레임 이동 시 사용할 시간 (1프레임에 해당하는 시간)
 
     void RenderTimelineControls(USkeletalMeshComponent* SkeletalMeshComp);
     void UpdatePlayback(float DeltaTime, USkeletalMeshComponent* SkeletalMeshComponent);
