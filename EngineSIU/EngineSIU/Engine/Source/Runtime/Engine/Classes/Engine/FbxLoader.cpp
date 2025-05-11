@@ -1435,7 +1435,6 @@ void FFbxLoader::ProcessAnimation(FbxNode* Node, FFbxLoadResult& OutResult)
             }
             Scene->SetCurrentAnimationStack(AnimStack);
             UAnimDataModel* AnimDataModel = CreateAnimDataModelFromFbxAnimStack(AnimStack, TimeMode, BoneNodes);
-            SaveAnimDataModelToBinary(AnimDataModel);
             OutResult.AnimDataModels.Add(AnimDataModel);
         }
     }
@@ -1742,7 +1741,7 @@ void FFbxLoader::SaveAnimationSequenceToBinary(const UAnimSequence* AnimSequence
     File.close();
 }
 
-bool FFbxLoader::LoadAnimDataModelFromBinary(const FString& FilePath, UAnimDataModel* OutAnimData, std::ifstream& File)
+bool FFbxLoader::LoadAnimDataModelFromBinary(UAnimDataModel* OutAnimData, std::ifstream& File)
 {
     // 이름
     FString Name;
@@ -1830,7 +1829,26 @@ bool FFbxLoader::LoadAnimationSequenceFromBinary(const FString& FilePath, UAnimS
         //OutputDebugStringA("")
         return false;
     }
-    return false;
+    UAnimDataModel* AnimDataModel = FObjectFactory::ConstructObject<UAnimDataModel>(nullptr);
+
+    // 1. AnimDataModel부터
+    if (LoadAnimDataModelFromBinary(AnimDataModel, File))
+    {
+        OutAnimSequence->SetAnimDataModel(AnimDataModel);
+    }
+    else
+    {
+        OutputDebugStringA("Failed to load AnimDataModel from binary.\n");
+
+        GUObjectArray.MarkRemoveObject(AnimDataModel);
+        return false;
+    }
+
+
+    // !TODO : 2. AnimNotifyData, AnimCurveData, TargetSkeleton 등도 로드
+
+    File.close();
+    return true;
 }
 
 void FFbxLoader::ConvertSceneToLeftHandedZUpXForward(FbxScene* Scene)

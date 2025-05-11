@@ -284,6 +284,8 @@ void UAssetManager::LoadContentFiles()
                 UAnimSequence* AnimSequence = FObjectFactory::ConstructObject<UAnimSequence>(nullptr);
                 AnimSequence->SetAnimDataModel(AnimDataModel);
 
+                Loader.SaveAnimationSequenceToBinary(AnimSequence);
+
                 FName AnimName = AnimDataModel->Name;
 
                 FAssetInfo Info = AssetInfo;
@@ -306,15 +308,13 @@ void UAssetManager::LoadAssets()
     // .anim(바이너리) 파일 로드
     for (const auto& Entry : std::filesystem::recursive_directory_iterator(BasePathName))
     {
-        if (Entry.is_regular_file() && Entry.path().extension() == ".anim")
+        if (Entry.is_regular_file() && Entry.path().extension() == ".animsequence")
         {
             FFbxLoader Loader;
-            UAnimDataModel* AnimDataModel = FObjectFactory::ConstructObject<UAnimDataModel>(nullptr);
-            if (Loader.LoadAnimationDataFromBinary(Entry.path().string(), AnimDataModel))
+            UAnimSequence* AnimSequence = FObjectFactory::ConstructObject<UAnimSequence>(nullptr);
+            if (Loader.LoadAnimationSequenceFromBinary(Entry.path().string(), AnimSequence))
             {
-                UAnimSequence* AnimSequence = FObjectFactory::ConstructObject<UAnimSequence>(nullptr);
-                AnimSequence->SetAnimDataModel(AnimDataModel);
-                FName AnimName = AnimDataModel->Name;
+                FName AnimName = AnimSequence->GetName();
                 FAssetInfo Info;
 
                 Info.PackagePath = FName(Entry.path().parent_path().wstring());
@@ -323,12 +323,13 @@ void UAssetManager::LoadAssets()
                 Info.AssetType = EAssetType::AnimSequence;
 
                 AssetRegistry->PathNameToAssetInfo.Add(Info.AssetName, Info);
-                AnimationMap.Add(AnimName, AnimDataModel);
+                //AnimationMap.Add(AnimName, AnimSequence);
+                AnimSequenceMap.Add(AnimName, AnimSequence);
             }
             else
             {
                 // !TODO : AnimDataModel 제거처리
-                GUObjectArray.MarkRemoveObject(AnimDataModel);
+                GUObjectArray.MarkRemoveObject(AnimSequence);
             }
         }
 
