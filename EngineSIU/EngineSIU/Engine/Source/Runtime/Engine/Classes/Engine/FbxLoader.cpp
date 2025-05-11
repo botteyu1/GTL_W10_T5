@@ -1428,7 +1428,7 @@ void FFbxLoader::ProcessAnimation(FbxNode* Node, FFbxLoadResult& OutResult)
         {
             // 애니메이션 스택을 처리
             FName AnimName = AnimStack->GetName();
-            if (UAssetManager::Get().GetAnimDataModel(AnimName))
+            if (UAssetManager::Get().GetAnimSequence(AnimName)) // AnimDataModel의 Name이 곧 AnimSequence의 Name
             {
                 // 이미 존재하는 애니메이션 스택은 건너뜀
                 continue;

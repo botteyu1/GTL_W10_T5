@@ -135,14 +135,14 @@ UMaterial* UAssetManager::GetMaterial(const FName& Name)
     return nullptr;
 }
 
-UAnimDataModel* UAssetManager::GetAnimDataModel(const FName& Name)
-{
-    if (AnimationMap.Contains(Name))
-    {
-        return AnimationMap[Name];
-    }
-    return nullptr;
-}
+//UAnimDataModel* UAssetManager::GetAnimDataModel(const FName& Name)
+//{
+//    if (AnimationMap.Contains(Name))
+//    {
+//        return AnimationMap[Name];
+//    }
+//    return nullptr;
+//}
 
 UAnimSequence* UAssetManager::GetAnimSequence(const FName& Name)
 {
@@ -173,10 +173,10 @@ void UAssetManager::AddMaterial(const FName& Key, UMaterial* Material)
     MaterialMap.Add(Key, Material);
 }
 
-void UAssetManager::AddAnimation(const FName& Key, UAnimDataModel* Animation)
-{
-    AnimationMap.Add(Key, Animation);
-}
+//void UAssetManager::AddAnimation(const FName& Key, UAnimDataModel* Animation)
+//{
+//    AnimationMap.Add(Key, Animation);
+//}
 
 void UAssetManager::AddAnimSequence(const FName& Key, UAnimSequence* AnimSequence)
 {
