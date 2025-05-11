@@ -140,13 +140,17 @@ void USkeletalMeshComponent::ProcessAnimation(float DeltaTime)
 
 void USkeletalMeshComponent::ProcessAnimation2(float DeltaTime)
 {
-    if (!bPlayAnimation || !AnimSequence || !SkeletalMeshAsset || !SkeletalMeshAsset->GetSkeleton() || !AnimSequence->GetAnimDataModel()) 
+    if (!AnimSequence || !SkeletalMeshAsset || !SkeletalMeshAsset->GetSkeleton() || !AnimSequence->GetAnimDataModel()) 
     {
         return;
     }
 
+    if (bPlayAnimation)
+    {
+        ElapsedTime += DeltaTime;
+    }
+
     UAnimDataModel* AnimDataModel = AnimSequence->GetAnimDataModel();
-    ElapsedTime += DeltaTime;
 
     float CurrentAnimTime = ElapsedTime;
     if (AnimSequence->GetPlayLength() > 0.f)
