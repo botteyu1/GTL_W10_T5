@@ -24,6 +24,7 @@ struct FAnimationCurveData;
 class UAnimDataModel;
 struct FBoneAnimationTrack;
 struct FFrameRate;
+class UAnimSequence;
 
 class FFbxLoader
 {
@@ -33,7 +34,8 @@ public:
 
     FFbxLoadResult LoadFBX(const FString& InFilePath);
 
-    bool LoadAnimationDataFromBinary(const FString& FilePath, UAnimDataModel* OutAnimData);
+    bool LoadAnimDataModelFromBinary(const FString& FilePath, UAnimDataModel* OutAnimData, std::ifstream& File);
+    bool LoadAnimationSequenceFromBinary(const FString& FilePath, UAnimSequence* OutAnimSequence);
 
 private:
     FbxManager* Manager;
@@ -107,7 +109,9 @@ private:
 
     FFrameRate GetFrameRateFromFbxTimeMode(FbxTime::EMode TimeMode);
 
-    void SaveAnimationDataToBinary(const UAnimDataModel* AnimDataModel);
+    void SaveAnimDataModelToBinary(const UAnimDataModel* AnimDataModel, std::ofstream& File);
+
+    void SaveAnimationSequenceToBinary(const UAnimSequence* AnimSequence);
 
 
     // 좌표계 변환 메소드

@@ -11,6 +11,7 @@
 #include "UObject/Casts.h"
 #include "Asset/SkeletalMeshAsset.h"
 #include "Animation/AnimDataModel.h"
+#include "Animation/AnimSequence.h"
 #include "UObject/ObjectFactory.h"
 
 UAssetManager::~UAssetManager()
@@ -143,6 +144,15 @@ UAnimDataModel* UAssetManager::GetAnimDataModel(const FName& Name)
     return nullptr;
 }
 
+UAnimSequence* UAssetManager::GetAnimSequence(const FName& Name)
+{
+    if (AnimSequenceMap.Contains(Name))
+    {
+        return AnimSequenceMap[Name];
+    }
+    return nullptr;
+}
+
 void UAssetManager::AddAssetInfo(const FAssetInfo& Info)
 {
     AssetRegistry->PathNameToAssetInfo.Add(Info.AssetName, Info);
@@ -166,6 +176,11 @@ void UAssetManager::AddMaterial(const FName& Key, UMaterial* Material)
 void UAssetManager::AddAnimation(const FName& Key, UAnimDataModel* Animation)
 {
     AnimationMap.Add(Key, Animation);
+}
+
+void UAssetManager::AddAnimSequence(const FName& Key, UAnimSequence* AnimSequence)
+{
+    AnimSequenceMap.Add(Key, AnimSequence);
 }
 
 void UAssetManager::LoadContentFiles()
@@ -266,6 +281,9 @@ void UAssetManager::LoadContentFiles()
             for (int32 i = 0; i < Result.AnimDataModels.Num(); ++i)
             {
                 UAnimDataModel* AnimDataModel = Result.AnimDataModels[i];
+                UAnimSequence* AnimSequence = FObjectFactory::ConstructObject<UAnimSequence>(nullptr);
+                AnimSequence->SetAnimDataModel(AnimDataModel);
+
                 FName AnimName = AnimDataModel->Name;
 
                 FAssetInfo Info = AssetInfo;
@@ -275,6 +293,7 @@ void UAssetManager::LoadContentFiles()
                 AssetRegistry->PathNameToAssetInfo.Add(Info.AssetName, Info);
 
                 AnimationMap.Add(AnimName, AnimDataModel);
+                AnimSequenceMap.Add(AnimName, AnimSequence);
             }
         }
     }
@@ -293,6 +312,8 @@ void UAssetManager::LoadAssets()
             UAnimDataModel* AnimDataModel = FObjectFactory::ConstructObject<UAnimDataModel>(nullptr);
             if (Loader.LoadAnimationDataFromBinary(Entry.path().string(), AnimDataModel))
             {
+                UAnimSequence* AnimSequence = FObjectFactory::ConstructObject<UAnimSequence>(nullptr);
+                AnimSequence->SetAnimDataModel(AnimDataModel);
                 FName AnimName = AnimDataModel->Name;
                 FAssetInfo Info;
 
