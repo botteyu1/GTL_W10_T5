@@ -4,6 +4,7 @@
 
 class UAnimSequence;
 class USkeletalMesh;
+struct FAnimNotifyEvent;
 
 class USkeletalMeshComponent : public USkinnedMeshComponent
 {
@@ -35,6 +36,7 @@ public:
     UAnimSequence* GetAnimSequence() const { return AnimSequence; }
     void SetAnimSequence(UAnimSequence* InAnimSequence) { AnimSequence = InAnimSequence; };
        
+    void HandleAnimNotify(const FAnimNotifyEvent& Notify);
 
 private:
     // !TODO : 애니메이션 인스턴스 로직으로 변경

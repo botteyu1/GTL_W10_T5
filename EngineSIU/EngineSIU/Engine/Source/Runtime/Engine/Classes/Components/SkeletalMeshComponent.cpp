@@ -9,6 +9,8 @@
 #include "Animation/AnimSequence.h"
 #include "Animation/AnimDataModel.h"
 #include "UObject/ObjectFactory.h"
+#include "GameFramework/Actor.h"
+
 USkeletalMeshComponent::USkeletalMeshComponent()
 {
     AnimSequence = FObjectFactory::ConstructObject<UAnimSequence>(this);
@@ -229,4 +231,9 @@ void USkeletalMeshComponent::ProcessAnimation2(float DeltaTime)
         // !TODO : 오프셋을 로드할 때 구해놓고, 계산할 때 사용하기
         BoneTransforms[BoneIdx] = LocalAnimatedTransforms[BoneIdx];
     }
+}
+
+void USkeletalMeshComponent::HandleAnimNotify(const FAnimNotifyEvent& Notify)
+{
+    GetOwner()->HandleAnimNotify(Notify);
 }

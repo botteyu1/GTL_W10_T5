@@ -3,6 +3,13 @@
 #include "UObject/ObjectMacros.h"
 #include "AnimRawData.h"
 
+struct FAnimNotifyEvent
+{
+    float TriggerTime;
+    float Duration;
+    FName NotifyName;
+};
+
 struct FBoneAnimationTrack
 {
     FName Name;
