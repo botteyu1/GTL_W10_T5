@@ -38,12 +38,14 @@ public:
        
     void HandleAnimNotify(const FAnimNotifyEvent& Notify);
 
+    void SetAnimationTime(float InTime) { ElapsedTime = InTime; }
+
 private:
     // !TODO : 애니메이션 인스턴스 로직으로 변경
     UAnimSequence* AnimSequence = nullptr;
     USkeletalMesh* SkeletalMeshAsset = nullptr;
 
-    float ElapsedTime = 0.f;
+    float ElapsedTime = 0.f; // TODO anim인스턴스로 이동 해야됨
 
     bool bPlayAnimation = false;
 };

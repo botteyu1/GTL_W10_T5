@@ -18,8 +18,8 @@ struct FBoneAnimationTrack
 
 struct FFrameRate
 {
-    uint32 Numerator;
-    uint32 Denominator;
+    uint32 Numerator = 0;
+    uint32 Denominator = 0;
 
     bool IsValid() const
     {
