@@ -33,11 +33,13 @@ public:
 
     void ProcessAnimation2(float DeltaTime);
 
+    void SetAnimationTime(float InTime) { ElapsedTime = InTime; }
+
 private:
     
     USkeletalMesh* SkeletalMeshAsset = nullptr;
 
-    float ElapsedTime = 0.f;
+    float ElapsedTime = 0.f; // TODO anim인스턴스로 이동 해야됨
 
     bool bPlayAnimation = false;
 };
