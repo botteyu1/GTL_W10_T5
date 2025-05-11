@@ -8,16 +8,41 @@
 
 
 class UAnimSequence;
-// ImSequencer를 사용하기 위한 간단한 SequenceInterface 구현체
+// ImSequencer를 사용하기 위한 간단한 FSequenceInterface 구현체
 // 실제로는 엔진의 애니메이션 데이터를 이 인터페이스에 맞게 제공해야 합니다.
-class MySequence : public ImSequencer::SequenceInterface
+class FSequenceInterface : public ImSequencer::SequenceInterface
 {
 public:
     UAnimSequence* CurrentSequence = nullptr;
     int SelectedEntry = -1; // 선택된 트랙 인덱스 (예시)
 
-    MySequence(UAnimSequence* InSequence) : CurrentSequence(InSequence) {}
-    MySequence() {}
+    FSequenceInterface(UAnimSequence* InSequence) : CurrentSequence(InSequence)
+    {
+        UpdateLabels();
+    }
+    FSequenceInterface() {}
+
+    void UpdateLabels()
+    {
+        ItemLabels.clear();
+        if (CurrentSequence)
+        {
+            const TArray<FBoneAnimationTrack>* tracksPtr = CurrentSequence->GetBoneAnimationTracks();
+            if (tracksPtr)
+            {
+                const TArray<FBoneAnimationTrack>& tracksArray = *tracksPtr;
+                for (const auto& track : tracksArray)
+                {
+                    ItemLabels.push_back((*track.Name.ToString()));
+                }
+            }
+            if (ItemLabels.empty()) // 본 트랙이 없으면 "Master Track"
+            {
+                ItemLabels.push_back("Master Track");
+            }
+        }
+    }
+
 
     virtual int GetFrameMin() const override
     {
@@ -65,7 +90,7 @@ public:
 
             if (index >= 0 && index < tracksArray.Num())
             {
-                return (*tracksArray[index].Name.ToString());
+                return *tracksArray[index].Name.ToString();
             }
             else if (index == 0 && tracksArray.IsEmpty()) // 본 트랙이 없고 index가 0이면 "Master Track"
             {
@@ -97,6 +122,8 @@ public:
         }
     }
 
+    std::vector<std::string> ItemLabels; // imgui에 띄울 트랙 이름을 저장할 벡터
+
     virtual void BeginEdit(int index) override {}
     virtual void EndEdit() override {}
     virtual int GetItemTypeCount() const override { return 1; } // 예: "Bone Track", "Curve Track"
@@ -126,7 +153,7 @@ public:
 private:
     float Width = 0, Height = 0;
     UAnimSequence* CurrentAnimSequence = nullptr;
-    MySequence* SequencerData = nullptr; // ImSequencer에 전달할 데이터
+    FSequenceInterface* SequencerData = nullptr; // ImSequencer에 전달할 데이터
 
     // 타임라인 상태
     int CurrentFrame = 0;

@@ -29,12 +29,12 @@
      delete SequencerData; // 기존 시퀀서 데이터 삭제
      if (CurrentAnimSequence)
      {
-         SequencerData = new MySequence(CurrentAnimSequence);
+         SequencerData = new FSequenceInterface(CurrentAnimSequence);
      }
      else
      {
          SequencerData = nullptr;
-         SequencerData = new MySequence(); // 기본값으로 초기화
+         SequencerData = new FSequenceInterface(); // 기본값으로 초기화
      }
  }
 
@@ -190,8 +190,9 @@
      {
          if (ImGui::SliderFloat("##Timeline", &PlaybackTime, 0.0f, CurrentAnimSequence->GetPlayLength(), "%.2f s"))
          {
-             bIsPlaying = false; // 슬라이더 조작 시 자동 재생 정지 (선택 사항)
+             bIsPlaying = false; // 슬라이더 조작 시 자동 재생 정지 
              CurrentFrame = static_cast<int>(PlaybackTime * CurrentAnimSequence->GetFrameRate().AsDecimal());
+             SkeletalMeshComp->SetAnimationTime(PlaybackTime);
              // TODO: 스켈레탈 메쉬 포즈 업데이트
          }
      }
@@ -218,7 +219,6 @@
 
      // 현재 프레임 업데이트 (ImSequencer는 CurrentFrame을 직접 사용)
      CurrentFrame = static_cast<int>(PlaybackTime * CurrentAnimSequence->GetFrameRate().AsDecimal());
-     CurrentFrame = 0.0f;
      CurrentFrame = std::max(0, std::min(CurrentFrame, SequencerData ? SequencerData->GetFrameMax() : 0));
 
 
