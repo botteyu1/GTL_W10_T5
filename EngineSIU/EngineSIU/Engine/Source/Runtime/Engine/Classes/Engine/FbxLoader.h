@@ -24,6 +24,7 @@ struct FAnimationCurveData;
 class UAnimDataModel;
 struct FBoneAnimationTrack;
 struct FFrameRate;
+class UAnimSequence;
 
 class FFbxLoader
 {
@@ -33,7 +34,11 @@ public:
 
     FFbxLoadResult LoadFBX(const FString& InFilePath);
 
-    bool LoadAnimationDataFromBinary(const FString& FilePath, UAnimDataModel* OutAnimData);
+    bool LoadAnimDataModelFromBinary(UAnimDataModel* OutAnimData, std::ifstream& File);
+
+    bool LoadAnimationSequenceFromBinary(const FString& FilePath, UAnimSequence* OutAnimSequence);
+
+    void SaveAnimationSequenceToBinary(const UAnimSequence* AnimSequence);
 
 private:
     FbxManager* Manager;
@@ -107,8 +112,7 @@ private:
 
     FFrameRate GetFrameRateFromFbxTimeMode(FbxTime::EMode TimeMode);
 
-    void SaveAnimationDataToBinary(const UAnimDataModel* AnimDataModel);
-
+    void SaveAnimDataModelToBinary(const UAnimDataModel* AnimDataModel, std::ofstream& File);
 
     // 좌표계 변환 메소드
     void ConvertSceneToLeftHandedZUpXForward(FbxScene* Scene);

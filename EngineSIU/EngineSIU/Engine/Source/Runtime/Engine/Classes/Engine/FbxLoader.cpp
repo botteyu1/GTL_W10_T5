@@ -13,6 +13,7 @@
 #include "Container/String.h"
 #include "Classes/Animation/AnimDataModel.h"
 #include "Serialization/Serializer.h"
+#include "Animation/AnimSequence.h"
 
 #include <fstream>
 #include <sstream>
@@ -1427,14 +1428,13 @@ void FFbxLoader::ProcessAnimation(FbxNode* Node, FFbxLoadResult& OutResult)
         {
             // 애니메이션 스택을 처리
             FName AnimName = AnimStack->GetName();
-            if (UAssetManager::Get().GetAnimDataModel(AnimName))
+            if (UAssetManager::Get().GetAnimSequence(AnimName)) // AnimDataModel의 Name이 곧 AnimSequence의 Name
             {
                 // 이미 존재하는 애니메이션 스택은 건너뜀
                 continue;
             }
             Scene->SetCurrentAnimationStack(AnimStack);
             UAnimDataModel* AnimDataModel = CreateAnimDataModelFromFbxAnimStack(AnimStack, TimeMode, BoneNodes);
-            SaveAnimationDataToBinary(AnimDataModel);
             OutResult.AnimDataModels.Add(AnimDataModel);
         }
     }
@@ -1654,20 +1654,8 @@ FFrameRate FFbxLoader::GetFrameRateFromFbxTimeMode(FbxTime::EMode TimeMode)
     return FrameRate;
 }
 
-void FFbxLoader::SaveAnimationDataToBinary(const UAnimDataModel* AnimDataModel)
+void FFbxLoader::SaveAnimDataModelToBinary(const UAnimDataModel* AnimDataModel, std::ofstream& File)
 {
-    FString AnimName = AnimDataModel->Name.ToString();
-    FString SanitizedName = AnimName.Replace(TEXT("|"), TEXT("_"));
-
-    const FString FullPath = ANIM_DATA_PATH + SanitizedName + TEXT(".anim");
-
-    std::ofstream File(FullPath.ToWideString(), std::ios::binary);
-    if (!File.is_open())
-    {
-        OutputDebugStringA("Failed to open file for writing.\n");
-        return;
-    }
-
     // 이름
     FString Name = AnimDataModel->Name.ToString();
     Serializer::WriteFString(File, Name);
@@ -1720,15 +1708,41 @@ void FFbxLoader::SaveAnimationDataToBinary(const UAnimDataModel* AnimDataModel)
     // !TODO : 커브 데이터와 타겟 스켈레톤
 }
 
-bool FFbxLoader::LoadAnimationDataFromBinary(const FString& FilePath, UAnimDataModel* OutAnimData)
+void FFbxLoader::SaveAnimationSequenceToBinary(const UAnimSequence* AnimSequence)
 {
-    std::ifstream File(FilePath.ToWideString(), std::ios::binary);
-    if (!File.is_open())
+    if (!AnimSequence)
     {
-        OutputDebugStringA("Failed to open file for reading.\n");
-        return false;
+        return;
     }
 
+    // 1. AnimDataModel부터
+    UAnimDataModel* AnimDataModel = AnimSequence->GetAnimDataModel();
+    if (!AnimDataModel)
+    {
+        return;
+    }
+
+    FString AnimName = AnimSequence->GetName().ToString();
+    FString SanitizedName = AnimName.Replace(TEXT("|"), TEXT("_"));
+
+    const FString FullPath = ANIM_DATA_PATH + SanitizedName + TEXT(".animsequence");
+
+    std::ofstream File(FullPath.ToWideString(), std::ios::binary);
+    if (!File.is_open())
+    {
+        OutputDebugStringA("Failed to open file for writing.\n");
+        return;
+    }
+
+    // 2. AnimDataModel을 바이너리로 저장
+    SaveAnimDataModelToBinary(AnimDataModel, File);
+
+    // !TODO 3. AnimNofityData, AnimCurveData, TargetSkeleton 등도 저장
+    File.close();
+}
+
+bool FFbxLoader::LoadAnimDataModelFromBinary(UAnimDataModel* OutAnimData, std::ifstream& File)
+{
     // 이름
     FString Name;
     Serializer::ReadFString(File, Name);
@@ -1805,6 +1819,36 @@ bool FFbxLoader::LoadAnimationDataFromBinary(const FString& FilePath, UAnimDataM
     OutAnimData->PlayLength = PlayLength;
     OutAnimData->NumberOfFrames = NumberOfFrames;
     OutAnimData->NumberOfKeys = NumberOfKeys;
+}
+
+bool FFbxLoader::LoadAnimationSequenceFromBinary(const FString& FilePath, UAnimSequence* OutAnimSequence)
+{
+    std::ifstream File(FilePath.ToWideString(), std::ios::binary);
+    if (!File.is_open())
+    {
+        //OutputDebugStringA("")
+        return false;
+    }
+    UAnimDataModel* AnimDataModel = FObjectFactory::ConstructObject<UAnimDataModel>(nullptr);
+
+    // 1. AnimDataModel부터
+    if (LoadAnimDataModelFromBinary(AnimDataModel, File))
+    {
+        OutAnimSequence->SetAnimDataModel(AnimDataModel);
+    }
+    else
+    {
+        OutputDebugStringA("Failed to load AnimDataModel from binary.\n");
+
+        GUObjectArray.MarkRemoveObject(AnimDataModel);
+        return false;
+    }
+
+
+    // !TODO : 2. AnimNotifyData, AnimCurveData, TargetSkeleton 등도 로드
+
+    File.close();
+    return true;
 }
 
 void FFbxLoader::ConvertSceneToLeftHandedZUpXForward(FbxScene* Scene)
