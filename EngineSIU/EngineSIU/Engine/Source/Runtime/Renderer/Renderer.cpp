@@ -36,6 +36,8 @@
 #include "Stats/Stats.h"
 #include "Stats/GPUTimingManager.h"
 
+
+bool FRenderingSettings::bIsCPUSkinning = false; // 초기값 설정
 //------------------------------------------------------------------------------
 // 초기화 및 해제 관련 함수
 //------------------------------------------------------------------------------
@@ -404,8 +406,8 @@ void FRenderer::RenderWorldScene(const std::shared_ptr<FEditorViewportClient>& V
     if (ShowFlag & EEngineShowFlags::SF_SkeletalMesh)
     {
         {
-            // QUICK_SCOPE_CYCLE_COUNTER(SkeletalMeshPass_CPU)
-            // QUICK_GPU_SCOPE_CYCLE_COUNTER(SkeletalMeshPass_GPU, *GPUTimingManager)
+            QUICK_SCOPE_CYCLE_COUNTER(SkeletalMeshPass_CPU)
+            QUICK_GPU_SCOPE_CYCLE_COUNTER(SkeletalMeshPass_GPU, *GPUTimingManager)
             SkeletalMeshRenderPass->Render(Viewport);
         }
     }
