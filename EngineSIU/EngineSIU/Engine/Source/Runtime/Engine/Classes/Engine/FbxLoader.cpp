@@ -12,7 +12,10 @@
 #include "Asset/StaticMeshAsset.h"
 #include "Container/String.h"
 #include "Classes/Animation/AnimDataModel.h"
-#include <set>
+#include "Serialization/Serializer.h"
+
+#include <fstream>
+#include <sstream>
 
 struct FVertexKey
 {
@@ -1423,8 +1426,15 @@ void FFbxLoader::ProcessAnimation(FbxNode* Node, FFbxLoadResult& OutResult)
         if (AnimStack)
         {
             // 애니메이션 스택을 처리
+            FName AnimName = AnimStack->GetName();
+            if (UAssetManager::Get().GetAnimDataModel(AnimName))
+            {
+                // 이미 존재하는 애니메이션 스택은 건너뜀
+                continue;
+            }
             Scene->SetCurrentAnimationStack(AnimStack);
             UAnimDataModel* AnimDataModel = CreateAnimDataModelFromFbxAnimStack(AnimStack, TimeMode, BoneNodes);
+            SaveAnimationDataToBinary(AnimDataModel);
             OutResult.AnimDataModels.Add(AnimDataModel);
         }
     }
@@ -1642,6 +1652,159 @@ FFrameRate FFbxLoader::GetFrameRateFromFbxTimeMode(FbxTime::EMode TimeMode)
         break;
     }
     return FrameRate;
+}
+
+void FFbxLoader::SaveAnimationDataToBinary(const UAnimDataModel* AnimDataModel)
+{
+    FString AnimName = AnimDataModel->Name.ToString();
+    FString SanitizedName = AnimName.Replace(TEXT("|"), TEXT("_"));
+
+    const FString FullPath = ANIM_DATA_PATH + SanitizedName + TEXT(".anim");
+
+    std::ofstream File(FullPath.ToWideString(), std::ios::binary);
+    if (!File.is_open())
+    {
+        OutputDebugStringA("Failed to open file for writing.\n");
+        return;
+    }
+
+    // 이름
+    FString Name = AnimDataModel->Name.ToString();
+    Serializer::WriteFString(File, Name);
+
+    // BoneAnimationTrack 배열
+    int32 TrackCount = AnimDataModel->BoneAnimationTracks.Num();
+    File.write(reinterpret_cast<const char*>(&TrackCount), sizeof(TrackCount));
+    for (int i = 0; i < TrackCount; i++)
+    {
+        FString BoneName = AnimDataModel->BoneAnimationTracks[i].Name.ToString();
+        Serializer::WriteFString(File, BoneName);
+        const FRawAnimSequenceTrack& Track = AnimDataModel->BoneAnimationTracks[i].InternalTrack;
+        int32 KeyCount = Track.PosKeys.Num();
+        File.write(reinterpret_cast<const char*>(&KeyCount), sizeof(KeyCount));
+        for (int j = 0; j < KeyCount; j++)
+        {
+            // 키프레임 데이터
+            float PosTime = Track.PosKeys[j].Time;
+            FVector Position = Track.PosKeys[j].Value;
+            float RotTime = Track.RotKeys[j].Time;
+            FQuat Rotation = Track.RotKeys[j].Value;
+            float ScaleTime = Track.ScaleKeys[j].Time;
+            FVector Scale = Track.ScaleKeys[j].Value;
+            File.write(reinterpret_cast<const char*>(&PosTime), sizeof(PosTime));
+            File.write(reinterpret_cast<const char*>(&Position), sizeof(Position));
+            File.write(reinterpret_cast<const char*>(&RotTime), sizeof(RotTime));
+            File.write(reinterpret_cast<const char*>(&Rotation), sizeof(Rotation));
+            File.write(reinterpret_cast<const char*>(&ScaleTime), sizeof(ScaleTime));
+            File.write(reinterpret_cast<const char*>(&Scale), sizeof(Scale));
+        }
+    }
+
+    //play length
+    float PlayLength = AnimDataModel->PlayLength;
+    File.write(reinterpret_cast<const char*>(&PlayLength), sizeof(PlayLength));
+
+    // FrameRate
+    FFrameRate FrameRate = AnimDataModel->FrameRate;
+    File.write(reinterpret_cast<const char*>(&FrameRate.Numerator), sizeof(FrameRate.Numerator));
+    File.write(reinterpret_cast<const char*>(&FrameRate.Denominator), sizeof(FrameRate.Denominator));
+
+    // number of frames
+    int32 NumberOfFrames = AnimDataModel->NumberOfFrames;
+    File.write(reinterpret_cast<const char*>(&NumberOfFrames), sizeof(NumberOfFrames));
+
+    // number of keys
+    int32 NumberOfKeys = AnimDataModel->NumberOfKeys;
+    File.write(reinterpret_cast<const char*>(&NumberOfKeys), sizeof(NumberOfKeys));
+
+    // !TODO : 커브 데이터와 타겟 스켈레톤
+}
+
+bool FFbxLoader::LoadAnimationDataFromBinary(const FString& FilePath, UAnimDataModel* OutAnimData)
+{
+    std::ifstream File(FilePath.ToWideString(), std::ios::binary);
+    if (!File.is_open())
+    {
+        OutputDebugStringA("Failed to open file for reading.\n");
+        return false;
+    }
+
+    // 이름
+    FString Name;
+    Serializer::ReadFString(File, Name);
+    OutAnimData->Name = Name;
+    // BoneAnimationTrack 배열
+    int32 TrackCount = 0;
+    File.read(reinterpret_cast<char*>(&TrackCount), sizeof(TrackCount));
+    if (TrackCount <= 0)
+    {
+        OutputDebugStringA("No animation tracks found.\n");
+        return false;
+    }
+
+    TArray<FBoneAnimationTrack>& BoneAnimationTracks = OutAnimData->BoneAnimationTracks;
+    BoneAnimationTracks.SetNum(TrackCount);
+
+    for (int i = 0; i < TrackCount; i++)
+    {
+        FString BoneName;
+        Serializer::ReadFString(File, BoneName);
+
+        int32 KeyCount = 0;
+        File.read(reinterpret_cast<char*>(&KeyCount), sizeof(KeyCount));
+
+        BoneAnimationTracks[i].Name = FName(BoneName);
+        FRawAnimSequenceTrack& Track = BoneAnimationTracks[i].InternalTrack;
+
+        for (int j = 0; j < KeyCount; j++)
+        {
+            // 키프레임 데이터
+            float PosTime = 0.0f;
+            FVector Position;
+            float RotTime = 0.0f;
+            FQuat Rotation;
+            float ScaleTime = 0.0f;
+            FVector Scale;
+            File.read(reinterpret_cast<char*>(&PosTime), sizeof(PosTime));
+            File.read(reinterpret_cast<char*>(&Position), sizeof(Position));
+            File.read(reinterpret_cast<char*>(&RotTime), sizeof(RotTime));
+            File.read(reinterpret_cast<char*>(&Rotation), sizeof(Rotation));
+            File.read(reinterpret_cast<char*>(&ScaleTime), sizeof(ScaleTime));
+            File.read(reinterpret_cast<char*>(&Scale), sizeof(Scale));
+
+            FVectorKey NewPosKey(PosTime, Position);
+            FQuatKey NewRotKey(RotTime, Rotation);
+            FVectorKey NewScaleKey(ScaleTime, Scale);
+
+            // 애니메이션 트랙에 키프레임 추가
+            Track.PosKeys.Add(NewPosKey);
+            Track.RotKeys.Add(NewRotKey);
+            Track.ScaleKeys.Add(NewScaleKey);
+        }
+    }
+
+    // play length
+    float PlayLength = 0.0f;
+    File.read(reinterpret_cast<char*>(&PlayLength), sizeof(PlayLength));
+
+    // FrameRate
+    FFrameRate FrameRate;
+    File.read(reinterpret_cast<char*>(&FrameRate.Numerator), sizeof(FrameRate.Numerator));
+    File.read(reinterpret_cast<char*>(&FrameRate.Denominator), sizeof(FrameRate.Denominator));
+
+    // number of frames
+    int32 NumberOfFrames = 0;
+    File.read(reinterpret_cast<char*>(&NumberOfFrames), sizeof(NumberOfFrames));
+    // number of keys
+    int32 NumberOfKeys = 0;
+    File.read(reinterpret_cast<char*>(&NumberOfKeys), sizeof(NumberOfKeys));
+    
+    // !TODO : 커브 데이터와 타겟 스켈레톤
+
+    OutAnimData->FrameRate = FrameRate;
+    OutAnimData->PlayLength = PlayLength;
+    OutAnimData->NumberOfFrames = NumberOfFrames;
+    OutAnimData->NumberOfKeys = NumberOfKeys;
 }
 
 void FFbxLoader::ConvertSceneToLeftHandedZUpXForward(FbxScene* Scene)

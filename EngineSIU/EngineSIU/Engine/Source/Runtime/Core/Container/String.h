@@ -226,6 +226,8 @@ public:
     [[nodiscard]] FString ToLower() &&;
     void ToLowerInline();
 
+    FString Replace(const FString& From, const FString& To, ESearchCase::Type SearchCase = ESearchCase::IgnoreCase);
+
 public:
     /** ElementType* 로 반환하는 연산자 */
     FORCEINLINE const ElementType* operator*() const;

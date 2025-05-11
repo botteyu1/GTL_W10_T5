@@ -78,6 +78,7 @@ public:
 
 private:
     void LoadContentFiles();
+    void LoadAssets();
 
     inline static TMap<FName, USkeleton*> SkeletonMap;
     inline static TMap<FName, USkeletalMesh*> SkeletalMeshMap;

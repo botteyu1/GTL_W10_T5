@@ -11,6 +11,7 @@
 #include "UObject/Casts.h"
 #include "Asset/SkeletalMeshAsset.h"
 #include "Animation/AnimDataModel.h"
+#include "UObject/ObjectFactory.h"
 
 UAssetManager::~UAssetManager()
 {
@@ -83,6 +84,7 @@ void UAssetManager::InitAssetManager()
 {
     AssetRegistry = std::make_unique<FAssetRegistry>();
 
+    LoadAssets();
     LoadContentFiles();
 }
 
@@ -276,4 +278,39 @@ void UAssetManager::LoadContentFiles()
             }
         }
     }
+}
+
+void UAssetManager::LoadAssets()
+{
+    const std::string BasePathName = "Assets/";
+
+    // .anim(바이너리) 파일 로드
+    for (const auto& Entry : std::filesystem::recursive_directory_iterator(BasePathName))
+    {
+        if (Entry.is_regular_file() && Entry.path().extension() == ".anim")
+        {
+            FFbxLoader Loader;
+            UAnimDataModel* AnimDataModel = FObjectFactory::ConstructObject<UAnimDataModel>(nullptr);
+            if (Loader.LoadAnimationDataFromBinary(Entry.path().string(), AnimDataModel))
+            {
+                FName AnimName = AnimDataModel->Name;
+                FAssetInfo Info;
+
+                Info.PackagePath = FName(Entry.path().parent_path().wstring());
+                Info.Size = static_cast<uint32>(std::filesystem::file_size(Entry.path()));
+                Info.AssetName = AnimName;
+                Info.AssetType = EAssetType::AnimSequence;
+
+                AssetRegistry->PathNameToAssetInfo.Add(Info.AssetName, Info);
+                AnimationMap.Add(AnimName, AnimDataModel);
+            }
+            else
+            {
+                // !TODO : AnimDataModel 제거처리
+                GUObjectArray.MarkRemoveObject(AnimDataModel);
+            }
+        }
+
+    }
+
 }

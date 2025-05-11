@@ -63,12 +63,12 @@ public:
     TArray<FBoneAnimationTrack> BoneAnimationTracks;
     float PlayLength;
     FFrameRate FrameRate;
-    int32 NumberOfFrames;
-    int32 NumberOfKeys;
+    int32 NumberOfFrames = 0;
+    int32 NumberOfKeys = 0;
+    // !TODO : 이거 어떻게 사용해야 하는지 고민
     FAnimationCurveData CurveData;
 
 
-    // !TODO : 이거 어떻게 사용해야 하는지 고민
     USkeleton* TargetSkeleton;
 
     virtual const TArray<FBoneAnimationTrack>& GetBoneAnimationTracks() const;
