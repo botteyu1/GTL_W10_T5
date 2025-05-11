@@ -19,7 +19,6 @@ public:
 
     void SetSkeletalMeshAsset(USkeletalMesh* InSkeletalMeshAsset);
 
-    UAnimSequence* AnimSequence = nullptr;
 
     TArray<FTransform> BoneTransforms;
 
@@ -33,10 +32,15 @@ public:
 
     void ProcessAnimation2(float DeltaTime);
 
+    UAnimSequence* GetAnimSequence() const { return AnimSequence; }
+    void SetAnimSequence(UAnimSequence* InAnimSequence) { AnimSequence = InAnimSequence; };
+       
+
     void SetAnimationTime(float InTime) { ElapsedTime = InTime; }
 
 private:
-    
+    // !TODO : 애니메이션 인스턴스 로직으로 변경
+    UAnimSequence* AnimSequence = nullptr;
     USkeletalMesh* SkeletalMeshAsset = nullptr;
 
     float ElapsedTime = 0.f; // TODO anim인스턴스로 이동 해야됨

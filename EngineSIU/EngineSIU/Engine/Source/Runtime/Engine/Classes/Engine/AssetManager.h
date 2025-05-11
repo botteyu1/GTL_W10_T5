@@ -6,6 +6,7 @@
 class USkeleton;
 class USkeletalMesh;
 class UAnimDataModel;
+class UAnimSequence;
 
 enum class EAssetType : uint8
 {
@@ -68,16 +69,19 @@ public:
     UStaticMesh* GetStaticMesh(const FName& Name);
     USkeleton* GetSkeleton(const FName& Name);
     UMaterial* GetMaterial(const FName& Name);
-    UAnimDataModel* GetAnimDataModel(const FName& Name);
+    //UAnimDataModel* GetAnimDataModel(const FName& Name);
+    UAnimSequence* GetAnimSequence(const FName& Name);
 
     void AddAssetInfo(const FAssetInfo& Info);
     void AddSkeleton(const FName& Key, USkeleton* Skeleton);
     void AddSkeletalMesh(const FName& Key, USkeletalMesh* Mesh);
     void AddMaterial(const FName& Key, UMaterial* Material);
-    void AddAnimation(const FName& Key, UAnimDataModel* Animation);
+    //void AddAnimation(const FName& Key, UAnimDataModel* Animation);
+    void AddAnimSequence(const FName& Key, UAnimSequence* AnimSequence);
 
 private:
     void LoadContentFiles();
+    void LoadAssets();
 
     inline static TMap<FName, USkeleton*> SkeletonMap;
     inline static TMap<FName, USkeletalMesh*> SkeletalMeshMap;
@@ -85,4 +89,5 @@ private:
     inline static TMap<FName, UMaterial*> MaterialMap;
     inline static TMap<FName, UAnimDataModel*> AnimationMap;
     // inline static TMap<FName, UAnimation*> AnimationMap;
+    inline static TMap<FName, UAnimSequence*> AnimSequenceMap;
 };

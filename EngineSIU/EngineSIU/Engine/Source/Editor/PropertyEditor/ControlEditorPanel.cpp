@@ -264,17 +264,17 @@ void ControlEditorPanel::CreateMenuButton(const ImVec2 ButtonSize, ImFont* IconF
                 }
 
                 // Animation들 등록
-                for (int32 i = 0; i < Result.AnimDataModels.Num(); ++i)
-                {
-                    UAnimDataModel* AnimDataModel = Result.AnimDataModels[i];
-                    FName AnimName = AnimDataModel->Name;
-                    FAssetInfo Info = AssetInfo;
-                    Info.AssetName = AnimName;
-                    Info.AssetType = EAssetType::AnimSequence;
+                //for (int32 i = 0; i < Result.AnimDataModels.Num(); ++i)
+                //{
+                //    UAnimDataModel* AnimDataModel = Result.AnimDataModels[i];
+                //    FName AnimName = AnimDataModel->Name;
+                //    FAssetInfo Info = AssetInfo;
+                //    Info.AssetName = AnimName;
+                //    Info.AssetType = EAssetType::AnimSequence;
 
-                    AM.AddAssetInfo(Info);
-                    AM.AddAnimation(AnimName, AnimDataModel);
-                }
+                //    AM.AddAssetInfo(Info);
+                //    AM.AddAnimation(AnimName, AnimDataModel);
+                //}
 
                 // 뷰어 실행
                 UE_LOG(ELogLevel::Display, TEXT("FBX loaded: %s"), *FilePath);

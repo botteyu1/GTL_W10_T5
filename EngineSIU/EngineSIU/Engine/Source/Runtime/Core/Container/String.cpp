@@ -376,6 +376,37 @@ void FString::ToLowerInline()
     );
 }
 
+FString FString::Replace(const FString& From, const FString& To, ESearchCase::Type SearchCase)
+{
+    if (From.IsEmpty() || From.Len() > 0 && From.Len() > this->Len())
+    {
+        return *this;
+    }
+
+    FString Result;
+    Result.Reserve(this->Len());
+
+    int32 CurrentSearchPos = 0;
+    int32 FoundPos = 0;
+
+    while (CurrentSearchPos < this->Len())
+    {
+        FoundPos = this->Find(From, SearchCase, ESearchDir::FromStart, CurrentSearchPos);
+
+        if (FoundPos == -1)
+        {
+            Result += this->Mid(CurrentSearchPos);
+            break;
+        }
+
+        Result += this->Mid(CurrentSearchPos, FoundPos - CurrentSearchPos);
+        Result += To;
+        CurrentSearchPos = FoundPos + From.Len();
+    }
+
+    return Result;
+}
+
 FString FString::Mid(int32 Start, int32 Count) const
 {
     const int32 MyLen = Len();

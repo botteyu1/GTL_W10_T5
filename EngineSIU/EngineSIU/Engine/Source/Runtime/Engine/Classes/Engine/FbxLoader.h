@@ -7,6 +7,8 @@
 #include "Container/Array.h"
 #include "Container/Map.h"
 
+const FString ANIM_DATA_PATH = TEXT("Assets\\Animations\\");
+
 struct FSkeletalMeshVertex;
 struct FMaterialInfo;
 struct FReferenceSkeleton;
@@ -22,6 +24,7 @@ struct FAnimationCurveData;
 class UAnimDataModel;
 struct FBoneAnimationTrack;
 struct FFrameRate;
+class UAnimSequence;
 
 class FFbxLoader
 {
@@ -30,6 +33,12 @@ public:
     ~FFbxLoader();
 
     FFbxLoadResult LoadFBX(const FString& InFilePath);
+
+    bool LoadAnimDataModelFromBinary(UAnimDataModel* OutAnimData, std::ifstream& File);
+
+    bool LoadAnimationSequenceFromBinary(const FString& FilePath, UAnimSequence* OutAnimSequence);
+
+    void SaveAnimationSequenceToBinary(const UAnimSequence* AnimSequence);
 
 private:
     FbxManager* Manager;
@@ -102,6 +111,8 @@ private:
     void AddCurveDataFromFbx(FbxAnimCurve* FbxCurve, const FName& curveFName, FAnimationCurveData& outAnimationCurveData);
 
     FFrameRate GetFrameRateFromFbxTimeMode(FbxTime::EMode TimeMode);
+
+    void SaveAnimDataModelToBinary(const UAnimDataModel* AnimDataModel, std::ofstream& File);
 
     // 좌표계 변환 메소드
     void ConvertSceneToLeftHandedZUpXForward(FbxScene* Scene);

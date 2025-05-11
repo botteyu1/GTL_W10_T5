@@ -14,7 +14,7 @@ public:
     UAnimSequence();
     virtual ~UAnimSequence() override = default;
 
-
+    FName GetName() const;
     // TODO: 맵의 key는 int가 아니라 fname이어야 함.
     TArray<TMap<int32, FTransform>> Anim;
 

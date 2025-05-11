@@ -470,11 +470,11 @@ void PropertyEditorPanel::RenderForSkeletalMesh(USkeletalMeshComponent* Skeletal
         ImGui::SameLine();
 
         PreviewName = FString("None");
-        if (UAnimSequence* AnimSequence = SkeletalMeshComp->AnimSequence)
+        if (UAnimSequence* AnimSequence = SkeletalMeshComp->GetAnimSequence())
         {
             if (AnimSequence->GetAnimDataModel())
             {
-                PreviewName = AnimSequence->GetAnimDataModel()->Name.ToString();
+                PreviewName = AnimSequence->GetName().ToString();
             }
         }
 
@@ -490,11 +490,11 @@ void PropertyEditorPanel::RenderForSkeletalMesh(USkeletalMeshComponent* Skeletal
                 if (ImGui::Selectable(GetData(Asset.Value.AssetName.ToString()), false))
                 {
                     FName AnimName = Asset.Value.AssetName;
-                    UAnimDataModel* AnimDataModel = UAssetManager::Get().GetAnimDataModel(AnimName);
-                    if (AnimDataModel)
+                    UAnimSequence* AnimSequence = UAssetManager::Get().GetAnimSequence(AnimName);
+                    if (AnimSequence)
                     {
                         // !TODO : AnimStateMachine 이후에는 AnimStateMachine에 추가하는 로직으로 변경
-                        SkeletalMeshComp->AnimSequence->SetAnimDataModel(AnimDataModel);
+                        SkeletalMeshComp->SetAnimSequence(AnimSequence);
                     }
                 }
             }
