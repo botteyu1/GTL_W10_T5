@@ -31,7 +31,6 @@ public:
     void SortNotifyEvents();
     TArray<FAnimNotifyEvent>& GetAnimNotifies(){ return Notifies; }
 
-
 protected:
     UAnimDataModel* AnimDataModel = nullptr;
     // !TODO : AnimNotify

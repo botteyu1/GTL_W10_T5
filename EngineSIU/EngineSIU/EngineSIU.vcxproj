@@ -582,7 +582,6 @@ xcopy /y /d "$(SolutionDir)$(ProjectName)\Engine\Source\ThirdParty\FBX\lib\x64\$
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Animation\AnimRawData.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Animation\AnimSequence.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Animation\AnimSequenceBase.h" />
-    <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Animation\Notify\UAnimNotify.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Animation\SkeletalMeshActor.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Animation\Skeleton.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Camera\CameraComponent.h" />

@@ -25,6 +25,7 @@ enum OBJECTS : uint8
     OBJ_COIN,
     OBJ_TRIGGERBOX,
     OBJ_SKELETALMESH,
+    OBJ_CHARACTER,
     OBJ_END
 };
 

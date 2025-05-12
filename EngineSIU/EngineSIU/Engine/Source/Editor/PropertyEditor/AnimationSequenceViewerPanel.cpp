@@ -104,7 +104,6 @@ AnimationSequenceViewerPanel::AnimationSequenceViewerPanel()
          CurrentFrame = std::max(SequencerData->GetFrameMin(), std::min(CurrentFrame, SequencerData->GetFrameMax()));
      }
 
-     ImGui::PushID("MainSequencer");
      if (ImSequencer::Sequencer(SequencerData, &CurrentFrame, &bIsExpanded, &SelectedSequencerEntry, &FirstFrame, sequenceOptions))
      {
           //시퀀서에서 프레임이 변경된 경우 (예: 사용자가 재생 헤드를 드래그)
@@ -118,7 +117,6 @@ AnimationSequenceViewerPanel::AnimationSequenceViewerPanel()
               
           }
      }
-     ImGui::PopID();
 
      static char NotifyName[256] = "";
      if (CurrentAnimSequence)
@@ -141,6 +139,7 @@ AnimationSequenceViewerPanel::AnimationSequenceViewerPanel()
          ImGui::Text("Edit Notify Trigger Time:");
 
      int NotifyIndex = 0;
+     //삭제할 Notify 담아둘 리스트
      TArray<FAnimNotifyEvent> DeletedNotify;
 
      for(auto& Notify : CurrentAnimSequence->GetAnimNotifies())
@@ -164,7 +163,7 @@ AnimationSequenceViewerPanel::AnimationSequenceViewerPanel()
          ImGui::PopID();
          ++NotifyIndex;
      }
-
+     //삭제할 Notify 일괄 처리
      for (auto& Notify : DeletedNotify)
      {
          CurrentAnimSequence->RemoveAnimNotifyEvent(Notify);

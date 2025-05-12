@@ -47,6 +47,7 @@
 #include <Engine/FbxLoader.h>
 #include "Engine/Classes/Engine/AssetManager.h"
 #include "Engine/Classes/Animation/AnimDataModel.h"
+#include <Actors/Character.h>
 
 ControlEditorPanel::ControlEditorPanel()
 {
@@ -451,6 +452,7 @@ void ControlEditorPanel::CreateModifyButton(const ImVec2 ButtonSize, ImFont* Ico
             {.Label = "Coin", .OBJ = OBJ_COIN},
             {.Label = "TriggerBox", .OBJ = OBJ_TRIGGERBOX},
             {.Label = "SkeletalMeshActor", .OBJ = OBJ_SKELETALMESH},
+            {.Label = "Character", .OBJ = OBJ_CHARACTER},
         };
 
         for (const auto& primitive : primitives)
@@ -586,6 +588,15 @@ void ControlEditorPanel::CreateModifyButton(const ImVec2 ButtonSize, ImFont* Ico
                         auto* MeshComp = SpawnedActor->AddComponent<USkeletalMeshComponent>();
                         SpawnedActor->SetRootComponent(MeshComp);
                         SpawnedActor->SetActorLabel(TEXT("OBJ_SKELETALMESH"));
+                    }
+                    break;
+                case OBJ_CHARACTER:
+                    {
+                        SpawnedActor = World->SpawnActor<ACharacter>();
+                        SpawnedActor->SetActorTickInEditor(true);
+                        auto* MeshComp = SpawnedActor->AddComponent<USkeletalMeshComponent>();
+                        SpawnedActor->SetRootComponent(MeshComp);
+                        SpawnedActor->SetActorLabel(TEXT("OBJ_CHARACTER"));
                     }
                     break;
                 case OBJ_CAMERA:
