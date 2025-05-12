@@ -4,7 +4,103 @@
  #include "Engine/Classes/Animation/AnimSequence.h" // UAnimSequence 사용
 #include "Engine/Source/Editor/UnrealEd/IconsFeather.h" // Feather Icons 헤더 (또는 사용 중인 아이콘 폰트 헤더)
 #include "Font/IconDefs.h"
+#include "ImGui/imgui_internal.h"
 
+
+void FSequenceInterface::CustomDrawCompact(int index, ImDrawList* draw_list, const ImRect& rc, const ImRect& clippingRect)
+{
+    SequenceInterface::CustomDrawCompact(index, draw_list, rc, clippingRect);
+
+    // // 이 함수는 각 트랙의 "컴팩트" 영역에 그리기를 수행합니다.
+    // // rc: 트랙 전체 영역 (범위를 벗어날 수 있음)
+    // // clippingRect: 실제로 그려지는 클리핑된 영역
+    //
+    // if (!CurrentSequence || index != 0) // 예시: 마스터 트랙(index 0)에만 노티파이 표시
+    // {
+    //     return;
+    // }
+    //
+    // // ImSequencer의 내부 변수 접근 (주의해서 사용해야 할 수 있음)
+    // // 또는 외부에서 framePixelWidth, firstFrame 등을 전달받아야 함.
+    // // 여기서는 ImGui::GetWindowDrawList()를 통해 현재 창의 draw_list를 사용하고,
+    // // rc와 clippingRect를 기준으로 위치를 계산한다고 가정합니다.
+    //
+    // // rc.Min.x는 (legendWidth - (firstFrame - GetFrameMin() - 0.5f) * framePixelWidth) 와 유사하게 계산된 값.
+    // // 즉, rc.Min.x는 시퀀스 시작 프레임(GetFrameMin())이 화면에 그려지는 x좌표.
+    // // framePixelWidth는 프레임 당 픽셀 너비.
+    //
+    // float framePixelWidth = ImGui::GetIO().DisplaySize.x / (float)(GetFrameMax() - GetFrameMin() +1) ; // 대략적인 값, 실제 ImSequencer 내부 값 사용 필요
+    // if (ImGui::GetCurrentWindowRead() && ImGui::GetCurrentWindowRead()->StateStorage.GetInt(ImGui::GetID("framePixelWidth"), -1) != -1) {
+    //      // 이 방법은 매우 불안정하며 ImSequencer 내부 구현에 의존적입니다.
+    //      // framePixelWidth = ImGui::GetCurrentWindowRead()->StateStorage.GetFloat(ImGui::GetID("framePixelWidth"));
+    // }
+    //  // 임시로 framePixelWidth를 계산하거나, AnimationSequenceViewerPanel에서 전달받아야 합니다.
+    //  // 여기서는 rc의 너비와 전체 프레임 수로 대략 계산합니다.
+    //  if (GetFrameMax() > GetFrameMin()) {
+    //      framePixelWidth = (rc.Max.x - rc.Min.x) / (float)(GetFrameMax() - GetFrameMin());
+    //  } else {
+    //      framePixelWidth = 10.0f; // 기본값
+    //  }
+    //
+    //
+    // for (const FAnimNotifyEvent& notify : CurrentSequence->GetAnimNotifies())
+    // {
+    //     float frameRate = CurrentSequence->GetFrameRate().AsDecimal();
+    //     if (frameRate <= 0.0f) continue;
+    //
+    //     int notifyFrame = static_cast<int>(notify.TriggerTime * frameRate);
+    //
+    //     // 노티파이 마커의 x 위치 계산
+    //     // float markerPosX = rc.Min.x + (notifyFrame - GetFrameMin()) * framePixelWidth;
+    //     // rc.Min.x는 이미 firstFrame이 적용된 좌표일 수 있으므로, ImSequencer의 firstFrame을 알아야 함.
+    //     // AnimationSequenceViewerPanel로부터 firstFrame 값을 가져와야 합니다.
+    //     // 여기서는 rc가 전체 타임라인을 나타낸다고 가정하고, firstFrame은 0이라고 가정하여 단순화합니다.
+    //     // 실제로는 AnimationSequenceViewerPanel의 FirstFrame 멤버를 MySequence가 접근할 수 있도록 해야 합니다.
+    //     int panelFirstFrame = 0; // TODO: 실제 패널의 FirstFrame 값으로 대체
+    //     if (ImGui::GetCurrentContext() && ImGui::GetCurrentContext()->CurrentWindow)
+    //     {
+    //         // 이 방법은 매우 불안정하며 ImSequencer 내부 구현에 의존적입니다.
+    //         // panelFirstFrame = ImGui::GetCurrentContext()->CurrentWindow->StateStorage.GetInt(ImGui::GetID("firstFrame"), 0);
+    //     }
+    //
+    //
+    //     // rc.Min.x는 (canvas_pos.x + legendWidth - firstFrameUsed * framePixelWidth) 와 유사.
+    //     // notifyFrame이 화면에 그려질 x 좌표:
+    //     // canvas_pos.x + legendWidth + (notifyFrame - panelFirstFrame) * framePixelWidth
+    //     // rc.Min.x를 기준으로 하면:
+    //     // rc.Min.x + (notifyFrame - GetFrameMin()) * framePixelWidth; (rc.Min.x가 GetFrameMin() 위치일 때)
+    //     // 또는, rc.Min.x + (notifyFrame - panelFirstFrame_when_rc_was_calculated) * framePixelWidth
+    //
+    //     // 가장 간단한 접근: rc는 전체 타임라인의 보이는 부분.
+    //     // notifyFrame이 현재 보이는 범위 내에 있는지 확인하고 그립니다.
+    //     float markerScreenX = clippingRect.Min.x + (notifyFrame - panelFirstFrame /* 패널의 FirstFrame */) * framePixelWidth;
+    //
+    //
+    //     // 마커가 클리핑 영역 내에 있을 때만 그립니다.
+    //     if (markerScreenX >= clippingRect.Min.x && markerScreenX <= clippingRect.Max.x)
+    //     {
+    //         // 간단한 다이아몬드 모양 마커 그리기
+    //         float markerSize = 8.0f;
+    //         ImVec2 p1 = ImVec2(markerScreenX, rc.Min.y);
+    //         ImVec2 p2 = ImVec2(markerScreenX + markerSize / 2, rc.Min.y + markerSize / 2);
+    //         ImVec2 p3 = ImVec2(markerScreenX, rc.Min.y + markerSize);
+    //         ImVec2 p4 = ImVec2(markerScreenX - markerSize / 2, rc.Min.y + markerSize / 2);
+    //         draw_list->AddQuadFilled(p1, p2, p3, p4, IM_COL32(255, 0, 0, 255)); // 빨간색 마커
+    //
+    //         // 마우스 오버 시 툴팁으로 노티파이 이름 표시
+    //         ImRect markerRect(ImVec2(markerScreenX - markerSize / 2, rc.Min.y), ImVec2(markerScreenX + markerSize / 2, rc.Min.y + markerSize));
+    //         if (markerRect.Contains(ImGui::GetMousePos()))
+    //         {
+    //             ImGui::BeginTooltip();
+    //             ImGui::Text("Notify: %s", (*notify.NotifyName.ToString()));
+    //             ImGui::Text("Time: %.2fs", notify.TriggerTime);
+    //             ImGui::EndTooltip();
+    //
+    //             // TODO: 클릭 시 노티파이 선택 및 편집 UI 연동
+    //         }
+    //     }
+    // }
+}
 
 AnimationSequenceViewerPanel::AnimationSequenceViewerPanel()
  {

@@ -108,7 +108,7 @@ public:
     virtual size_t GetCustomHeight(int index) override { return 0; } // 트랙별 커스텀 높이
     virtual void DoubleClick(int index) override { SelectedEntry = index; }
     virtual void CustomDraw(int index, ImDrawList* draw_list, const ImRect& rc, const ImRect& legendRect, const ImRect& clippingRect, const ImRect& legendClippingRect) override {}
-    virtual void CustomDrawCompact(int index, ImDrawList* draw_list, const ImRect& rc, const ImRect& clippingRect) override {}
+    virtual void CustomDrawCompact(int index, ImDrawList* draw_list, const ImRect& rc, const ImRect& clippingRect) override ;
 };
 
 class AnimationSequenceViewerPanel : public UEditorPanel
