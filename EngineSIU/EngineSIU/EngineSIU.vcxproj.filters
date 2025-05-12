@@ -1663,6 +1663,7 @@
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Animation\AnimDataModel.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Engine\Asset\AnimationAsset.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Animation\AnimSequenceBase.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Actors\Character.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="EngineSIU.natvis" />
@@ -1702,6 +1703,7 @@
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Animation\AnimRawData.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Engine\Asset\AnimationAsset.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Animation\AnimSequenceBase.h" />
+    <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Actors\Character.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\CompositingShader.hlsl" />

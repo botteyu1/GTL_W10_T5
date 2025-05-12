@@ -4,7 +4,7 @@
  #include "Engine/Classes/Animation/AnimSequence.h" // UAnimSequence 사용
 #include "Engine/Source/Editor/UnrealEd/IconsFeather.h" // Feather Icons 헤더 (또는 사용 중인 아이콘 폰트 헤더)
 #include "Font/IconDefs.h"
-
+#include "Animation/AnimSingleNodeInstance.h"
 
 AnimationSequenceViewerPanel::AnimationSequenceViewerPanel()
  {
@@ -44,16 +44,23 @@ AnimationSequenceViewerPanel::AnimationSequenceViewerPanel()
      USkeletalMeshComponent* SkeletalMeshComponent = Cast<USkeletalMeshComponent>(Engine->GetSelectedComponent());
 
      // 전 애니메이션과 달라지면 업데이트
+     // AnimInstance가 SingleNodeInstance인 경우에만 애니메이션을 업데이트 -> 뷰어니깐
      if (Engine and SkeletalMeshComponent)
      {
+         AnimSingleNodeInstance = Cast<UAnimSingleNodeInstance>(SkeletalMeshComponent->GetAnimInstance());
+
          static UAnimSequence* PrevAnim = nullptr;
-         if (PrevAnim != SkeletalMeshComponent->GetAnimSequence())
+         if (AnimSingleNodeInstance && PrevAnim != AnimSingleNodeInstance->GetAnimationAsset())
          {
-             SetAnimationSequence(SkeletalMeshComponent->GetAnimSequence());
+             if (UAnimationAsset* AnimAsset = AnimSingleNodeInstance->GetAnimationAsset())
+             {
+                 CurrentAnimSequence = Cast<UAnimSequence>(AnimAsset); // !TODO : 현 시점에서는 UAnimSequence뿐이니까 이렇게 캐스팅
+                SetAnimationSequence(CurrentAnimSequence);
+             }
          }
          PrevAnim = CurrentAnimSequence;
      }
-     if (!Engine || !CurrentAnimSequence || !SequencerData || !SkeletalMeshComponent) // 엔진 또는 시퀀스 없으면 렌더링 안 함
+     if (!Engine || !CurrentAnimSequence || !SequencerData || !SkeletalMeshComponent || !AnimSingleNodeInstance) // 엔진 또는 시퀀스 없으면 렌더링 안 함
      {
          // 패널은 표시하되, 내용이 없음을 알릴 수 있음
          ImGui::Begin("Animation Sequence Viewer", nullptr, ImGuiWindowFlags_NoCollapse);
@@ -117,7 +124,58 @@ AnimationSequenceViewerPanel::AnimationSequenceViewerPanel()
               
           }
      }
-     
+
+     static char NotifyName[256] = "";
+     if (CurrentAnimSequence)
+     {
+         ImGui::InputText("NotifyName", NotifyName, sizeof(NotifyName));
+
+         if (ImGui::Button("Add Notify"))
+         {
+             FAnimNotifyEvent NewNotify;
+             NewNotify.NotifyName = FName(FString(NotifyName));
+             NewNotify.TriggerTime = PlaybackTime;
+             NewNotify.Duration = 0.0f;
+             CurrentAnimSequence->AddAnimNotifyEvent(NewNotify);
+
+             NotifyName[0] = '\0';
+         }
+     }
+
+     if(CurrentAnimSequence->GetAnimNotifies().Num()>0)
+         ImGui::Text("Edit Notify Trigger Time:");
+
+     int NotifyIndex = 0;
+     //삭제할 Notify 담아둘 리스트
+     TArray<FAnimNotifyEvent> DeletedNotify;
+
+     for(auto& Notify : CurrentAnimSequence->GetAnimNotifies())
+     {
+         ImGui::PushID(NotifyIndex);
+         float FrameRate = CurrentAnimSequence->GetFrameRate().AsDecimal();
+         float TimeInSeconds = Notify.TriggerTime;
+
+         ImGui::Separator();
+         ImGui::Text(*Notify.NotifyName.ToString());
+         ImGui::SameLine();
+         if (ImGui::SliderFloat("##TriggerTime", &TimeInSeconds, 0.0f, CurrentAnimSequence->GetPlayLength(), "%.2f s"))
+         {
+             Notify.TriggerTime = TimeInSeconds;
+         }
+         ImGui::SameLine();
+         if (ImGui::Button("Delete"))
+         {
+             DeletedNotify.Add(Notify);
+         }
+         ImGui::PopID();
+         ++NotifyIndex;
+     }
+     //삭제할 Notify 일괄 처리
+     for (auto& Notify : DeletedNotify)
+     {
+         CurrentAnimSequence->RemoveAnimNotifyEvent(Notify);
+     }
+
      // 선택된 트랙 정보 표시 (예시)
      if (SelectedSequencerEntry != -1)
      {

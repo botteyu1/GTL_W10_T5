@@ -8,6 +8,7 @@
 
 
 class UAnimSequence;
+class UAnimSingleNodeInstance;
 // ImSequencer를 사용하기 위한 간단한 FSequenceInterface 구현체
 // 실제로는 엔진의 애니메이션 데이터를 이 인터페이스에 맞게 제공해야 합니다.
 class FSequenceInterface : public ImSequencer::SequenceInterface
@@ -111,8 +112,6 @@ public:
     virtual void CustomDrawCompact(int index, ImDrawList* draw_list, const ImRect& rc, const ImRect& clippingRect) override {}
 };
 
-
-
 class AnimationSequenceViewerPanel : public UEditorPanel
 {
 public:
@@ -128,12 +127,13 @@ private:
     float Width = 0, Height = 0;
     UAnimSequence* CurrentAnimSequence = nullptr;
     FSequenceInterface* SequencerData = nullptr; // ImSequencer에 전달할 데이터
+    UAnimSingleNodeInstance* AnimSingleNodeInstance = nullptr; // 싱글노드 애니메이션 인스턴스
 
     // 타임라인 상태
     int CurrentFrame = 0;
     int FirstFrame = 0; // 타임라인 스크롤 시작 프레임
-    bool bIsExpanded = true; // 시퀀서 확장 여부 (ImSequencer용)
-    int SelectedSequencerEntry = -1; // ImSequencer에서 선택된 아이템
+    bool bIsExpanded = false; // 시퀀서 확장 여부 (ImSequencer용)
+    int SelectedSequencerEntry = -1; // ImSequencer에서 선택된 
 
     // 재생 관련 상태
     bool bIsPlaying = false;

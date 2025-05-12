@@ -2,8 +2,10 @@
 #include "SkinnedMeshComponent.h"
 #include "Engine/AssetManager.h"
 
+class UAnimInstance;
 class UAnimSequence;
 class USkeletalMesh;
+struct FAnimNotifyEvent;
 
 class USkeletalMeshComponent : public USkinnedMeshComponent
 {
@@ -19,7 +21,6 @@ public:
 
     void SetSkeletalMeshAsset(USkeletalMesh* InSkeletalMeshAsset);
 
-
     TArray<FTransform> BoneTransforms;
 
     TArray<FTransform> BoneBindPoseTransforms; // 원본 BindPose에서 복사해온 에디팅을 위한 Transform
@@ -28,20 +29,17 @@ public:
 
     void SetAnimationEnabled(bool bEnable);
 
-    void ProcessAnimation(float DeltaTime);
-
-    void ProcessAnimation2(float DeltaTime);
-
-    UAnimSequence* GetAnimSequence() const { return AnimSequence; }
-    void SetAnimSequence(UAnimSequence* InAnimSequence) { AnimSequence = InAnimSequence; };
+    void SetAnimSequence(UAnimSequence* InAnimSequence);
        
+    void HandleAnimNotify(const FAnimNotifyEvent& Notify);
 
-    void SetAnimationTime(float InTime) { ElapsedTime = InTime; }
+    void SetAnimationTime(float InTime); 
+
+    UAnimInstance* GetAnimInstance() const { return AnimInstance; }
 
 private:
-    // !TODO : 애니메이션 인스턴스 로직으로 변경
-    UAnimSequence* AnimSequence = nullptr;
     USkeletalMesh* SkeletalMeshAsset = nullptr;
+    UAnimInstance* AnimInstance = nullptr;
 
     float ElapsedTime = 0.f; // TODO anim인스턴스로 이동 해야됨
 

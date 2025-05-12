@@ -3,6 +3,15 @@
 #include "UObject/ObjectMacros.h"
 #include "AnimRawData.h"
 
+struct FAnimNotifyEvent
+{
+    float TriggerTime;
+    float Duration;
+    FName NotifyName;
+
+    bool operator==(const FAnimNotifyEvent& Other) const;
+};
+
 struct FBoneAnimationTrack
 {
     FName Name;

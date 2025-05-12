@@ -6,6 +6,7 @@
 
 class UAnimDataModel;
 struct FBoneAnimationTrack;
+struct FAnimNotifyEvent;
 
 class UAnimSequenceBase : public UAnimationAsset
 {
@@ -23,9 +24,15 @@ public:
 
     const TArray<FBoneAnimationTrack>* GetBoneAnimationTracks() const;
 
+    void AddAnimNotifyEvent(FAnimNotifyEvent Notify);
+    void RemoveAnimNotifyEvent(FAnimNotifyEvent Notify);
+    void RemoveAnimNotifyEvent(int index);
+    void ClearAnimNotifyEvents();
+    void SortNotifyEvents();
+    TArray<FAnimNotifyEvent>& GetAnimNotifies(){ return Notifies; }
 
 protected:
     UAnimDataModel* AnimDataModel = nullptr;
-    // !TODO : AnimNofity
-    //TArray<FAnimNofity*> Notifies;
+    // !TODO : AnimNotify
+    TArray<FAnimNotifyEvent> Notifies;
 };

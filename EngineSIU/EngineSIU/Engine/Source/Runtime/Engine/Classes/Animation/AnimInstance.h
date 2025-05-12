@@ -3,6 +3,19 @@
 #include "UObject/ObjectMacros.h"
 
 class USkeletalMeshComponent;
+class UAnimationAsset;
+
+struct FAnimationPlaybackContext
+{
+    UAnimationAsset* AnimationAsset = nullptr;
+    float PreviousTime = 0.f;
+    float PlaybackTime = 0.f;
+    bool bIsLooping = false;
+    float PlayRate = 1.f;
+    float StartPosition = 0.f;
+
+    FAnimationPlaybackContext(UAnimationAsset* InAnimAsset, bool IsLoop = false, float InPlayRate = 1.f, float InStartPosition = 0.f);
+};
 
 // 애니메이션 상태를 나타내는 enum
 enum class EAnimState
@@ -25,18 +38,22 @@ public:
     UAnimInstance();
     virtual ~UAnimInstance();
 
-    // 애니메이션 초기화 (컴포넌트 등 설정)
-    virtual void Initialize(USkeletalMeshComponent* MeshComponent) = 0;
+    // 애니메이션 업데이트 함수
+    void TriggerAnimNotifies(float DeltaTime);
+    virtual void NativeUpdateAnimation(float DeltaTime);
 
-    // 매 프레임 애니메이션 업데이트 함수
-    virtual void TriggerAnimNotifies(float DeltaTime) = 0;
+    virtual void AddAnimationPlaybackContext(UAnimationAsset* InAnimAsset = nullptr, bool IsLoop = false, float InPlayRate = 1.f, float InStartPosition = 0.f);
 
-    // FSM 이 메시 컴포넌트에 접근할 수 있도록 getter 제공
-    USkeletalMeshComponent* GetSkeletalMeshComponent() const
-    {
-        return SkeletalMeshComponent;
-    }
+    std::shared_ptr<FAnimationPlaybackContext>& GetAnimationPlaybackContext(UAnimationAsset* InAnimAsset);
+
+    void Initialize(USkeletalMeshComponent* MeshComponent);
+    USkeletalMeshComponent* GetSkeletalMeshComponent() const { return SkeletalMeshComponent; }
+    void SetSkeletalMeshComponent(USkeletalMeshComponent* InSkeletalMeshComponent) { SkeletalMeshComponent = InSkeletalMeshComponent; }
+
+    void ClearAnimationPlaybackContexts();
+
 
 protected:
     USkeletalMeshComponent* SkeletalMeshComponent = nullptr;
+    TArray<std::shared_ptr<FAnimationPlaybackContext>> AnimationPlaybackContexts;
 };

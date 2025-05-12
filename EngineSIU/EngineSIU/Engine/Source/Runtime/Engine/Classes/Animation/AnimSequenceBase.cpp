@@ -43,3 +43,35 @@ const TArray<FBoneAnimationTrack>* UAnimSequenceBase::GetBoneAnimationTracks() c
     return nullptr; 
 }
 
+void UAnimSequenceBase::AddAnimNotifyEvent(FAnimNotifyEvent Notify)
+{
+    Notifies.Add(Notify);
+    SortNotifyEvents();
+}
+
+void UAnimSequenceBase::RemoveAnimNotifyEvent(FAnimNotifyEvent Notify)
+{
+    Notifies.Remove(Notify);
+}
+
+void UAnimSequenceBase::RemoveAnimNotifyEvent(int index)
+{
+    if (index >= 0 && index < Notifies.Num())
+    {
+        Notifies.RemoveAt(index);
+    }
+}
+
+void UAnimSequenceBase::ClearAnimNotifyEvents()
+{
+    Notifies.Empty();
+}
+
+void UAnimSequenceBase::SortNotifyEvents()
+{
+    Notifies.Sort([](const FAnimNotifyEvent& A, const FAnimNotifyEvent& B)
+        {
+            return A.TriggerTime < B.TriggerTime;
+        });
+}
+

@@ -11,8 +11,9 @@ public:
     UAnimSingleNodeInstance();
     virtual ~UAnimSingleNodeInstance() override;
 
-    void UpdateAnimation(float DeltaTime);
-    void SetAnimationAsset(UAnimationAsset* InAnimationAsset);
+    virtual void NativeUpdateAnimation(float DeltaTime) override;
+    void UpdateBone(float ElapsedTime);
+    void SetAnimationAsset(UAnimationAsset* InAnimAsset, bool IsLoop = false, float InPlayRate = 1.f, float InStartPosition = 0.f);
 
     UAnimationAsset* GetAnimationAsset() const { return CurrentAsset; }
 
@@ -21,10 +22,15 @@ public:
 
     void SetPlaying(bool bInPlaying);
     bool IsPlaying() const;
+    void PauseAnim();
     void SetLooping(bool bInLooping);
-    bool IsLooping() const;
+    bool IsLooping();
+
+    void SetAnimationTime(float InTime);
 
 
+    virtual void AddAnimationPlaybackContext(UAnimationAsset* InAnimAsset, bool IsLoop = false, float InPlayRate = 1.f, float InStartPosition = 0.f) override;
 protected:
     UAnimationAsset* CurrentAsset = nullptr;
+    bool bIsPlaying = false;
 };
