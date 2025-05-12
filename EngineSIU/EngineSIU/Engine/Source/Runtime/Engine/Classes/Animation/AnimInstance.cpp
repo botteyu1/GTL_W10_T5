@@ -41,24 +41,39 @@ void UAnimInstance::TriggerAnimNotifies(float DeltaTime)
 
 void UAnimInstance::NativeUpdateAnimation(float DeltaTime)
 {
+
 }
 
 void UAnimInstance::AddAnimationPlaybackContext(UAnimationAsset* InAnimAsset, bool IsLoop, float InPlayRate, float InStartPosition)
 {
     if (InAnimAsset)
     {
+        bool bIsExist = false;
+        for (const auto& PlaybackContext : AnimationPlaybackContexts)
+        {
+            if (PlaybackContext->AnimationAsset == InAnimAsset)
+            {
+                bIsExist = true;
+                break;
+            }
+        }
+        if (bIsExist)
+        {
+            return;
+        }
         auto PlaybackContext = std::make_shared<FAnimationPlaybackContext>(InAnimAsset, IsLoop, InPlayRate, InStartPosition);
         AnimationPlaybackContexts.Add(PlaybackContext);
     }
 }
 
-std::shared_ptr<FAnimationPlaybackContext>& UAnimInstance::GetAnimationPlaybackContext(UAnimationAsset* InAnimAsset)
+FAnimationPlaybackContext* UAnimInstance::GetAnimationPlaybackContext(UAnimationAsset* InAnimAsset)
 {
     for (auto& PlaybackContext : AnimationPlaybackContexts)
     {
         if (PlaybackContext->AnimationAsset == InAnimAsset)
-            return PlaybackContext;
+            return PlaybackContext.get();
     }
+    return nullptr;
 }
 
 void UAnimInstance::Initialize(USkeletalMeshComponent* MeshComponent)

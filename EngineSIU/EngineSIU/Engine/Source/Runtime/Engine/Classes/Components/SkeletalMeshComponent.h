@@ -6,6 +6,8 @@ class UAnimInstance;
 class UAnimSequence;
 class USkeletalMesh;
 struct FAnimNotifyEvent;
+class UAnimSingleNodeInstance;
+class UBlendAnimInstance;
 
 class USkeletalMeshComponent : public USkinnedMeshComponent
 {
@@ -35,11 +37,16 @@ public:
 
     void SetAnimationTime(float InTime); 
 
+    void SetAnimInstanceClass(UClass* InstanceClass);
+
     UAnimInstance* GetAnimInstance() const { return AnimInstance; }
 
 private:
     USkeletalMesh* SkeletalMeshAsset = nullptr;
     UAnimInstance* AnimInstance = nullptr;
+
+    UAnimInstance* CachedAnimSingleNodeInstance = nullptr;
+    UAnimInstance* CachedBlendAnimInstance = nullptr;
 
     float ElapsedTime = 0.f; // TODO anim인스턴스로 이동 해야됨
 
