@@ -11,12 +11,10 @@
 #include "UObject/ObjectFactory.h"
 USkeletalMeshComponent::USkeletalMeshComponent()
 {
-    AnimSequence = FObjectFactory::ConstructObject<UAnimSequence>(this);
 }
 
 USkeletalMeshComponent::~USkeletalMeshComponent()
 {
-
 }
 
 
