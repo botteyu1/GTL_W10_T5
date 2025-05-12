@@ -12,6 +12,7 @@ public:
     virtual ~UAnimInstance();
     // 애니메이션 업데이트 함수
     void TriggerAnimNotifies(float DeltaTime);
+    virtual void NativeUpdateAnimation(float DeltaTime) {}
 
     void Initialize(USkeletalMeshComponent* MeshComponent);
 
