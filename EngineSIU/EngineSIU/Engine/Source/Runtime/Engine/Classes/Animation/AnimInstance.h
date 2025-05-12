@@ -29,7 +29,7 @@ public:
 
     virtual void AddAnimationPlaybackContext(UAnimationAsset* InAnimAsset = nullptr, bool IsLoop = false, float InPlayRate = 1.f, float InStartPosition = 0.f);
 
-    std::shared_ptr<FAnimationPlaybackContext>& GetAnimationPlaybackContext(UAnimationAsset* InAnimAsset);
+    FAnimationPlaybackContext* GetAnimationPlaybackContext(UAnimationAsset* InAnimAsset);
 
     void Initialize(USkeletalMeshComponent* MeshComponent);
     USkeletalMeshComponent* GetSkeletalMeshComponent() const { return SkeletalMeshComponent; }

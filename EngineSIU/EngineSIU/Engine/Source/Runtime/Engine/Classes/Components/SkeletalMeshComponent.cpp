@@ -12,6 +12,7 @@
 #include "GameFramework/Actor.h"
 #include "Animation/AnimInstance.h"
 #include "Animation/AnimSingleNodeInstance.h"
+#include "Animation/BlendAnimInstance.h"
 
 USkeletalMeshComponent::USkeletalMeshComponent()
 {
@@ -82,6 +83,11 @@ void USkeletalMeshComponent::SetAnimationEnabled(bool bEnable)
     if (UAnimSingleNodeInstance* SingleNodeInstance = Cast<UAnimSingleNodeInstance>(AnimInstance))
     {
         SingleNodeInstance->SetPlaying(bEnable);
+    }
+
+    if (UBlendAnimInstance* BlendAnimInstance = Cast<UBlendAnimInstance>(AnimInstance))
+    {
+        BlendAnimInstance->SetAnimationEnabled(bEnable);
     }
 
     if (!bPlayAnimation)
@@ -247,4 +253,44 @@ void USkeletalMeshComponent::SetAnimationTime(float InTime)
         SingleNodeInstance->SetAnimationTime(InTime);
     }
     ElapsedTime = InTime; 
+}
+
+void USkeletalMeshComponent::SetAnimInstanceClass(UClass* InstanceClass)
+{
+    if (Cast<UAnimSingleNodeInstance>(AnimInstance))
+    {
+        CachedAnimSingleNodeInstance = AnimInstance;
+    }
+    else if (Cast<UBlendAnimInstance>(AnimInstance))
+    {
+        CachedBlendAnimInstance = AnimInstance;
+    }
+
+    if (InstanceClass && InstanceClass == UAnimSingleNodeInstance::StaticClass())
+    {
+        if(CachedAnimSingleNodeInstance)
+        {
+            AnimInstance = CachedAnimSingleNodeInstance;
+            CachedAnimSingleNodeInstance = nullptr;
+        }
+        else
+        {
+            AnimInstance = FObjectFactory::ConstructObject<UAnimSingleNodeInstance>(this);
+            AnimInstance->Initialize(this);
+        }
+    }
+
+    if (InstanceClass && InstanceClass == UBlendAnimInstance::StaticClass())
+    {
+        if (CachedBlendAnimInstance)
+        {
+            AnimInstance = CachedBlendAnimInstance;
+            CachedBlendAnimInstance = nullptr;
+        }
+        else
+        {
+            AnimInstance = FObjectFactory::ConstructObject<UBlendAnimInstance>(this);
+            AnimInstance->Initialize(this);
+        }
+    }
 }
