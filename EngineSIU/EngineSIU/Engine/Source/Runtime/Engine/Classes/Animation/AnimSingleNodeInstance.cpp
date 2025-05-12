@@ -19,11 +19,21 @@ void UAnimSingleNodeInstance::NativeUpdateAnimation(float DeltaTime)
     if (CurrentAsset && bIsPlaying)
     {
         std::shared_ptr<FAnimationPlaybackContext>& PlaybackContext = GetAnimationPlaybackContext(CurrentAsset);
-        PlaybackContext->PreviousTime = PlaybackContext->PlaybackTime;
-        PlaybackContext->PlaybackTime += DeltaTime;
+        if (PlaybackContext->PlayRate > 0)
+        {
+            PlaybackContext->PreviousTime = PlaybackContext->PlaybackTime;
+            PlaybackContext->PlaybackTime += DeltaTime;
+        }
+        else if (PlaybackContext->PlayRate < 0)
+        {
+            PlaybackContext->PreviousTime = PlaybackContext->PlaybackTime;
+            PlaybackContext->PlaybackTime -= DeltaTime;
+        }
+        PlaybackContext->PlaybackTime = fmodf(PlaybackContext->PlaybackTime, PlaybackContext->AnimationLength);
 
         float ElapsedTime = PlaybackContext->PlaybackTime;
         UpdateBone(ElapsedTime);
+        TriggerAnimNotifies(DeltaTime);
     }
 }
 
@@ -188,9 +198,13 @@ void UAnimSingleNodeInstance::SetAnimationTime(float InTime)
     if (CurrentAsset)
     {
         std::shared_ptr<FAnimationPlaybackContext>& PlaybackContext = GetAnimationPlaybackContext(CurrentAsset);
+        PlaybackContext->PreviousTime = PlaybackContext->PlaybackTime;
+        if (PlaybackContext->PreviousTime < InTime)
+            PlaybackContext->PlayRate = 1;
+        else
+            PlaybackContext->PlayRate = -1;
         PlaybackContext->PlaybackTime = InTime;
-        PlaybackContext->PreviousTime = InTime;
-
+        TriggerAnimNotifies(0);
         UpdateBone(InTime);
     }
 }

@@ -13,6 +13,7 @@ struct FAnimationPlaybackContext
     bool bIsLooping = false;
     float PlayRate = 1.f;
     float StartPosition = 0.f;
+    float AnimationLength = 0.f;
 
     FAnimationPlaybackContext(UAnimationAsset* InAnimAsset, bool IsLoop = false, float InPlayRate = 1.f, float InStartPosition = 0.f);
 };
