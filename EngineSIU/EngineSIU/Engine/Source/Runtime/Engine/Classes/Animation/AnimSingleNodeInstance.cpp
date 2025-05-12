@@ -1,43 +1,43 @@
 #include "AnimSingleNodeInstance.h"
 
-AnimSingleNodeInstance::AnimSingleNodeInstance()
+UAnimSingleNodeInstance::UAnimSingleNodeInstance()
 {
 }
 
-AnimSingleNodeInstance::~AnimSingleNodeInstance()
+UAnimSingleNodeInstance::~UAnimSingleNodeInstance()
 {
 }
 
-void AnimSingleNodeInstance::UpdateAnimation(float DeltaTime)
+void UAnimSingleNodeInstance::UpdateAnimation(float DeltaTime)
 {
 }
 
-void AnimSingleNodeInstance::SetAnimationAsset(UAnimationAsset* InAnimationAsset)
+void UAnimSingleNodeInstance::SetAnimationAsset(UAnimationAsset* InAnimationAsset)
 {
 }
 
-void AnimSingleNodeInstance::PlayAnim(bool bIsLooping, float InPlayRate, float InStartPosition)
+void UAnimSingleNodeInstance::PlayAnim(bool bIsLooping, float InPlayRate, float InStartPosition)
 {
 }
 
-void AnimSingleNodeInstance::StopAnim()
+void UAnimSingleNodeInstance::StopAnim()
 {
 }
 
-void AnimSingleNodeInstance::SetPlaying(bool bInPlaying)
+void UAnimSingleNodeInstance::SetPlaying(bool bInPlaying)
 {
 }
 
-bool AnimSingleNodeInstance::IsPlaying() const
+bool UAnimSingleNodeInstance::IsPlaying() const
 {
     return false;
 }
 
-void AnimSingleNodeInstance::SetLooping(bool bInLooping)
+void UAnimSingleNodeInstance::SetLooping(bool bInLooping)
 {
 }
 
-bool AnimSingleNodeInstance::IsLooping() const
+bool UAnimSingleNodeInstance::IsLooping() const
 {
     return false;
 }
