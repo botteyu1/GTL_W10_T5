@@ -12,6 +12,7 @@ public:
     virtual ~UAnimSingleNodeInstance() override;
 
     virtual void NativeUpdateAnimation(float DeltaTime) override;
+    void UpdateBone(float ElapsedTime);
     void SetAnimationAsset(UAnimationAsset* InAnimAsset, bool IsLoop = false, float InPlayRate = 1.f, float InStartPosition = 0.f);
 
     UAnimationAsset* GetAnimationAsset() const { return CurrentAsset; }

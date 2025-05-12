@@ -251,10 +251,6 @@ AnimationSequenceViewerPanel::AnimationSequenceViewerPanel()
         if (ImGui::Button(reinterpret_cast<const char*>(ICON_FEATHER_PAUSE))) // "Pause" (Stop 대신 Pause 아이콘 사용)
         {
             bIsPlaying = false;
-            if (AnimSingleNodeInstance)
-            {
-                AnimSingleNodeInstance->PauseAnim();
-            }
         }
     }
     else if (bIsPlayingReverse) // 역방향 재생 중
@@ -262,10 +258,6 @@ AnimationSequenceViewerPanel::AnimationSequenceViewerPanel()
         if (ImGui::Button(reinterpret_cast<const char*>(ICON_FEATHER_PAUSE))) // "Pause"
         {
             bIsPlayingReverse = false;
-            if (AnimSingleNodeInstance)
-            {
-                AnimSingleNodeInstance->PauseAnim();
-            }
         }
     }
     else // 정지 상태
@@ -273,10 +265,6 @@ AnimationSequenceViewerPanel::AnimationSequenceViewerPanel()
         if (ImGui::Button(reinterpret_cast<const char*>(ICON_FEATHER_PLAY))) // "Play"
         {
             bIsPlaying = true;
-            if (AnimSingleNodeInstance)
-            {
-                AnimSingleNodeInstance->SetPlaying(bIsPlaying);
-            }
             bIsPlayingReverse = false;
             // 재생 시작 시 LastFrameTime을 현재 시간으로 리셋
             LastFrameTime = static_cast<float>(ImGui::GetTime());
