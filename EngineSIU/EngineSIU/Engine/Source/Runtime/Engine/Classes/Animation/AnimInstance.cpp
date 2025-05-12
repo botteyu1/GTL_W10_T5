@@ -3,6 +3,7 @@
 #include "Animation/AnimSequenceBase.h"
 #include "UObject/Casts.h"
 #include "Components/SkeletalMeshComponent.h"
+#include "Animation/AnimSequence.h"
 
 UAnimInstance::UAnimInstance()
 {
@@ -16,12 +17,23 @@ void UAnimInstance::TriggerAnimNotifies(float DeltaTime)
 {
     for (const auto& PlaybackContexts : AnimationPlaybackContexts)
     {
-        UAnimSequenceBase* AnimSequenceBase = Cast<UAnimSequenceBase>(PlaybackContexts->AnimationAsset);
+        UAnimSequence* AnimSequenceBase = Cast<UAnimSequence>(PlaybackContexts->AnimationAsset);
         for (const auto& Notify : AnimSequenceBase->GetAnimNotifies())
         {
-            if (PlaybackContexts->PreviousTime <= Notify.TriggerTime && PlaybackContexts->PlaybackTime >= Notify.TriggerTime)
+            if (PlaybackContexts->PlayRate > 0)
             {
-                SkeletalMeshComponent->HandleAnimNotify(Notify);
+                if (PlaybackContexts->PreviousTime <= Notify.TriggerTime && PlaybackContexts->PlaybackTime >= Notify.TriggerTime)
+                {
+                    SkeletalMeshComponent->HandleAnimNotify(Notify);
+                }
+            }
+            //역방향 재생시 반대로 계산
+            else if (PlaybackContexts->PlayRate < 0)
+            {
+                if (PlaybackContexts->PreviousTime >= Notify.TriggerTime && PlaybackContexts->PlaybackTime <= Notify.TriggerTime)
+                {
+                    SkeletalMeshComponent->HandleAnimNotify(Notify);
+                }
             }
         }
     }
@@ -80,4 +92,5 @@ FAnimationPlaybackContext::FAnimationPlaybackContext(UAnimationAsset* InAnimAsse
 {
     PreviousTime = 0.f;
     PlaybackTime = 0.f;
+    AnimationLength = Cast<UAnimSequence>(InAnimAsset)->GetPlayLength();
 }

@@ -24,11 +24,22 @@ void UAnimSingleNodeInstance::NativeUpdateAnimation(float DeltaTime)
             return;
         }
 
-        PlaybackContext->PreviousTime = PlaybackContext->PlaybackTime;
-        PlaybackContext->PlaybackTime += DeltaTime;
+        if (PlaybackContext->PlayRate > 0)
+        {
+            PlaybackContext->PreviousTime = PlaybackContext->PlaybackTime;
+            PlaybackContext->PlaybackTime += DeltaTime;
+        }
+        else if (PlaybackContext->PlayRate < 0)
+        {
+            PlaybackContext->PreviousTime = PlaybackContext->PlaybackTime;
+            PlaybackContext->PlaybackTime -= DeltaTime;
+        }
+
+        PlaybackContext->PlaybackTime = fmodf(PlaybackContext->PlaybackTime, PlaybackContext->AnimationLength);
 
         float ElapsedTime = PlaybackContext->PlaybackTime;
         UpdateBone(ElapsedTime);
+        TriggerAnimNotifies(DeltaTime);
     }
 }
 
@@ -198,8 +209,7 @@ void UAnimSingleNodeInstance::SetAnimationTime(float InTime)
             return;
         }
         PlaybackContext->PlaybackTime = InTime;
-        PlaybackContext->PreviousTime = InTime;
-
+        TriggerAnimNotifies(0);
         UpdateBone(InTime);
     }
 }
