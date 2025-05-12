@@ -8,3 +8,10 @@ const TArray<FBoneAnimationTrack>& UAnimDataModel::GetBoneAnimationTracks() cons
 {
     return BoneAnimationTracks;
 }
+
+bool FAnimNotifyEvent::operator==(const FAnimNotifyEvent& Other) const
+{
+    return NotifyName == Other.NotifyName &&
+        TriggerTime == Other.TriggerTime &&
+        Duration == Other.Duration;
+}

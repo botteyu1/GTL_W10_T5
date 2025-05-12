@@ -26,9 +26,10 @@ public:
 
     void AddAnimNotifyEvent(FAnimNotifyEvent Notify);
     void RemoveAnimNotifyEvent(FAnimNotifyEvent Notify);
+    void RemoveAnimNotifyEvent(int index);
     void ClearAnimNotifyEvents();
     void SortNotifyEvents();
-    const TArray<FAnimNotifyEvent>& GetAnimNotifies() const { return Notifies; }
+    TArray<FAnimNotifyEvent>& GetAnimNotifies(){ return Notifies; }
 
 
 protected:

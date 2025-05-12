@@ -104,6 +104,7 @@ AnimationSequenceViewerPanel::AnimationSequenceViewerPanel()
          CurrentFrame = std::max(SequencerData->GetFrameMin(), std::min(CurrentFrame, SequencerData->GetFrameMax()));
      }
 
+     ImGui::PushID("MainSequencer");
      if (ImSequencer::Sequencer(SequencerData, &CurrentFrame, &bIsExpanded, &SelectedSequencerEntry, &FirstFrame, sequenceOptions))
      {
           //시퀀서에서 프레임이 변경된 경우 (예: 사용자가 재생 헤드를 드래그)
@@ -117,7 +118,58 @@ AnimationSequenceViewerPanel::AnimationSequenceViewerPanel()
               
           }
      }
-     
+     ImGui::PopID();
+
+     static char NotifyName[256] = "";
+     if (CurrentAnimSequence)
+     {
+         ImGui::InputText("NotifyName", NotifyName, sizeof(NotifyName));
+
+         if (ImGui::Button("Add Notify"))
+         {
+             FAnimNotifyEvent NewNotify;
+             NewNotify.NotifyName = FName(FString(NotifyName));
+             NewNotify.TriggerTime = PlaybackTime;
+             NewNotify.Duration = 0.0f;
+             CurrentAnimSequence->AddAnimNotifyEvent(NewNotify);
+
+             NotifyName[0] = '\0';
+         }
+     }
+
+     if(CurrentAnimSequence->GetAnimNotifies().Num()>0)
+         ImGui::Text("Edit Notify Trigger Time:");
+
+     int NotifyIndex = 0;
+     TArray<FAnimNotifyEvent> DeletedNotify;
+
+     for(auto& Notify : CurrentAnimSequence->GetAnimNotifies())
+     {
+         ImGui::PushID(NotifyIndex);
+         float FrameRate = CurrentAnimSequence->GetFrameRate().AsDecimal();
+         float TimeInSeconds = Notify.TriggerTime;
+
+         ImGui::Separator();
+         ImGui::Text(*Notify.NotifyName.ToString());
+         ImGui::SameLine();
+         if (ImGui::SliderFloat("##TriggerTime", &TimeInSeconds, 0.0f, CurrentAnimSequence->GetPlayLength(), "%.2f s"))
+         {
+             Notify.TriggerTime = TimeInSeconds;
+         }
+         ImGui::SameLine();
+         if (ImGui::Button("Delete"))
+         {
+             DeletedNotify.Add(Notify);
+         }
+         ImGui::PopID();
+         ++NotifyIndex;
+     }
+
+     for (auto& Notify : DeletedNotify)
+     {
+         CurrentAnimSequence->RemoveAnimNotifyEvent(Notify);
+     }
+
      // 선택된 트랙 정보 표시 (예시)
      if (SelectedSequencerEntry != -1)
      {

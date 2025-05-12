@@ -54,6 +54,14 @@ void UAnimSequenceBase::RemoveAnimNotifyEvent(FAnimNotifyEvent Notify)
     Notifies.Remove(Notify);
 }
 
+void UAnimSequenceBase::RemoveAnimNotifyEvent(int index)
+{
+    if (index >= 0 && index < Notifies.Num())
+    {
+        Notifies.RemoveAt(index);
+    }
+}
+
 void UAnimSequenceBase::ClearAnimNotifyEvents()
 {
     Notifies.Empty();
