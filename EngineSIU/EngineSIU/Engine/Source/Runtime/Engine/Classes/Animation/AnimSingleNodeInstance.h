@@ -11,7 +11,7 @@ public:
     UAnimSingleNodeInstance();
     virtual ~UAnimSingleNodeInstance() override;
 
-    void UpdateAnimation(float DeltaTime);
+    virtual void NativeUpdateAnimation(float DeltaTime) override;
     void SetAnimationAsset(UAnimationAsset* InAnimationAsset);
 
     UAnimationAsset* GetAnimationAsset() const { return CurrentAsset; }
