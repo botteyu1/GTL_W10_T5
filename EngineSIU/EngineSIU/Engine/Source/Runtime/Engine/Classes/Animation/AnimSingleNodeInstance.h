@@ -21,11 +21,14 @@ public:
 
     void SetPlaying(bool bInPlaying);
     bool IsPlaying() const;
+    void PauseAnim();
     void SetLooping(bool bInLooping);
-    bool IsLooping() const;
+    bool IsLooping();
+
+    void SetAnimationTime(float InTime);
+
 
     virtual void AddAnimationPlaybackContext(UAnimationAsset* InAnimAsset, bool IsLoop = false, float InPlayRate = 1.f, float InStartPosition = 0.f) override;
-
 protected:
     UAnimationAsset* CurrentAsset = nullptr;
     bool bIsPlaying = false;

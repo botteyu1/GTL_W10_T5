@@ -27,6 +27,10 @@ void UAnimInstance::TriggerAnimNotifies(float DeltaTime)
     }
 }
 
+void UAnimInstance::NativeUpdateAnimation(float DeltaTime)
+{
+}
+
 void UAnimInstance::AddAnimationPlaybackContext(UAnimationAsset* InAnimAsset, bool IsLoop, float InPlayRate, float InStartPosition)
 {
     if (InAnimAsset)
@@ -48,6 +52,11 @@ std::shared_ptr<FAnimationPlaybackContext>& UAnimInstance::GetAnimationPlaybackC
 void UAnimInstance::Initialize(USkeletalMeshComponent* MeshComponent)
 {
     SkeletalMeshComponent = MeshComponent;
+    AnimationPlaybackContexts.Empty();
+}
+
+void UAnimInstance::ClearAnimationPlaybackContexts()
+{
     AnimationPlaybackContexts.Empty();
 }
 

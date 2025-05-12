@@ -29,20 +29,15 @@ public:
 
     void SetAnimationEnabled(bool bEnable);
 
-    void ProcessAnimation(float DeltaTime);
-
-    void ProcessAnimation2(float DeltaTime);
-
-    UAnimSequence* GetAnimSequence() const { return AnimSequence; }
     void SetAnimSequence(UAnimSequence* InAnimSequence);
        
     void HandleAnimNotify(const FAnimNotifyEvent& Notify);
 
-    void SetAnimationTime(float InTime) { ElapsedTime = InTime; }
+    void SetAnimationTime(float InTime); 
+
+    UAnimInstance* GetAnimInstance() const { return AnimInstance; }
 
 private:
-    // !TODO : 애니메이션 인스턴스 로직으로 변경
-    UAnimSequence* AnimSequence = nullptr;
     USkeletalMesh* SkeletalMeshAsset = nullptr;
     UAnimInstance* AnimInstance = nullptr;
 

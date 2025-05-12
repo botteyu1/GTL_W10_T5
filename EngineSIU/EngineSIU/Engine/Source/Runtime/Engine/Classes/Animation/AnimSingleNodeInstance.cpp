@@ -1,4 +1,10 @@
 #include "AnimSingleNodeInstance.h"
+#include "Components/SkeletalMeshComponent.h"
+#include "Animation/AnimSequence.h"
+#include "UObject/Casts.h"
+#include "Engine/SkeletalMesh.h"
+#include "Engine/ReferenceSkeleton.h"
+#include "Animation/Skeleton.h"
 
 UAnimSingleNodeInstance::UAnimSingleNodeInstance()
 {
@@ -15,15 +21,21 @@ void UAnimSingleNodeInstance::NativeUpdateAnimation(float DeltaTime)
         std::shared_ptr<FAnimationPlaybackContext>& PlaybackContext = GetAnimationPlaybackContext(CurrentAsset);
         PlaybackContext->PreviousTime = PlaybackContext->PlaybackTime;
         PlaybackContext->PlaybackTime += DeltaTime;
-        /*
-        if (!AnimSequence || !SkeletalMeshAsset || !SkeletalMeshAsset->GetSkeleton() || !AnimSequence->GetAnimDataModel())
+
+        float ElapsedTime = PlaybackContext->PlaybackTime;
+
+        USkeletalMeshComponent* SkeletalMeshComponent = GetSkeletalMeshComponent();
+        if (!SkeletalMeshComponent)
         {
             return;
         }
 
-        if (bPlayAnimation)
+        USkeletalMesh* SkeletalMeshAsset = SkeletalMeshComponent->GetSkeletalMeshAsset();
+        UAnimSequence* AnimSequence = Cast<UAnimSequence>(CurrentAsset);
+
+        if (!AnimSequence || !SkeletalMeshAsset || !SkeletalMeshAsset->GetSkeleton() || !AnimSequence->GetAnimDataModel())
         {
-            ElapsedTime += DeltaTime;
+            return;
         }
 
         UAnimDataModel* AnimDataModel = AnimSequence->GetAnimDataModel();
@@ -36,6 +48,10 @@ void UAnimSingleNodeInstance::NativeUpdateAnimation(float DeltaTime)
 
         const USkeleton* Skeleton = SkeletalMeshAsset->GetSkeleton();
         const TArray<FMeshBoneInfo>& SkeletonBones = Skeleton->GetReferenceSkeleton().RawRefBoneInfo;
+
+        // !TODO : 여기를 FPoseContext등으로 수정해야 함
+        TArray<FTransform>& BoneTransforms = SkeletalMeshComponent->BoneTransforms;
+        TArray<FTransform>& BoneBindPoseTransforms = SkeletalMeshComponent->BoneBindPoseTransforms;
 
         if (BoneTransforms.Num() != SkeletonBones.Num())
         {
@@ -97,7 +113,7 @@ void UAnimSingleNodeInstance::NativeUpdateAnimation(float DeltaTime)
 
             BoneTransforms[BoneIdx] = LocalAnimatedTransforms[BoneIdx];
         }
-        */
+        
     }
 }
 
@@ -127,16 +143,26 @@ void UAnimSingleNodeInstance::PlayAnim(bool bIsLooping, float InPlayRate, float 
 void UAnimSingleNodeInstance::StopAnim()
 {
     bIsPlaying = false;
+    SetAnimationTime(0); //정지하고 시간 0으로 리셋
 }
 
 void UAnimSingleNodeInstance::SetPlaying(bool bInPlaying)
 {
     bIsPlaying = bInPlaying;
+    if (!bInPlaying)
+    {
+        StopAnim();
+    }
 }
 
 bool UAnimSingleNodeInstance::IsPlaying() const
 {
-    return false;
+    return bIsPlaying;
+}
+
+void UAnimSingleNodeInstance::PauseAnim()
+{
+    bIsPlaying = false;
 }
 
 void UAnimSingleNodeInstance::SetLooping(bool bInLooping)
@@ -144,12 +170,27 @@ void UAnimSingleNodeInstance::SetLooping(bool bInLooping)
     GetAnimationPlaybackContext(CurrentAsset)->bIsLooping = bInLooping;
 }
 
-bool UAnimSingleNodeInstance::IsLooping() const
+bool UAnimSingleNodeInstance::IsLooping()
 {
+    if (CurrentAsset && GetAnimationPlaybackContext(CurrentAsset)->bIsLooping)
+    {
+        return true;
+    }
     return false;
+}
+
+void UAnimSingleNodeInstance::SetAnimationTime(float InTime)
+{
+    if (CurrentAsset)
+    {
+        std::shared_ptr<FAnimationPlaybackContext>& PlaybackContext = GetAnimationPlaybackContext(CurrentAsset);
+        PlaybackContext->PlaybackTime = InTime;
+        PlaybackContext->PreviousTime = InTime;
+    }
 }
 
 void UAnimSingleNodeInstance::AddAnimationPlaybackContext(UAnimationAsset* InAnimAsset, bool IsLoop, float InPlayRate, float InStartPosition)
 {
+    ClearAnimationPlaybackContexts(); // Single이니까 Clear 시킨 후 추가
     Super::AddAnimationPlaybackContext(InAnimAsset, IsLoop, InPlayRate, InStartPosition);
 }

@@ -8,6 +8,7 @@
 
 
 class UAnimSequence;
+class UAnimSingleNodeInstance;
 // ImSequencer를 사용하기 위한 간단한 FSequenceInterface 구현체
 // 실제로는 엔진의 애니메이션 데이터를 이 인터페이스에 맞게 제공해야 합니다.
 class FSequenceInterface : public ImSequencer::SequenceInterface
@@ -126,6 +127,7 @@ private:
     float Width = 0, Height = 0;
     UAnimSequence* CurrentAnimSequence = nullptr;
     FSequenceInterface* SequencerData = nullptr; // ImSequencer에 전달할 데이터
+    UAnimSingleNodeInstance* AnimSingleNodeInstance = nullptr; // 싱글노드 애니메이션 인스턴스
 
     // 타임라인 상태
     int CurrentFrame = 0;

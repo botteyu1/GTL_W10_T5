@@ -4,7 +4,7 @@
  #include "Engine/Classes/Animation/AnimSequence.h" // UAnimSequence 사용
 #include "Engine/Source/Editor/UnrealEd/IconsFeather.h" // Feather Icons 헤더 (또는 사용 중인 아이콘 폰트 헤더)
 #include "Font/IconDefs.h"
-
+#include "Animation/AnimSingleNodeInstance.h"
 
 AnimationSequenceViewerPanel::AnimationSequenceViewerPanel()
  {
@@ -44,16 +44,23 @@ AnimationSequenceViewerPanel::AnimationSequenceViewerPanel()
      USkeletalMeshComponent* SkeletalMeshComponent = Cast<USkeletalMeshComponent>(Engine->GetSelectedComponent());
 
      // 전 애니메이션과 달라지면 업데이트
+     // AnimInstance가 SingleNodeInstance인 경우에만 애니메이션을 업데이트 -> 뷰어니깐
      if (Engine and SkeletalMeshComponent)
      {
+         AnimSingleNodeInstance = Cast<UAnimSingleNodeInstance>(SkeletalMeshComponent->GetAnimInstance());
+
          static UAnimSequence* PrevAnim = nullptr;
-         if (PrevAnim != SkeletalMeshComponent->GetAnimSequence())
+         if (AnimSingleNodeInstance && PrevAnim != AnimSingleNodeInstance->GetAnimationAsset())
          {
-             SetAnimationSequence(SkeletalMeshComponent->GetAnimSequence());
+             if (UAnimationAsset* AnimAsset = AnimSingleNodeInstance->GetAnimationAsset())
+             {
+                 CurrentAnimSequence = Cast<UAnimSequence>(AnimAsset); // !TODO : 현 시점에서는 UAnimSequence뿐이니까 이렇게 캐스팅
+                SetAnimationSequence(CurrentAnimSequence);
+             }
          }
          PrevAnim = CurrentAnimSequence;
      }
-     if (!Engine || !CurrentAnimSequence || !SequencerData || !SkeletalMeshComponent) // 엔진 또는 시퀀스 없으면 렌더링 안 함
+     if (!Engine || !CurrentAnimSequence || !SequencerData || !SkeletalMeshComponent || !AnimSingleNodeInstance) // 엔진 또는 시퀀스 없으면 렌더링 안 함
      {
          // 패널은 표시하되, 내용이 없음을 알릴 수 있음
          ImGui::Begin("Animation Sequence Viewer", nullptr, ImGuiWindowFlags_NoCollapse);
@@ -244,6 +251,10 @@ AnimationSequenceViewerPanel::AnimationSequenceViewerPanel()
         if (ImGui::Button(reinterpret_cast<const char*>(ICON_FEATHER_PAUSE))) // "Pause" (Stop 대신 Pause 아이콘 사용)
         {
             bIsPlaying = false;
+            if (AnimSingleNodeInstance)
+            {
+                AnimSingleNodeInstance->PauseAnim();
+            }
         }
     }
     else if (bIsPlayingReverse) // 역방향 재생 중
@@ -251,6 +262,10 @@ AnimationSequenceViewerPanel::AnimationSequenceViewerPanel()
         if (ImGui::Button(reinterpret_cast<const char*>(ICON_FEATHER_PAUSE))) // "Pause"
         {
             bIsPlayingReverse = false;
+            if (AnimSingleNodeInstance)
+            {
+                AnimSingleNodeInstance->PauseAnim();
+            }
         }
     }
     else // 정지 상태
@@ -258,6 +273,10 @@ AnimationSequenceViewerPanel::AnimationSequenceViewerPanel()
         if (ImGui::Button(reinterpret_cast<const char*>(ICON_FEATHER_PLAY))) // "Play"
         {
             bIsPlaying = true;
+            if (AnimSingleNodeInstance)
+            {
+                AnimSingleNodeInstance->SetPlaying(bIsPlaying);
+            }
             bIsPlayingReverse = false;
             // 재생 시작 시 LastFrameTime을 현재 시간으로 리셋
             LastFrameTime = static_cast<float>(ImGui::GetTime());

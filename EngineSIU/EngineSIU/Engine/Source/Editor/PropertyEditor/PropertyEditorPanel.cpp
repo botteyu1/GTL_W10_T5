@@ -41,6 +41,8 @@
 #include "Math/Transform.h"
 #include "Animation/AnimSequence.h"
 #include "Animation/AnimDataModel.h"
+#include "Animation/AnimSingleNodeInstance.h"
+#include "UObject/Casts.h"
 
 PropertyEditorPanel::PropertyEditorPanel()
 {
@@ -470,13 +472,19 @@ void PropertyEditorPanel::RenderForSkeletalMesh(USkeletalMeshComponent* Skeletal
         ImGui::SameLine();
 
         PreviewName = FString("None");
-        if (UAnimSequence* AnimSequence = SkeletalMeshComp->GetAnimSequence())
+        UAnimInstance* AnimInstance = SkeletalMeshComp->GetAnimInstance();
+        if (AnimInstance)
         {
-            if (AnimSequence->GetAnimDataModel())
+            UAnimSingleNodeInstance* SingleNodeInstance = Cast<UAnimSingleNodeInstance>(AnimInstance);
+            if (SingleNodeInstance)
             {
-                PreviewName = AnimSequence->GetName().ToString();
+                if (UAnimSequence* AnimSequence = Cast<UAnimSequence>(SingleNodeInstance->GetAnimationAsset()))
+                {
+                    PreviewName = AnimSequence->GetName().ToString();
+                }
             }
         }
+
 
         if (ImGui::BeginCombo("##AnimSequence", GetData(PreviewName), ImGuiComboFlags_None))
         {
