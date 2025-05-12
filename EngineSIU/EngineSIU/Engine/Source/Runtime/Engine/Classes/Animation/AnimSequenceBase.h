@@ -1,4 +1,5 @@
 #pragma once
+#include "AnimDataModel.h"
 #include "UObject/Object.h"
 #include "UObject/ObjectMacros.h"
 #include "Engine/Asset/AnimationAsset.h"
@@ -17,6 +18,10 @@ public:
     UAnimDataModel* GetAnimDataModel() const;
     void SetAnimDataModel(UAnimDataModel* InAnimDataModel);
     float GetPlayLength() const;
+
+    FFrameRate GetFrameRate() const;
+
+    const TArray<FBoneAnimationTrack>* GetBoneAnimationTracks() const;
 
 
 protected:

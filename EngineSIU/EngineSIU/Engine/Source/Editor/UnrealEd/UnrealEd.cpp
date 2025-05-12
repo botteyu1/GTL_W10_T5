@@ -1,5 +1,6 @@
 #include "UnrealEd.h"
 #include "EditorPanel.h"
+#include "PropertyEditor/AnimationSequenceViewerPanel.h"
 
 #include "PropertyEditor/ControlEditorPanel.h"
 #include "PropertyEditor/OutlinerEditorPanel.h"
@@ -20,6 +21,9 @@ void UnrealEd::Initialize()
     // TODO : SkeletalViewe 전용 UI 분리
     auto BoneHierarchyPanel = std::make_shared<BoneHierarchyViewerPanel>();
     Panels["BoneHierarchyPaenl"] = BoneHierarchyPanel;
+    
+    auto AnimationSequenceViewer = std::make_shared<AnimationSequenceViewerPanel>();
+    Panels["AnimationSequenceViewerPanel"] = AnimationSequenceViewer;
 }
 
 void UnrealEd::Render() const

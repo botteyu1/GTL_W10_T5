@@ -53,7 +53,7 @@ int32 FEngineLoop::Init(HINSTANCE hInstance)
     AppMessageHandler = std::make_unique<FSlateAppMessageHandler>();
     LevelEditor = new SLevelEditor();
 
-    UnrealEditor->Initialize();
+    
     GraphicDevice.Initialize(AppWnd);
 
     if (!GPUTimingManager.Initialize(GraphicDevice.Device, GraphicDevice.DeviceContext))
@@ -85,6 +85,8 @@ int32 FEngineLoop::Init(HINSTANCE hInstance)
     PrimitiveDrawBatch.Initialize(&GraphicDevice);
     UIMgr->Initialize(AppWnd, GraphicDevice.Device, GraphicDevice.DeviceContext);
     ResourceManager.Initialize(&Renderer, &GraphicDevice);
+
+    UnrealEditor->Initialize();
     
     uint32 ClientWidth = 0;
     uint32 ClientHeight = 0;

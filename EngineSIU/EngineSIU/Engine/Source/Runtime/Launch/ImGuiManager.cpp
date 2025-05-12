@@ -4,6 +4,7 @@
 #include "ImGuiManager.h"
 #include "Font/RawFonts.h"
 #include "Font/IconDefs.h"
+#include "ImGui/ImGuizmo.h"
 
 void UImGuiManager::Initialize(HWND hWnd, ID3D11Device* device, ID3D11DeviceContext* deviceContext)
 {
@@ -18,22 +19,14 @@ void UImGuiManager::Initialize(HWND hWnd, ID3D11Device* device, ID3D11DeviceCont
     FeatherFontConfig.PixelSnapH = true;
     FeatherFontConfig.FontDataOwnedByAtlas = false;
     FeatherFontConfig.GlyphOffset = ImVec2(0, 0);
+    
+    constexpr const ImWchar feather_icon_min = 0xE900; // 실제 Feather 아이콘 시작 유니코드
+    constexpr ImWchar feather_icon_max = 0xEA1E; // 실제 Feather 아이콘 끝 유니코드 (또는 사용하는 아이콘 중 가장 큰 값)
+
     static constexpr ImWchar IconRanges[] = {
-        ICON_MOVE,      ICON_MOVE + 1,
-        ICON_ROTATE,    ICON_ROTATE + 1,
-        ICON_SCALE,     ICON_SCALE + 1,
-        ICON_MONITOR,   ICON_MONITOR + 1,
-        ICON_BAR_GRAPH, ICON_BAR_GRAPH + 1,
-        ICON_NEW,       ICON_NEW + 1,
-        ICON_SAVE,      ICON_SAVE + 1,
-        ICON_LOAD,      ICON_LOAD + 1,
-        ICON_MENU,      ICON_MENU + 1,
-        ICON_SLIDER,    ICON_SLIDER + 1,
-        ICON_PLUS,      ICON_PLUS + 1,
-        ICON_PLAY,      ICON_PLAY + 1,
-        ICON_STOP,      ICON_STOP + 1,
-        ICON_SQUARE,    ICON_SQUARE + 1,
-        0 };
+        feather_icon_min, feather_icon_max, // 로드할 아이콘의 전체 범위
+        0 // NULL 종료
+    };
 
     io.Fonts->AddFontFromMemoryTTF(FeatherRawData, FontSizeOfFeather, 22.0f, &FeatherFontConfig, IconRanges);
     PreferenceStyle();
@@ -44,6 +37,7 @@ void UImGuiManager::BeginFrame() const
     ImGui_ImplDX11_NewFrame();
     ImGui_ImplWin32_NewFrame();
     ImGui::NewFrame();
+    ImGuizmo::BeginFrame();
 }
 
 void UImGuiManager::EndFrame() const
