@@ -11,16 +11,10 @@
 #include "UObject/ObjectFactory.h"
 USkeletalMeshComponent::USkeletalMeshComponent()
 {
-    AnimSequence = FObjectFactory::ConstructObject<UAnimSequence>(this);
 }
 
 USkeletalMeshComponent::~USkeletalMeshComponent()
 {
-    if (AnimSequence)
-    {
-        delete AnimSequence;
-        AnimSequence = nullptr;
-    }
 }
 
 
@@ -219,18 +213,6 @@ void USkeletalMeshComponent::ProcessAnimation2(float DeltaTime)
     {
         uint32 ParentIndex = SkeletonBones[BoneIdx].ParentIndex;
 
-        //if (ParentIndex != INDEX_NONE && ParentIndex >= 0 && ParentIndex < BoneIdx)
-        //{
-        //    // !NOTE : 곱셈 순서 확인!!!
-        //    BoneTransforms[BoneIdx] = BoneBindPoseTransforms[BoneIdx] * LocalAnimatedTransforms[BoneIdx];
-        //}
-        //else
-        //{
-        //    // 부모가 없거나 루트 본인 경우
-        //    //BoneTransforms[BoneIdx] = BoneBindPoseTransforms[BoneIdx];
-        //}
-
-        // !TODO : 오프셋을 로드할 때 구해놓고, 계산할 때 사용하기
         BoneTransforms[BoneIdx] = LocalAnimatedTransforms[BoneIdx];
     }
 }
