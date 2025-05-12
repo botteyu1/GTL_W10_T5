@@ -25,13 +25,17 @@ public:
     virtual ~UAnimInstance();
     // 애니메이션 업데이트 함수
     void TriggerAnimNotifies(float DeltaTime);
-    virtual void NativeUpdateAnimation(float DeltaTime) {}
+    virtual void NativeUpdateAnimation(float DeltaTime);
 
     virtual void AddAnimationPlaybackContext(UAnimationAsset* InAnimAsset = nullptr, bool IsLoop = false, float InPlayRate = 1.f, float InStartPosition = 0.f);
 
     std::shared_ptr<FAnimationPlaybackContext>& GetAnimationPlaybackContext(UAnimationAsset* InAnimAsset);
 
     void Initialize(USkeletalMeshComponent* MeshComponent);
+    USkeletalMeshComponent* GetSkeletalMeshComponent() const { return SkeletalMeshComponent; }
+    void SetSkeletalMeshComponent(USkeletalMeshComponent* InSkeletalMeshComponent) { SkeletalMeshComponent = InSkeletalMeshComponent; }
+
+    void ClearAnimationPlaybackContexts();
 
 protected:
     USkeletalMeshComponent* SkeletalMeshComponent = nullptr;
