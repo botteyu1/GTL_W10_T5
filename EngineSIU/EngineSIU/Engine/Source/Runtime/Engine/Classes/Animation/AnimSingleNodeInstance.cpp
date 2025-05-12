@@ -1,43 +1,58 @@
 #include "AnimSingleNodeInstance.h"
 
-AnimSingleNodeInstance::AnimSingleNodeInstance()
+UAnimSingleNodeInstance::UAnimSingleNodeInstance()
 {
 }
 
-AnimSingleNodeInstance::~AnimSingleNodeInstance()
+UAnimSingleNodeInstance::~UAnimSingleNodeInstance()
 {
 }
 
-void AnimSingleNodeInstance::UpdateAnimation(float DeltaTime)
+void UAnimSingleNodeInstance::NativeUpdateAnimation(float DeltaTime)
+{
+
+}
+
+void UAnimSingleNodeInstance::SetAnimationAsset(UAnimationAsset* InAnimationAsset)
+{
+   
+}
+
+void UAnimSingleNodeInstance::PlayAnim(bool bIsLooping, float InPlayRate, float InStartPosition)
+{
+    if (CurrentAsset)
+    {
+        // 애니메이션 자산이 설정되어 있으면 재생
+        SetPlaying(true);
+        SetLooping(bIsLooping);
+        //AnimSequencePlaybackContexts.Add(new FAnimSequencePlaybackContext());
+    }
+    else
+    {
+        // 애니메이션 자산이 없으면 정지
+        StopAnim();
+    }
+
+}
+
+void UAnimSingleNodeInstance::StopAnim()
 {
 }
 
-void AnimSingleNodeInstance::SetAnimationAsset(UAnimationAsset* InAnimationAsset)
+void UAnimSingleNodeInstance::SetPlaying(bool bInPlaying)
 {
 }
 
-void AnimSingleNodeInstance::PlayAnim(bool bIsLooping, float InPlayRate, float InStartPosition)
-{
-}
-
-void AnimSingleNodeInstance::StopAnim()
-{
-}
-
-void AnimSingleNodeInstance::SetPlaying(bool bInPlaying)
-{
-}
-
-bool AnimSingleNodeInstance::IsPlaying() const
+bool UAnimSingleNodeInstance::IsPlaying() const
 {
     return false;
 }
 
-void AnimSingleNodeInstance::SetLooping(bool bInLooping)
+void UAnimSingleNodeInstance::SetLooping(bool bInLooping)
 {
 }
 
-bool AnimSingleNodeInstance::IsLooping() const
+bool UAnimSingleNodeInstance::IsLooping() const
 {
     return false;
 }
