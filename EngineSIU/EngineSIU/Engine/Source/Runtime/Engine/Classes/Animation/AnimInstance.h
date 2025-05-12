@@ -3,6 +3,19 @@
 #include "UObject/ObjectMacros.h"
 
 class USkeletalMeshComponent;
+class UAnimationAsset;
+
+struct FAnimationPlaybackContext
+{
+    UAnimationAsset* AnimationAsset = nullptr;
+    float PreviousTime = 0.f;
+    float PlaybackTime = 0.f;
+    bool bIsLooping = false;
+    float PlayRate = 1.f;
+    float StartPosition = 0.f;
+
+    FAnimationPlaybackContext(UAnimationAsset* InAnimAsset, bool IsLoop = false, float InPlayRate = 1.f, float InStartPosition = 0.f);
+};
 
 class UAnimInstance : public UObject
 {
@@ -14,8 +27,13 @@ public:
     void TriggerAnimNotifies(float DeltaTime);
     virtual void NativeUpdateAnimation(float DeltaTime) {}
 
+    virtual void AddAnimationPlaybackContext(UAnimationAsset* InAnimAsset = nullptr, bool IsLoop = false, float InPlayRate = 1.f, float InStartPosition = 0.f);
+
+    std::shared_ptr<FAnimationPlaybackContext>& GetAnimationPlaybackContext(UAnimationAsset* InAnimAsset);
+
     void Initialize(USkeletalMeshComponent* MeshComponent);
 
 protected:
     USkeletalMeshComponent* SkeletalMeshComponent = nullptr;
+    TArray<std::shared_ptr<FAnimationPlaybackContext>> AnimationPlaybackContexts;
 };

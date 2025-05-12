@@ -12,7 +12,7 @@ public:
     virtual ~UAnimSingleNodeInstance() override;
 
     virtual void NativeUpdateAnimation(float DeltaTime) override;
-    void SetAnimationAsset(UAnimationAsset* InAnimationAsset);
+    void SetAnimationAsset(UAnimationAsset* InAnimAsset, bool IsLoop = false, float InPlayRate = 1.f, float InStartPosition = 0.f);
 
     UAnimationAsset* GetAnimationAsset() const { return CurrentAsset; }
 
@@ -24,7 +24,9 @@ public:
     void SetLooping(bool bInLooping);
     bool IsLooping() const;
 
+    virtual void AddAnimationPlaybackContext(UAnimationAsset* InAnimAsset, bool IsLoop = false, float InPlayRate = 1.f, float InStartPosition = 0.f) override;
 
 protected:
     UAnimationAsset* CurrentAsset = nullptr;
+    bool bIsPlaying = false;
 };

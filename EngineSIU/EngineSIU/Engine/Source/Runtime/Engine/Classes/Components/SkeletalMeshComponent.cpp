@@ -10,23 +10,25 @@
 #include "Animation/AnimDataModel.h"
 #include "UObject/ObjectFactory.h"
 #include "GameFramework/Actor.h"
+#include "Animation/AnimInstance.h"
+#include "Animation/AnimSingleNodeInstance.h"
 
 USkeletalMeshComponent::USkeletalMeshComponent()
 {
+    AnimInstance = FObjectFactory::ConstructObject<UAnimSingleNodeInstance>(this);
 }
 
 USkeletalMeshComponent::~USkeletalMeshComponent()
 {
 }
 
-
-
 void USkeletalMeshComponent::TickComponent(float DeltaTime)
 {
     USkinnedMeshComponent::TickComponent(DeltaTime);
 
     //ProcessAnimation(DeltaTime);
-    ProcessAnimation2(DeltaTime);
+    //ProcessAnimation2(DeltaTime); AnimInstance로 넘김
+    AnimInstance->NativeUpdateAnimation(DeltaTime);
 }
 
 void USkeletalMeshComponent::SetSkeletalMeshAsset(USkeletalMesh* InSkeletalMeshAsset)
@@ -216,6 +218,15 @@ void USkeletalMeshComponent::ProcessAnimation2(float DeltaTime)
         uint32 ParentIndex = SkeletonBones[BoneIdx].ParentIndex;
 
         BoneTransforms[BoneIdx] = LocalAnimatedTransforms[BoneIdx];
+    }
+}
+
+void USkeletalMeshComponent::SetAnimSequence(UAnimSequence* InAnimSequence)
+{
+    AnimSequence = InAnimSequence;
+    if (UAnimSingleNodeInstance* SingleNodeInstance = Cast<UAnimSingleNodeInstance>(AnimInstance))
+    {
+        SingleNodeInstance->SetAnimationAsset(InAnimSequence);
     }
 }
 
