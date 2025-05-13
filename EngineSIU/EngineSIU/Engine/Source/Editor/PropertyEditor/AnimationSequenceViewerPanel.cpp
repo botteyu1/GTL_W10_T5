@@ -135,7 +135,7 @@ AnimationSequenceViewerPanel::AnimationSequenceViewerPanel()
              FAnimNotifyEvent NewNotify;
              NewNotify.NotifyName = FName(FString(NotifyName));
              NewNotify.TriggerTime = PlaybackTime;
-             NewNotify.Duration = 0.0f;
+             NewNotify.Duration = 0.5f;
              CurrentAnimSequence->AddAnimNotifyEvent(NewNotify);
 
              NotifyName[0] = '\0';
@@ -160,7 +160,7 @@ AnimationSequenceViewerPanel::AnimationSequenceViewerPanel()
          ImGui::SameLine();
          if (ImGui::SliderFloat("##TriggerTime", &TimeInSeconds, 0.0f, CurrentAnimSequence->GetPlayLength(), "%.2f s"))
          {
-             Notify.TriggerTime = TimeInSeconds;
+             Notify.ChangeTriggerTime(TimeInSeconds);
          }
          ImGui::SameLine();
          if (ImGui::Button("Delete"))

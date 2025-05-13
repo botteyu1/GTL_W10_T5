@@ -7,9 +7,12 @@ struct FAnimNotifyEvent
 {
     float TriggerTime;
     float Duration;
+    float EndTime;
     FName NotifyName;
 
     bool operator==(const FAnimNotifyEvent& Other) const;
+    void ChangeTriggerTime(float InTriggerTime);
+    void ChangeDuration(float InDuration);
 };
 
 struct FBoneAnimationTrack

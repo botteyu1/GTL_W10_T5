@@ -33,7 +33,11 @@ public:
 
     void SetAnimSequence(UAnimSequence* InAnimSequence);
        
-    void HandleAnimNotify(const FAnimNotifyEvent& Notify);
+    void StartAnimNotify(const FAnimNotifyEvent& Notify);
+
+    void TickAnimNotify(const FAnimNotifyEvent& Notify, float DeltaTime = 0.f);
+
+    void EndAnimNotify(const FAnimNotifyEvent& Notify);
 
     void SetAnimationTime(float InTime); 
 

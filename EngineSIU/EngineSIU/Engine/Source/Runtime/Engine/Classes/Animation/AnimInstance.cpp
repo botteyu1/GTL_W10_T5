@@ -25,7 +25,18 @@ void UAnimInstance::TriggerAnimNotifies(float DeltaTime)
             {
                 if (PlaybackContext->PreviousTime <= Notify.TriggerTime && PlaybackContext->PlaybackTime >= Notify.TriggerTime)
                 {
-                    SkeletalMeshComponent->HandleAnimNotify(Notify);
+                    SkeletalMeshComponent->StartAnimNotify(Notify);
+                }
+                else if (PlaybackContext->PreviousTime > Notify.TriggerTime && Notify.Duration > 0)
+                {
+                    if (PlaybackContext->PlaybackTime - Notify.TriggerTime <= Notify.Duration)
+                    {
+                        SkeletalMeshComponent->TickAnimNotify(Notify, DeltaTime);
+                    }
+                    else if(PlaybackContext->PreviousTime <= Notify.EndTime && PlaybackContext->PlaybackTime >= Notify.EndTime)
+                    {
+                        SkeletalMeshComponent->EndAnimNotify(Notify);
+                    }
                 }
             }
             //역방향 재생시 반대로 계산
@@ -33,7 +44,18 @@ void UAnimInstance::TriggerAnimNotifies(float DeltaTime)
             {
                 if (PlaybackContext->PreviousTime >= Notify.TriggerTime && PlaybackContext->PlaybackTime <= Notify.TriggerTime)
                 {
-                    SkeletalMeshComponent->HandleAnimNotify(Notify);
+                    SkeletalMeshComponent->StartAnimNotify(Notify);
+                }
+                else if (PlaybackContext->PreviousTime < Notify.TriggerTime && Notify.Duration > 0)
+                {
+                    if (Notify.TriggerTime - PlaybackContext->PlaybackTime <= Notify.Duration)
+                    {
+                        SkeletalMeshComponent->TickAnimNotify(Notify, DeltaTime);
+                    }
+                    else if (PlaybackContext->PreviousTime >= Notify.EndTime && PlaybackContext->PlaybackTime <= Notify.EndTime)
+                    {
+                        SkeletalMeshComponent->EndAnimNotify(Notify);
+                    }
                 }
             }
         }

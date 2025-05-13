@@ -45,7 +45,11 @@ public:
 
     bool IsOverlappingActor(const AActor* Other) const;
 
-    virtual void HandleAnimNotify(const FAnimNotifyEvent& Notify) {};
+    virtual void StartAnimNotify(const FAnimNotifyEvent& Notify) {}
+     
+    virtual void TickAnimNotify(const FAnimNotifyEvent& Notify, float DeltaTime = 0.f) {}
+
+    virtual void EndAnimNotify(const FAnimNotifyEvent& Notify) {}
 
 public:
     /** 이 Actor를 제거합니다. */

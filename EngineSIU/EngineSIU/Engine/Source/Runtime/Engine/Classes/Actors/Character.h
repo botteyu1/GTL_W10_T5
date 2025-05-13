@@ -9,5 +9,9 @@ class ACharacter : public APlayer
 public :
     ACharacter() = default;
     virtual ~ACharacter() override = default;
-    virtual void HandleAnimNotify(const FAnimNotifyEvent& Notify) override;
+    virtual void StartAnimNotify(const FAnimNotifyEvent& Notify) override;
+
+    virtual void TickAnimNotify(const FAnimNotifyEvent& Notify, float DeltaTime = 0.f);
+
+    virtual void EndAnimNotify(const FAnimNotifyEvent& Notify);
 };
