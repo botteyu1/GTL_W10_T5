@@ -30,7 +30,6 @@ UObject* USkeletalMeshComponent::Duplicate(UObject* InOuter)
     NewComponent->AnimInstance = static_cast<UAnimInstance*>(AnimInstance->Duplicate(InOuter));
     NewComponent->AnimInstance->Initialize(NewComponent);
 
-    SkeletalMeshAsset->GetSkeleton()->GetReferenceSkeleton();
     NewComponent->BoneTransforms = BoneTransforms;
     NewComponent->BoneBindPoseTransforms = BoneBindPoseTransforms;
     NewComponent->SkeletalMeshAsset = SkeletalMeshAsset;
@@ -71,8 +70,12 @@ void USkeletalMeshComponent::SetSkeletalMeshAsset(USkeletalMesh* InSkeletalMeshA
     }
 }
 
-void USkeletalMeshComponent::GetCurrentGlobalBoneMatrices(TArray<FMatrix>& OutBoneMatrices) const
+bool USkeletalMeshComponent::GetCurrentGlobalBoneMatrices(TArray<FMatrix>& OutBoneMatrices) const
 {
+    if (!SkeletalMeshAsset || !SkeletalMeshAsset->GetSkeleton())
+    {
+        return false;
+    }
     const FReferenceSkeleton& RefSkeleton = SkeletalMeshAsset->GetSkeleton()->GetReferenceSkeleton();
     const TArray<FTransform>& BindPose = RefSkeleton.RawRefBonePose; // 로컬
     const int32 BoneNum = RefSkeleton.RawRefBoneInfo.Num();
@@ -98,6 +101,7 @@ void USkeletalMeshComponent::GetCurrentGlobalBoneMatrices(TArray<FMatrix>& OutBo
         // 결과 행렬 저장
         OutBoneMatrices[BoneIndex] = LocalMatrix;
     }
+    return true;
 }
 
  void USkeletalMeshComponent::BeginPlay()

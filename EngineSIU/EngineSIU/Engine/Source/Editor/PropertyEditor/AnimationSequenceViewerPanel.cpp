@@ -240,7 +240,8 @@ void FSequenceInterface::CustomDrawCompact(int index, ImDrawList* draw_list, con
 AnimationSequenceViewerPanel::AnimationSequenceViewerPanel()
  {
      // 이 패널이 어떤 월드 타입에서 활성화될지 설정 (예: SkeletalViewer 전용)
-     SetSupportedWorldTypes(EWorldTypeBitFlag::Editor|EWorldTypeBitFlag::PIE|EWorldTypeBitFlag::SkeletalViewer);
+    //EWorldTypeBitFlag::Editor|EWorldTypeBitFlag::PIE|
+     SetSupportedWorldTypes(EWorldTypeBitFlag::SkeletalViewer);
      // 초기화 시 LastFrameTime 설정
      LastFrameTime = static_cast<float>(ImGui::GetTime());
  }
@@ -380,7 +381,7 @@ void AnimationSequenceViewerPanel::Render()
      ImGui::SetNextWindowPos(ImVec2(PanelPosX, PanelPosY), ImGuiCond_Always);
      ImGui::SetNextWindowSize(ImVec2(PanelWidth, PanelHeight), ImGuiCond_Always);
 
-     ImGuiWindowFlags PanelFlags = ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse;
+     ImGuiWindowFlags PanelFlags = ImGuiWindowFlags_MenuBar| ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove ;
      // ImGuiWindowFlags_MenuBar 플래그를 추가하여 메뉴바 공간 확보 가능
 
      ImGui::Begin("Animation Sequence Viewer", nullptr, PanelFlags);
