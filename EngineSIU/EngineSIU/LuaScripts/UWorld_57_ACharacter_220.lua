@@ -1,6 +1,3 @@
-turnSpeed = 80
-MoveSpeed = 10
-
 function BeginPlay()
     print("Begin")
 end

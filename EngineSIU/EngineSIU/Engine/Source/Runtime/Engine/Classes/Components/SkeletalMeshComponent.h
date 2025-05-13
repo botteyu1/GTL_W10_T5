@@ -6,6 +6,7 @@ class UAnimInstance;
 class UAnimSequence;
 class USkeletalMesh;
 struct FAnimNotifyEvent;
+enum ENotifyState;
 class UAnimSingleNodeInstance;
 class UBlendAnimInstance;
 
@@ -30,8 +31,10 @@ public:
     void GetCurrentGlobalBoneMatrices(TArray<FMatrix>& OutBoneMatrices) const;
 
     void SetAnimationEnabled(bool bEnable);
-       
-    void HandleAnimNotify(const FAnimNotifyEvent& Notify);
+
+    void SetAnimSequence(UAnimSequence* InAnimSequence);
+
+    void HandleAnimNotify(const FAnimNotifyEvent& Notify, ENotifyState NotifyState, float DeltaTime = 0.f);
 
     void SetAnimationTime(float InTime); 
 

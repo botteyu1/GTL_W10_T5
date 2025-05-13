@@ -1,12 +1,13 @@
 #include "Level.h"
 #include "GameFramework/Actor.h"
 #include "UObject/Casts.h"
+#include "Engine/Engine.h"
+#include "Engine/World/World.h"
 
 
 void ULevel::InitLevel(UWorld* InOwningWorld)
 {
     OwningWorld = InOwningWorld;
-
 }
 
 void ULevel::Release()
