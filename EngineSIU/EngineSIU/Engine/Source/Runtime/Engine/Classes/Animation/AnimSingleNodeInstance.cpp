@@ -154,9 +154,10 @@ void UAnimSingleNodeInstance::SetAnimationTime(float InTime)
         }
         PlaybackContext->PreviousTime = PlaybackContext->PlaybackTime;
         PlaybackContext->PlaybackTime = InTime;
+        
         float Diff = PlaybackContext->PlaybackTime - PlaybackContext->PreviousTime;
         //루프 확인
-        if (FMath::Abs(Diff) >= PlaybackContext->AnimationLength - 0.01f)
+        if (FMath::Abs(Diff) >= PlaybackContext->AnimationLength - 0.005f)
         {
             if (Diff < 0)
             {

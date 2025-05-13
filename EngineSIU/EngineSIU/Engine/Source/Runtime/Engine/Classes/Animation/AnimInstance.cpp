@@ -23,15 +23,16 @@ void UAnimInstance::TriggerAnimNotifies(float DeltaTime)
         if (!AnimSequenceBase)
             continue;
 
-        for (const auto& Notify : AnimSequenceBase->GetAnimNotifies())
+        for (auto& Notify : AnimSequenceBase->GetAnimNotifies())
         {
             if (PlaybackContext->PlayRate > 0)
             {
                 if (PlaybackContext->PreviousTime <= Notify.TriggerTime && PlaybackContext->PlaybackTime >= Notify.TriggerTime)
                 {
                     SkeletalMeshComponent->HandleAnimNotify(Notify, ENotifyState::Start);
+                    Notify.bIsNotifyTriggered = true;
                 }
-                else if (PlaybackContext->PreviousTime > Notify.TriggerTime && Notify.Duration > 0)
+                else if (PlaybackContext->PlaybackTime >= Notify.TriggerTime && Notify.bIsNotifyTriggered && Notify.Duration > 0)
                 {
                     float EndTime = Notify.TriggerTime + Notify.Duration;
                     if (PlaybackContext->PlaybackTime - Notify.TriggerTime <= Notify.Duration)
@@ -41,6 +42,7 @@ void UAnimInstance::TriggerAnimNotifies(float DeltaTime)
                     else if(PlaybackContext->PreviousTime <= EndTime && PlaybackContext->PlaybackTime >= EndTime)
                     {
                         SkeletalMeshComponent->HandleAnimNotify(Notify, ENotifyState::End);
+                        Notify.bIsNotifyTriggered = false;
                     }
                 }
             }
@@ -50,8 +52,9 @@ void UAnimInstance::TriggerAnimNotifies(float DeltaTime)
                 if (PlaybackContext->PreviousTime >= Notify.TriggerTime && PlaybackContext->PlaybackTime <= Notify.TriggerTime)
                 {
                     SkeletalMeshComponent->HandleAnimNotify(Notify, ENotifyState::Start);
+                    Notify.bIsNotifyTriggered = true;
                 }
-                else if (PlaybackContext->PreviousTime < Notify.TriggerTime && Notify.Duration > 0)
+                else if (PlaybackContext->PreviousTime >= Notify.TriggerTime && Notify.bIsNotifyTriggered && Notify.Duration > 0)
                 {
                     float EndTime = Notify.TriggerTime + Notify.Duration;
                     if (Notify.TriggerTime - PlaybackContext->PlaybackTime <= Notify.Duration)
@@ -61,6 +64,7 @@ void UAnimInstance::TriggerAnimNotifies(float DeltaTime)
                     else if (PlaybackContext->PreviousTime >= EndTime && PlaybackContext->PlaybackTime <= EndTime)
                     {
                         SkeletalMeshComponent->HandleAnimNotify(Notify, ENotifyState::End);
+                        Notify.bIsNotifyTriggered = false;
                     }
                 }
             }

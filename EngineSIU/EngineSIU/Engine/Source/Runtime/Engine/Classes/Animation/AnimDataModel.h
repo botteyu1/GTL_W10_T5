@@ -15,6 +15,7 @@ struct FAnimNotifyEvent
     float TriggerTime;
     float Duration;
     FName NotifyName;
+    bool bIsNotifyTriggered = false;
 
     bool operator==(const FAnimNotifyEvent& Other) const;
 };
