@@ -90,6 +90,7 @@ void FSequenceInterface::CustomDrawCompact(int index, ImDrawList* draw_list, con
                 ImGui::BeginTooltip();
                 ImGui::Text("Notify: %s", (*notify.NotifyName.ToString()));
                 ImGui::Text("Time: %.2fs (Frame: %d)", notify.TriggerTime, notifyFrame);
+                ImGui::Text("Duration: %.2fs", notify.Duration);
                 ImGui::EndTooltip();
 
                 // 클릭 시 선택

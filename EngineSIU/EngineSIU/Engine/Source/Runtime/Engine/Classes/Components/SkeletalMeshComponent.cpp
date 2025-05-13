@@ -248,6 +248,7 @@ void USkeletalMeshComponent::HandleAnimNotify(const FAnimNotifyEvent& Notify, EN
 
 void USkeletalMeshComponent::SetAnimationTime(float InTime)
 {
+    AnimInstance->PauseAnimations();
     if (UAnimSingleNodeInstance* SingleNodeInstance = Cast<UAnimSingleNodeInstance>(AnimInstance))
     {
         SingleNodeInstance->SetAnimationTime(InTime);

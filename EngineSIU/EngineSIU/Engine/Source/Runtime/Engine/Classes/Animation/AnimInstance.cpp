@@ -30,9 +30,8 @@ void UAnimInstance::TriggerAnimNotifies(float DeltaTime)
                 if (PlaybackContext->PreviousTime <= Notify.TriggerTime && PlaybackContext->PlaybackTime >= Notify.TriggerTime)
                 {
                     SkeletalMeshComponent->HandleAnimNotify(Notify, ENotifyState::Start);
-                    Notify.bIsNotifyTriggered = true;
                 }
-                else if (PlaybackContext->PlaybackTime >= Notify.TriggerTime && Notify.bIsNotifyTriggered && Notify.Duration > 0)
+                else if (PlaybackContext->PlaybackTime >= Notify.TriggerTime && Notify.Duration > 0)
                 {
                     float EndTime = Notify.TriggerTime + Notify.Duration;
                     if (PlaybackContext->PlaybackTime - Notify.TriggerTime <= Notify.Duration)
@@ -42,7 +41,6 @@ void UAnimInstance::TriggerAnimNotifies(float DeltaTime)
                     else if(PlaybackContext->PreviousTime <= EndTime && PlaybackContext->PlaybackTime >= EndTime)
                     {
                         SkeletalMeshComponent->HandleAnimNotify(Notify, ENotifyState::End);
-                        Notify.bIsNotifyTriggered = false;
                     }
                 }
             }
@@ -52,9 +50,8 @@ void UAnimInstance::TriggerAnimNotifies(float DeltaTime)
                 if (PlaybackContext->PreviousTime >= Notify.TriggerTime && PlaybackContext->PlaybackTime <= Notify.TriggerTime)
                 {
                     SkeletalMeshComponent->HandleAnimNotify(Notify, ENotifyState::Start);
-                    Notify.bIsNotifyTriggered = true;
                 }
-                else if (PlaybackContext->PreviousTime >= Notify.TriggerTime && Notify.bIsNotifyTriggered && Notify.Duration > 0)
+                else if (PlaybackContext->PreviousTime >= Notify.TriggerTime && Notify.Duration > 0)
                 {
                     float EndTime = Notify.TriggerTime + Notify.Duration;
                     if (Notify.TriggerTime - PlaybackContext->PlaybackTime <= Notify.Duration)
@@ -64,7 +61,6 @@ void UAnimInstance::TriggerAnimNotifies(float DeltaTime)
                     else if (PlaybackContext->PreviousTime >= EndTime && PlaybackContext->PlaybackTime <= EndTime)
                     {
                         SkeletalMeshComponent->HandleAnimNotify(Notify, ENotifyState::End);
-                        Notify.bIsNotifyTriggered = false;
                     }
                 }
             }
@@ -139,6 +135,14 @@ void UAnimInstance::Initialize(USkeletalMeshComponent* MeshComponent)
 void UAnimInstance::ClearAnimationPlaybackContexts()
 {
     AnimationPlaybackContexts.Empty();
+}
+
+void UAnimInstance::PauseAnimations()
+{
+    for (auto& PlaybackContext : AnimationPlaybackContexts)
+    {
+        PlaybackContext->bIsPlaying = false;
+    }
 }
 
 FTransform UAnimInstance::GetCurrentAnimatedTransform(UAnimationAsset* AnimInstance, FName BoneName)
