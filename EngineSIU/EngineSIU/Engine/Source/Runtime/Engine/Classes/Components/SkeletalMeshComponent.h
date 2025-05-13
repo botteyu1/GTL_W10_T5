@@ -30,8 +30,6 @@ public:
     void GetCurrentGlobalBoneMatrices(TArray<FMatrix>& OutBoneMatrices) const;
 
     void SetAnimationEnabled(bool bEnable);
-
-    void SetAnimSequence(UAnimSequence* InAnimSequence);
        
     void HandleAnimNotify(const FAnimNotifyEvent& Notify);
 

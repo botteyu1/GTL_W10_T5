@@ -232,15 +232,6 @@ void USkeletalMeshComponent::SetAnimationEnabled(bool bEnable)
 //    }
 //}
 
-void USkeletalMeshComponent::SetAnimSequence(UAnimSequence* InAnimSequence)
-{
-    //AnimSequence = InAnimSequence;
-    if (UAnimSingleNodeInstance* SingleNodeInstance = Cast<UAnimSingleNodeInstance>(AnimInstance))
-    {
-        SingleNodeInstance->SetAnimationAsset(InAnimSequence);
-    }
-}
-
 void USkeletalMeshComponent::HandleAnimNotify(const FAnimNotifyEvent& Notify)
 {
     GetOwner()->HandleAnimNotify(Notify);

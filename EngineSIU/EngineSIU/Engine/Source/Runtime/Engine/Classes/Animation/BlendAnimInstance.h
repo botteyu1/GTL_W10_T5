@@ -14,12 +14,7 @@ public:
 
     virtual void NativeUpdateAnimation(float DeitaTime) override;
     void SetAnimSequences(UAnimSequence* InAnimA, UAnimSequence* InAnimB);
-
-    FTransform GetCurrentTransform(UAnimSequence* AnimInstance, FName BoneName);
-    void SetAnimationEnabled(bool bEnable)
-    {
-        bIsPlaying = bEnable;
-    }
+    void SetAnimationEnabled(bool bEnable);
 
 public:
     float BlendAlpha = 0.0f;
