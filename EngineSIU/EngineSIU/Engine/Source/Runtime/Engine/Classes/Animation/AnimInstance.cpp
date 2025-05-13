@@ -14,6 +14,12 @@ UAnimInstance::~UAnimInstance()
 {
 }
 
+UObject* UAnimInstance::Duplicate(UObject* InOuter)
+{
+    ThisClass* NewObject = Cast<ThisClass>(Super::Duplicate(InOuter));
+    return NewObject;
+}
+
 void UAnimInstance::TriggerAnimNotifies(float DeltaTime)
 {
     for (const auto& PlaybackContext : AnimationPlaybackContexts)
@@ -129,7 +135,6 @@ FAnimationPlaybackContext* UAnimInstance::GetAnimationPlaybackContext(UAnimation
 void UAnimInstance::Initialize(USkeletalMeshComponent* MeshComponent)
 {
     SkeletalMeshComponent = MeshComponent;
-    AnimationPlaybackContexts.Empty();
 }
 
 void UAnimInstance::ClearAnimationPlaybackContexts()

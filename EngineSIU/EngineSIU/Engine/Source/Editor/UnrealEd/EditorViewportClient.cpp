@@ -53,10 +53,10 @@ void FEditorViewportClient::Initialize(EViewScreenLocation InViewportIndex, cons
 
 void FEditorViewportClient::Tick(const float DeltaTime)
 {
-    if (GEngine->ActiveWorld->WorldType == EWorldType::Editor or GEngine->ActiveWorld->WorldType == EWorldType::SkeletalViewer)
-    {
+    // if (GEngine->ActiveWorld->WorldType == EWorldType::Editor or GEngine->ActiveWorld->WorldType == EWorldType::SkeletalViewer)
+    // {
         UpdateEditorCameraMovement(DeltaTime);
-    }
+    //}
     UpdateViewMatrix();
     UpdateProjectionMatrix();
     GizmoActor->Tick(DeltaTime);
@@ -475,7 +475,7 @@ void FEditorViewportClient::PivotMoveUp(const float InValue) const
 
 void FEditorViewportClient::UpdateViewMatrix()
 {
-    if (GEngine->ActiveWorld->WorldType == EWorldType::PIE)
+    if (false and GEngine->ActiveWorld->WorldType == EWorldType::PIE)
     {
         FMinimalViewInfo ViewInfo;
         GetViewInfo(ViewInfo);
@@ -521,7 +521,7 @@ void FEditorViewportClient::UpdateProjectionMatrix()
 {
     AspectRatio = GetViewport()->GetD3DViewport().Width / GetViewport()->GetD3DViewport().Height;
 
-    if (GEngine->ActiveWorld->WorldType == EWorldType::PIE)
+    if (false and GEngine->ActiveWorld->WorldType == EWorldType::PIE)
     {
         FMinimalViewInfo ViewInfo;
         GetViewInfo(ViewInfo);

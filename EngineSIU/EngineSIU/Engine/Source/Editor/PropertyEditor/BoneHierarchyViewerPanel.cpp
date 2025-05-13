@@ -1,5 +1,6 @@
 #include "BoneHierarchyViewerPanel.h"
 
+#include <iso646.h>
 #include <ReferenceSkeleton.h>
 #include "Engine/Classes/Engine/SkeletalMesh.h"
 #include "Engine/Classes/Animation/Skeleton.h"
@@ -45,6 +46,7 @@ void BoneHierarchyViewerPanel::Render()
     
     if (Engine->ActiveWorld) {
         if (Engine->ActiveWorld->WorldType == EWorldType::SkeletalViewer) {
+
 
             if (CopiedRefSkeleton == nullptr) {
                 CopyRefSkeleton(); // 선택된 액터/컴포넌트로부터 스켈레톤 정보 복사
@@ -144,6 +146,13 @@ void BoneHierarchyViewerPanel::LoadBoneIcon()
 void BoneHierarchyViewerPanel::CopyRefSkeleton()
 {
     UEditorEngine* Engine = Cast<UEditorEngine>(GEngine);
+
+    if (Engine->SkeletalMeshViewerWorld->GetSkeletalMeshComponent() == nullptr or
+    Engine->SkeletalMeshViewerWorld->GetSkeletalMeshComponent()->GetSkeletalMeshAsset() == nullptr or
+    Engine->SkeletalMeshViewerWorld->GetSkeletalMeshComponent()->GetSkeletalMeshAsset()->GetSkeleton() == nullptr) {
+        return;
+    }
+    
     const FReferenceSkeleton& OrigRef = Engine->SkeletalMeshViewerWorld
         ->GetSkeletalMeshComponent()->GetSkeletalMeshAsset()
         ->GetSkeleton()->GetReferenceSkeleton();

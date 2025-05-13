@@ -128,68 +128,68 @@ void UWorld::Tick(float DeltaTime)
 
 void UWorld::BeginPlay()
 {
-    if (!GameMode && this->WorldType == EWorldType::PIE)
-    {
-        GameMode = this->SpawnActor<AGameMode>();
-        GameMode->SetActorLabel(TEXT("OBJ_GAMEMODE"));
-        GameMode->InitializeComponent();
-
-        for (const auto iter : TObjectRange<UTextComponent>())
-        {
-            if (iter->GetWorld() == GEngine->ActiveWorld)
-            {
-                MainTextComponent = iter;
-            }
-        }
-
-        // GameMode Delegate addition [Need to delete later]
-        GameMode->OnGameInit.AddLambda([this]() {
-            if (MainTextComponent) {
-                FVector Target = MainTextComponent->GetComponentLocation();
-                Target.X -= 20.0f;
-            
-                MainTextComponent->SetText(L"Press Space to start");
-                //GetMainCamera()->SetFInterpToSpeed(3.0f);
-                //GetMainCamera()->SetFollowCustomTarget(Target);
-                GetPlayerController()->PlayerCameraManager->StartCameraFade(1.0f, 0.0f, 4.0f, FLinearColor(.0f, .0f, .0f, 1.0f));
-            }
-        });
-
-        GameMode->OnGameStart.AddLambda([this]() {
-            //GetMainCamera()->SetFInterpToSpeed(0.8f);
-            //GetMainCamera()->ResetFollowToPlayer();
-            });
-
-        GameMode->OnGameEnd.AddLambda([this](bool bIsWin) {
-            if (MainTextComponent) {
-//                FVector Target = MainTextComponent->GetWorldLocation();
-//                FVector TextLoc = Target;
-//                Target.X -= 20.0f;
-//                Target.Z -= GetMainCamera()->CameraHeight;
-
-//                GetMainCamera()->SetFollowCustomTarget(Target);
-//                GetMainCamera()->SetLookTarget(TextLoc);
-                
-                if (bIsWin)
-                {
-                    AFish* Fish = Cast<AFish>(GEngine->ActiveWorld->GetMainPlayer());
-                    
-                    FString Message = FString::Printf(TEXT("Earned Coin %d"), Fish->GetScore());
-                    MainTextComponent->SetText(Message.ToWideString());
-                    //MainCamera->CameraZOffset = 0.0f;
-                } else
-                {
-                    MainTextComponent->SetText(L"Fish roasted");
-                    
-                    AFish* Fish = Cast<AFish>(GEngine->ActiveWorld->GetMainPlayer());
-                    Fish->SetActorLocation(FVector(-110.0f, 0.0f, -4.0f));
-                    Fish->SetActorRotation(FRotator(70.0f, 0.0f, 0.0f));
-                }
-            }
-            });
-
-        GameMode->InitGame();
-    }
+//     if (!GameMode && this->WorldType == EWorldType::PIE)
+//     {
+//         GameMode = this->SpawnActor<AGameMode>();
+//         GameMode->SetActorLabel(TEXT("OBJ_GAMEMODE"));
+//         GameMode->InitializeComponent();
+//
+//         for (const auto iter : TObjectRange<UTextComponent>())
+//         {
+//             if (iter->GetWorld() == GEngine->ActiveWorld)
+//             {
+//                 MainTextComponent = iter;
+//             }
+//         }
+//
+//         // GameMode Delegate addition [Need to delete later]
+//         GameMode->OnGameInit.AddLambda([this]() {
+//             if (MainTextComponent) {
+//                 FVector Target = MainTextComponent->GetComponentLocation();
+//                 Target.X -= 20.0f;
+//             
+//                 MainTextComponent->SetText(L"Press Space to start");
+//                 //GetMainCamera()->SetFInterpToSpeed(3.0f);
+//                 //GetMainCamera()->SetFollowCustomTarget(Target);
+//                 GetPlayerController()->PlayerCameraManager->StartCameraFade(1.0f, 0.0f, 4.0f, FLinearColor(.0f, .0f, .0f, 1.0f));
+//             }
+//         });
+//
+//         GameMode->OnGameStart.AddLambda([this]() {
+//             //GetMainCamera()->SetFInterpToSpeed(0.8f);
+//             //GetMainCamera()->ResetFollowToPlayer();
+//             });
+//
+//         GameMode->OnGameEnd.AddLambda([this](bool bIsWin) {
+//             if (MainTextComponent) {
+// //                FVector Target = MainTextComponent->GetWorldLocation();
+// //                FVector TextLoc = Target;
+// //                Target.X -= 20.0f;
+// //                Target.Z -= GetMainCamera()->CameraHeight;
+//
+// //                GetMainCamera()->SetFollowCustomTarget(Target);
+// //                GetMainCamera()->SetLookTarget(TextLoc);
+//                 
+//                 if (bIsWin)
+//                 {
+//                     AFish* Fish = Cast<AFish>(GEngine->ActiveWorld->GetMainPlayer());
+//                     
+//                     FString Message = FString::Printf(TEXT("Earned Coin %d"), Fish->GetScore());
+//                     MainTextComponent->SetText(Message.ToWideString());
+//                     //MainCamera->CameraZOffset = 0.0f;
+//                 } else
+//                 {
+//                     MainTextComponent->SetText(L"Fish roasted");
+//                     
+//                     AFish* Fish = Cast<AFish>(GEngine->ActiveWorld->GetMainPlayer());
+//                     Fish->SetActorLocation(FVector(-110.0f, 0.0f, -4.0f));
+//                     Fish->SetActorRotation(FRotator(70.0f, 0.0f, 0.0f));
+//                 }
+//             }
+//             });
+//
+//         GameMode->InitGame();
+//     }
     for (AActor* Actor : ActiveLevel->Actors)
     {
         if (Actor->GetWorld() == this)

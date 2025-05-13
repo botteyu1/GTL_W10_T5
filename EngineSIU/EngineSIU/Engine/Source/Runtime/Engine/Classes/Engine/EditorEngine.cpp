@@ -152,7 +152,7 @@ void UEditorEngine::StartPIE()
     // WorldList.Add(GetWorldContextFromWorld(PIEWorld));
 }
 
-void UEditorEngine::StartSkeletalMeshViewer(FName SkeletalMeshName)
+void UEditorEngine::StartSkeletalMeshViewer()
 {
     if (SkeletalMeshViewerWorld)
     {
@@ -166,17 +166,42 @@ void UEditorEngine::StartSkeletalMeshViewer(FName SkeletalMeshName)
     SkeletalMeshViewerWorld = USkeletalViewerWorld::CreateWorld(this, EWorldType::SkeletalViewer, FString("SkeletalMeshViewerWorld"));
 
     WorldContext.SetCurrentWorld(SkeletalMeshViewerWorld);
+
+    USkeletalMeshComponent* SkeletalMeshComp = Cast<USkeletalMeshComponent>(GetSelectedComponent());
+    
     ActiveWorld = SkeletalMeshViewerWorld;
+
+    //선택중인 컴포넌트가 스켈레탈이면 복사아니면 새로 생성
+    if (SkeletalMeshComp == nullptr)
+    {
+        AActor* SpawnedActor = ActiveWorld->SpawnActor<AActor>();
+        SpawnedActor->SetActorTickInEditor(true);
+        SkeletalMeshComp = SpawnedActor->AddComponent<USkeletalMeshComponent>();
+        SpawnedActor->SetRootComponent(SkeletalMeshComp);
+        SpawnedActor->SetActorLabel(TEXT("OBJ_SKELETALMESH"));
+
+        UEditorEngine* Engine = Cast<UEditorEngine>(GEngine);
+        Engine->DeselectComponent(Engine->GetSelectedComponent());
+        Engine->SelectActor(SpawnedActor);
+        Engine->SelectComponent(SkeletalMeshComp);
+    }
+    else
+    {
+        AActor* SpawnedActor = ActiveWorld->SpawnActor<AActor>();
+        SpawnedActor->SetActorTickInEditor(true);
+        SkeletalMeshComp = Cast<USkeletalMeshComponent>(SkeletalMeshComp->Duplicate(SpawnedActor));
+        SpawnedActor->ForceAddComponent(SkeletalMeshComp);
+        SpawnedActor->SetRootComponent(SkeletalMeshComp);
+        SpawnedActor->SetActorLabel(TEXT("OBJ_SKELETALMESH"));
+
+        UEditorEngine* Engine = Cast<UEditorEngine>(GEngine);
+        Engine->DeselectComponent(Engine->GetSelectedComponent());
+        Engine->SelectActor(SpawnedActor);
+        Engine->SelectComponent(SkeletalMeshComp);
+    }
     SkeletalMeshViewerWorld->WorldType = EWorldType::SkeletalViewer;
 
-    // 스켈레탈 액터 스폰
-    ASkeletalMeshActor* SkeletalActor = SkeletalMeshViewerWorld->SpawnActor<ASkeletalMeshActor>();
-    SkeletalActor->SetActorTickInEditor(true);
-    USkeletalMeshComponent* MeshComp = SkeletalActor->AddComponent<USkeletalMeshComponent>();
-    SkeletalActor->SetRootComponent(MeshComp);
-    SkeletalActor->SetActorLabel(TEXT("OBJ_SKELETALMESH"));
-    MeshComp->SetSkeletalMeshAsset(UAssetManager::Get().GetSkeletalMesh(SkeletalMeshName.ToString()));
-    SkeletalMeshViewerWorld->SetSkeletalMeshComponent(MeshComp);
+    SkeletalMeshViewerWorld->SetSkeletalMeshComponent(SkeletalMeshComp);
 }
 
 void UEditorEngine::BindEssentialObjects()
