@@ -4,6 +4,7 @@
 
 class USkeletalMeshComponent;
 class UAnimationAsset;
+struct FTransform;
 
 struct FAnimationPlaybackContext
 {
@@ -14,6 +15,7 @@ struct FAnimationPlaybackContext
     float PlayRate = 1.f;
     float StartPosition = 0.f;
     float AnimationLength = 0.f;
+    bool bIsPlaying = true; // Pause 여부 처리. Stop시에는 그냥 배열에서 제거
 
     FAnimationPlaybackContext(UAnimationAsset* InAnimAsset, bool IsLoop = false, float InPlayRate = 1.f, float InStartPosition = 0.f);
 };
@@ -37,6 +39,9 @@ public:
     void SetSkeletalMeshComponent(USkeletalMeshComponent* InSkeletalMeshComponent) { SkeletalMeshComponent = InSkeletalMeshComponent; }
 
     void ClearAnimationPlaybackContexts();
+
+protected:
+    FTransform GetCurrentAnimatedTransform(UAnimationAsset* AnimInstance, FName BoneName);
 
 protected:
     USkeletalMeshComponent* SkeletalMeshComponent = nullptr;

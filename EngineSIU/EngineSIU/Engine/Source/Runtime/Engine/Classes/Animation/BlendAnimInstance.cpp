@@ -17,6 +17,7 @@ UBlendAnimInstance::~UBlendAnimInstance()
 
 void UBlendAnimInstance::NativeUpdateAnimation(float DeltaTime)
 {
+    Super::NativeUpdateAnimation(DeltaTime);
     if (!bIsPlaying)
         return;
     if (AnimA && AnimB)
@@ -26,12 +27,6 @@ void UBlendAnimInstance::NativeUpdateAnimation(float DeltaTime)
         FAnimationPlaybackContext* PlaybackContextB = GetAnimationPlaybackContext(AnimB);
 
         USkeletalMeshComponent* SkeletalMeshComponent = GetSkeletalMeshComponent();
-
-        PlaybackContextA->PreviousTime = PlaybackContextA->PlaybackTime;
-        PlaybackContextA->PlaybackTime += DeltaTime;
-
-        PlaybackContextB->PreviousTime = PlaybackContextB->PlaybackTime;
-        PlaybackContextB->PlaybackTime += DeltaTime;
 
         if (!SkeletalMeshComponent || !PlaybackContextA || !PlaybackContextB)
             return;
@@ -50,8 +45,8 @@ void UBlendAnimInstance::NativeUpdateAnimation(float DeltaTime)
         for (int32 BoneIdx = 0; BoneIdx < SkeletonBones.Num(); ++BoneIdx)
         {
             const FName CurrentBoneName = SkeletonBones[BoneIdx].Name;
-            FTransform TransformA = GetCurrentTransform(AnimA, CurrentBoneName);
-            FTransform TransformB = GetCurrentTransform(AnimB, CurrentBoneName);
+            FTransform TransformA = GetCurrentAnimatedTransform(AnimA, CurrentBoneName);
+            FTransform TransformB = GetCurrentAnimatedTransform(AnimB, CurrentBoneName);
 
             FTransform BlendedTransform;
             BlendedTransform.Blend(TransformA, TransformB, BlendAlpha);
@@ -82,48 +77,25 @@ void UBlendAnimInstance::SetAnimSequences(UAnimSequence* InAnimA, UAnimSequence*
     }
 }
 
-FTransform UBlendAnimInstance::GetCurrentTransform(UAnimSequence* AnimSequence, FName BoneName)
+
+void UBlendAnimInstance::SetAnimationEnabled(bool bEnable)
 {
-    if(!AnimSequence)
-        return FTransform();
-
-    FAnimationPlaybackContext* Context = GetAnimationPlaybackContext(Cast<UAnimationAsset>(AnimSequence));
-    if(Context)
+    bIsPlaying = bEnable;
+    if (AnimA)
     {
-        float CurrentAnimTime = Context->PlaybackTime;
-        // !TODO : Looping관련 로직
-        if (AnimSequence->GetPlayLength() > 0.f)
+        FAnimationPlaybackContext* Context = GetAnimationPlaybackContext(AnimA);
+        if (Context)
         {
-            CurrentAnimTime = FMath::Fmod(CurrentAnimTime, AnimSequence->GetPlayLength());
+            Context->bIsPlaying = bEnable;
         }
-
-        const FBoneAnimationTrack* BoneTrack = nullptr;
-
-        // 트랙 찾기
-        for (const FBoneAnimationTrack& Track : AnimSequence->GetAnimDataModel()->GetBoneAnimationTracks())
+    }
+    if (AnimB)
+    {
+        FAnimationPlaybackContext* Context = GetAnimationPlaybackContext(AnimB);
+        if (Context)
         {
-            if (Track.Name == BoneName)
-            {
-                BoneTrack = &Track;
-                break;
-            }
+            Context->bIsPlaying = bEnable;
         }
-
-        if (BoneTrack && !BoneTrack->InternalTrack.IsEmpty())
-        {
-            FVector FinalPos = FVectorKey::Interpolate(BoneTrack->InternalTrack.PosKeys, CurrentAnimTime);
-            FQuat FinalRot = FQuatKey::Interpolate(BoneTrack->InternalTrack.RotKeys, CurrentAnimTime);
-            FVector FinalScale = FVectorKey::Interpolate(BoneTrack->InternalTrack.ScaleKeys, CurrentAnimTime);
-
-            // scale은 0이 되지 못하도록 예외
-            if (FinalScale.IsZero())
-            {
-                FinalScale = FVector(1.f, 1.f, 1.f);
-            }
-
-            return FTransform(FinalRot, FinalPos, FinalScale);
-        }
-
-        return FTransform();
     }
 }
+
