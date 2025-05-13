@@ -6,6 +6,7 @@ class UAnimInstance;
 class UAnimSequence;
 class USkeletalMesh;
 struct FAnimNotifyEvent;
+enum ENotifyState;
 class UAnimSingleNodeInstance;
 class UBlendAnimInstance;
 
@@ -32,12 +33,8 @@ public:
     void SetAnimationEnabled(bool bEnable);
 
     void SetAnimSequence(UAnimSequence* InAnimSequence);
-       
-    void StartAnimNotify(const FAnimNotifyEvent& Notify);
 
-    void TickAnimNotify(const FAnimNotifyEvent& Notify, float DeltaTime = 0.f);
-
-    void EndAnimNotify(const FAnimNotifyEvent& Notify);
+    void HandleAnimNotify(const FAnimNotifyEvent& Notify, ENotifyState NotifyState, float DeltaTime = 0.f);
 
     void SetAnimationTime(float InTime); 
 

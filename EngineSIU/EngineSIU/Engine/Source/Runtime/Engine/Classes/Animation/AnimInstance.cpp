@@ -25,18 +25,18 @@ void UAnimInstance::TriggerAnimNotifies(float DeltaTime)
             {
                 if (PlaybackContext->PreviousTime <= Notify.TriggerTime && PlaybackContext->PlaybackTime >= Notify.TriggerTime)
                 {
-                    SkeletalMeshComponent->StartAnimNotify(Notify);
+                    SkeletalMeshComponent->HandleAnimNotify(Notify, ENotifyState::Start);
                 }
                 else if (PlaybackContext->PreviousTime > Notify.TriggerTime && Notify.Duration > 0)
                 {
                     float EndTime = Notify.TriggerTime + Notify.Duration;
                     if (PlaybackContext->PlaybackTime - Notify.TriggerTime <= Notify.Duration)
                     {
-                        SkeletalMeshComponent->TickAnimNotify(Notify, DeltaTime);
+                        SkeletalMeshComponent->HandleAnimNotify(Notify, ENotifyState::Tick, DeltaTime);
                     }
                     else if(PlaybackContext->PreviousTime <= EndTime && PlaybackContext->PlaybackTime >= EndTime)
                     {
-                        SkeletalMeshComponent->EndAnimNotify(Notify);
+                        SkeletalMeshComponent->HandleAnimNotify(Notify, ENotifyState::End);
                     }
                 }
             }
@@ -45,18 +45,18 @@ void UAnimInstance::TriggerAnimNotifies(float DeltaTime)
             {
                 if (PlaybackContext->PreviousTime >= Notify.TriggerTime && PlaybackContext->PlaybackTime <= Notify.TriggerTime)
                 {
-                    SkeletalMeshComponent->StartAnimNotify(Notify);
+                    SkeletalMeshComponent->HandleAnimNotify(Notify, ENotifyState::Start);
                 }
                 else if (PlaybackContext->PreviousTime < Notify.TriggerTime && Notify.Duration > 0)
                 {
                     float EndTime = Notify.TriggerTime + Notify.Duration;
                     if (Notify.TriggerTime - PlaybackContext->PlaybackTime <= Notify.Duration)
                     {
-                        SkeletalMeshComponent->TickAnimNotify(Notify, DeltaTime);
+                        SkeletalMeshComponent->HandleAnimNotify(Notify, ENotifyState::Tick, DeltaTime);
                     }
                     else if (PlaybackContext->PreviousTime >= EndTime && PlaybackContext->PlaybackTime <= EndTime)
                     {
-                        SkeletalMeshComponent->EndAnimNotify(Notify);
+                        SkeletalMeshComponent->HandleAnimNotify(Notify, ENotifyState::End);
                     }
                 }
             }

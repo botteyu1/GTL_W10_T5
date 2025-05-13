@@ -241,19 +241,9 @@ void USkeletalMeshComponent::SetAnimSequence(UAnimSequence* InAnimSequence)
     }
 }
 
-void USkeletalMeshComponent::TickAnimNotify(const FAnimNotifyEvent& Notify, float DeltaTime)
+void USkeletalMeshComponent::HandleAnimNotify(const FAnimNotifyEvent& Notify, ENotifyState NotifyState, float DeltaTime)
 {
-    GetOwner()->TickAnimNotify(Notify, DeltaTime);
-}
-
-void USkeletalMeshComponent::EndAnimNotify(const FAnimNotifyEvent& Notify)
-{
-    GetOwner()->EndAnimNotify(Notify);
-}
-
-void USkeletalMeshComponent::StartAnimNotify(const FAnimNotifyEvent& Notify)
-{
-    GetOwner()->StartAnimNotify(Notify);
+    GetOwner()->HandleAnimNotify(Notify, NotifyState, DeltaTime);
 }
 
 void USkeletalMeshComponent::SetAnimationTime(float InTime)

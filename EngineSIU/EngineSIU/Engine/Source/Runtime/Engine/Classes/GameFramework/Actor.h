@@ -14,6 +14,7 @@ DECLARE_MULTICAST_DELEGATE_FourParams(FActorHitSignature, AActor* /* SelfActor *
 class UActorComponent;
 
 struct FAnimNotifyEvent;
+enum ENotifyState;
 
 class AActor : public UObject
 {
@@ -45,11 +46,7 @@ public:
 
     bool IsOverlappingActor(const AActor* Other) const;
 
-    virtual void StartAnimNotify(const FAnimNotifyEvent& Notify) {}
-     
-    virtual void TickAnimNotify(const FAnimNotifyEvent& Notify, float DeltaTime = 0.f) {}
-
-    virtual void EndAnimNotify(const FAnimNotifyEvent& Notify) {}
+    virtual void HandleAnimNotify(const FAnimNotifyEvent& Notify, ENotifyState NotifyState, float DeltaTime = 0.f) {}
 
 public:
     /** 이 Actor를 제거합니다. */
