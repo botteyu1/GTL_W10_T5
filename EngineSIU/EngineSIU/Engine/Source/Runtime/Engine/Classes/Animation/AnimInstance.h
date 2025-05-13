@@ -13,6 +13,7 @@ struct FAnimationPlaybackContext
     bool bIsLooping = false;
     float PlayRate = 1.f;
     float StartPosition = 0.f;
+    float AnimationLength = 0.f;
 
     FAnimationPlaybackContext(UAnimationAsset* InAnimAsset, bool IsLoop = false, float InPlayRate = 1.f, float InStartPosition = 0.f);
 };
@@ -44,7 +45,7 @@ public:
 
     virtual void AddAnimationPlaybackContext(UAnimationAsset* InAnimAsset = nullptr, bool IsLoop = false, float InPlayRate = 1.f, float InStartPosition = 0.f);
 
-    std::shared_ptr<FAnimationPlaybackContext>& GetAnimationPlaybackContext(UAnimationAsset* InAnimAsset);
+    FAnimationPlaybackContext* GetAnimationPlaybackContext(UAnimationAsset* InAnimAsset);
 
     void Initialize(USkeletalMeshComponent* MeshComponent);
     USkeletalMeshComponent* GetSkeletalMeshComponent() const { return SkeletalMeshComponent; }

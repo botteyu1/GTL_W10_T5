@@ -42,6 +42,7 @@
 #include "Animation/AnimSequence.h"
 #include "Animation/AnimDataModel.h"
 #include "Animation/AnimSingleNodeInstance.h"
+#include "Animation/BlendAnimInstance.h"
 #include "UObject/Casts.h"
 
 PropertyEditorPanel::PropertyEditorPanel()
@@ -441,7 +442,7 @@ void PropertyEditorPanel::RenderForSkeletalMesh(USkeletalMeshComponent* Skeletal
                 PreviewName = RenderData->DisplayName;
             }
         }
-        
+
         const TMap<FName, FAssetInfo> Assets = UAssetManager::Get().GetAssetRegistry();
 
         if (ImGui::BeginCombo("##SkeletalMesh", GetData(PreviewName), ImGuiComboFlags_None))
@@ -452,7 +453,7 @@ void PropertyEditorPanel::RenderForSkeletalMesh(USkeletalMeshComponent* Skeletal
                 {
                     continue;
                 }
-                
+
                 if (ImGui::Selectable(GetData(Asset.Value.AssetName.ToString()), false))
                 {
                     FString MeshName = Asset.Value.PackagePath.ToString() + "/" + Asset.Value.AssetName.ToString();
@@ -465,61 +466,225 @@ void PropertyEditorPanel::RenderForSkeletalMesh(USkeletalMeshComponent* Skeletal
             }
             ImGui::EndCombo();
         }
-
         ImGui::TreePop();
+    }
+    ImGui::PopStyleColor();
 
-        ImGui::Text("Animation");
-        ImGui::SameLine();
+    if (SkeletalMeshComp->GetSkeletalMeshAsset() == nullptr)
+    {
+        return;
+    }
 
-        PreviewName = FString("None");
-        UAnimInstance* AnimInstance = SkeletalMeshComp->GetAnimInstance();
-        if (AnimInstance)
+    // 애니메이션 관련 UI
+    ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(0.1f, 0.1f, 0.1f, 1.0f)); // 섹션 구분을 위해 동일 스타일 적용
+    if (ImGui::TreeNodeEx("Animation", ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_DefaultOpen))
+    {
+        // 여기서 AnimInstance의 클래스 타입에 따라 분기
+        UAnimInstance* CurrentAnimInst = SkeletalMeshComp->GetAnimInstance();
+        const char* CurrentModeStr = "Unknown";
+
+        enum class ECurrentAnimMode
         {
-            UAnimSingleNodeInstance* SingleNodeInstance = Cast<UAnimSingleNodeInstance>(AnimInstance);
-            if (SingleNodeInstance)
+            Unknown,
+            SingleNode,
+            BlendInstance,
+            AnimStateMachine
+        };
+
+        ECurrentAnimMode CurrentAnimMode = ECurrentAnimMode::Unknown;
+
+        if (CurrentAnimInst)
+        {
+            if (Cast<UBlendAnimInstance>(CurrentAnimInst)) {
+                CurrentModeStr = "BlendAnimInstance";
+                CurrentAnimMode = ECurrentAnimMode::BlendInstance;
+            }
+            else if (Cast<UAnimSingleNodeInstance>(CurrentAnimInst)) {
+                CurrentModeStr = "SingleNode";
+                CurrentAnimMode = ECurrentAnimMode::SingleNode;
+            }
+            else
             {
-                if (UAnimSequence* AnimSequence = Cast<UAnimSequence>(SingleNodeInstance->GetAnimationAsset()))
-                {
-                    PreviewName = AnimSequence->GetName().ToString();
-                }
+                CurrentModeStr = "Unknown"; // 또는 CurrentAnimInst->GetClass()->GetName() 사용
             }
         }
-
-
-        if (ImGui::BeginCombo("##AnimSequence", GetData(PreviewName), ImGuiComboFlags_None))
+        else
         {
-            for (const auto& Asset : Assets)
-            {
-                if (Asset.Value.AssetType != EAssetType::AnimSequence)
-                {
-                    continue;
-                }
+            CurrentModeStr = "None";
+        }
 
-                if (ImGui::Selectable(GetData(Asset.Value.AssetName.ToString()), false))
+        ImGui::Text("AnimMode");
+        ImGui::SameLine();
+
+        if (ImGui::BeginCombo("##AnimModeSelection", CurrentModeStr))
+        {
+            // UBlendAnimInstance로 변경하는 옵션
+            if (ImGui::Selectable("BlendAnimInstance", CurrentAnimMode == ECurrentAnimMode::BlendInstance))
+            {
+                if (CurrentAnimMode != ECurrentAnimMode::BlendInstance)
                 {
-                    FName AnimName = Asset.Value.AssetName;
-                    UAnimSequence* AnimSequence = UAssetManager::Get().GetAnimSequence(AnimName);
-                    if (AnimSequence)
+                    SkeletalMeshComp->SetAnimInstanceClass(UBlendAnimInstance::StaticClass());
+                }
+            }
+            if (ImGui::Selectable("SingleNode", CurrentAnimMode == ECurrentAnimMode::SingleNode || (CurrentAnimInst == nullptr && CurrentAnimMode == ECurrentAnimMode::Unknown)))
+            {
+                if (CurrentAnimMode != ECurrentAnimMode::SingleNode)
+                {
+                    if (UAnimSingleNodeInstance::StaticClass())
                     {
-                        // !TODO : AnimStateMachine 이후에는 AnimStateMachine에 추가하는 로직으로 변경
-                        SkeletalMeshComp->SetAnimSequence(AnimSequence);
+                        SkeletalMeshComp->SetAnimInstanceClass(UAnimSingleNodeInstance::StaticClass());
+                    }
+                    else
+                    {
+                        SkeletalMeshComp->SetAnimInstanceClass(nullptr);
                     }
                 }
             }
             ImGui::EndCombo();
         }
+        ImGui::Separator();
+
+        // AnimInstance 타입에 따른 UI 분기 (모드 변경 후 인스턴스를 다시 가져와야 할 수 있음)
+        CurrentAnimInst = SkeletalMeshComp->GetAnimInstance(); // 중요: 모드 변경 시 인스턴스가 바뀔 수 있으므로 다시 가져옴
+        UBlendAnimInstance* BlendInstance = Cast<UBlendAnimInstance>(CurrentAnimInst);
+        UAnimSingleNodeInstance* SingleNodeInst = Cast<UAnimSingleNodeInstance>(CurrentAnimInst);
+
+        const TMap<FName, FAssetInfo> AllAnimAssets = UAssetManager::Get().GetAssetRegistry();
+
+        if (BlendInstance)
+        {
+            ImGui::TextUnformatted("BlendInstance Properties");
+
+            FString PreviewNameA = BlendInstance->AnimA ? BlendInstance->AnimA->GetName().ToString() : "None";
+            ImGui::Text("AnimA : "); ImGui::SameLine(120);
+            if (ImGui::BeginCombo("##BlendAnim A", GetData(PreviewNameA)))
+            {
+                if (ImGui::Selectable(GetData(FString("None##AnimA")), BlendInstance->AnimA == nullptr))
+                {
+                    BlendInstance->SetAnimSequences(nullptr, nullptr);
+                }
+                for (const auto& AssetEntry : AllAnimAssets)
+                {
+                    if (AssetEntry.Value.AssetType == EAssetType::AnimSequence)
+                    {
+                        bool isSelected = (BlendInstance->AnimA && BlendInstance->AnimA->GetName() == AssetEntry.Value.AssetName);
+                        if (ImGui::Selectable(GetData(AssetEntry.Value.AssetName.ToString()), isSelected))
+                        {
+                            UAnimSequence* SelectedSeq = UAssetManager::Get().GetAnimSequence(AssetEntry.Value.AssetName);
+                            BlendInstance->SetAnimSequences(SelectedSeq, nullptr);
+                        }
+                    }
+                }
+                ImGui::EndCombo();
+            }
+
+            FString PreviewNameB = BlendInstance->AnimB ? BlendInstance->AnimB->GetName().ToString() : "None";
+            ImGui::Text("AnimB : "); ImGui::SameLine(120);
+            if (ImGui::BeginCombo("##BlendAnim B", GetData(PreviewNameB)))
+            {
+                if (ImGui::Selectable(GetData(FString("None##AnimB")), BlendInstance->AnimB == nullptr))
+                {
+                    BlendInstance->SetAnimSequences(nullptr, nullptr);
+                }
+                for (const auto& AssetEntry : AllAnimAssets)
+                {
+                    if (AssetEntry.Value.AssetType == EAssetType::AnimSequence)
+                    {
+                        bool isSelected = (BlendInstance->AnimB && BlendInstance->AnimB->GetName() == AssetEntry.Value.AssetName);
+                        if (ImGui::Selectable(GetData(AssetEntry.Value.AssetName.ToString()), isSelected))
+                        {
+                            UAnimSequence* SelectedSeq = UAssetManager::Get().GetAnimSequence(AssetEntry.Value.AssetName);
+                            BlendInstance->SetAnimSequences(nullptr, SelectedSeq);
+                        }
+                    }
+                }
+                ImGui::EndCombo();
+            }
+
+            ImGui::Text("Blend Alpha"); ImGui::SameLine(120);
+            ImGui::SliderFloat("##BlendAlphaSlider", &BlendInstance->BlendAlpha, 0.0f, 1.0f);
+        }
+        else
+        {
+            ImGui::TextUnformatted("SingleNode Properties");
+            ImGui::Text("AnimSequence"); ImGui::SameLine(120);
+
+            FString PreviewSingleAnimName = "None";
+            UAnimSequence* CurrentSingleAnimAsset = nullptr;
+            if (SingleNodeInst)
+            {
+                CurrentSingleAnimAsset = Cast<UAnimSequence>(SingleNodeInst->GetAnimationAsset());
+                if (CurrentSingleAnimAsset)
+                {
+                    PreviewSingleAnimName = CurrentSingleAnimAsset->GetName().ToString();
+                }
+            }
+
+            if (CurrentSingleAnimAsset)
+            {
+                PreviewSingleAnimName = CurrentSingleAnimAsset->GetName().ToString();
+            }
+
+            if (ImGui::BeginCombo("##SingleAnimSequenceCombo", GetData(PreviewSingleAnimName)))
+            {
+                // "없음" 선택지
+                if (ImGui::Selectable(GetData(FString("None##SingleAnim")), CurrentSingleAnimAsset == nullptr))
+                {
+                    //SkeletalMeshComp->Stop(); // 애니메이션 정지
+                    if (SingleNodeInst) 
+                    {
+                        SingleNodeInst->SetAnimationAsset(nullptr);
+                    }
+                    else 
+                    {
+                        // SkeletalMeshComp에 직접 애니메이션을 설정/해제하는 API가 있다면 사용
+                        // 예: SkeletalMeshComp->SetAnimation(nullptr);
+                    }
+                }
+
+                for (const auto& AssetEntry : AllAnimAssets)
+                {
+                    if (AssetEntry.Value.AssetType == EAssetType::AnimSequence)
+                    {
+                        bool isSelected = (CurrentSingleAnimAsset && CurrentSingleAnimAsset->GetName() == AssetEntry.Value.AssetName);
+                        if (ImGui::Selectable(GetData(AssetEntry.Value.AssetName.ToString()), isSelected))
+                        {
+                            UAnimSequence* SelectedSeq = UAssetManager::Get().GetAnimSequence(AssetEntry.Value.AssetName);
+                            if (SelectedSeq)
+                            {
+                                // UAnimSingleNodeInstance가 활성화된 모드라면 해당 인스턴스에 설정
+                                if (SingleNodeInst) 
+                                {
+                                    SingleNodeInst->SetAnimationAsset(SelectedSeq);
+                                    // 필요시 SingleNodeInst->PlayAnimation(); 등 호출
+                                }
+                                else 
+                                {
+                                    // 아니면 SkeletalMeshComponent의 기본 단일 애니메이션 재생 함수 사용
+                                    SkeletalMeshComp->SetAnimSequence(SelectedSeq); // 이 함수가 내부적으로 처리한다고 가정
+                                }
+                            }
+                        }
+                    }
+                }
+                ImGui::EndCombo();
+            }
+        }
+
+        ImGui::Separator();
 
         if (ImGui::Button("Play Animation"))
         {
             SkeletalMeshComp->SetAnimationEnabled(true);
         }
-        
+
         ImGui::SameLine();
-        
+
         if (ImGui::Button("Stop Animation"))
         {
             SkeletalMeshComp->SetAnimationEnabled(false);
         }
+        ImGui::TreePop();
     }
     ImGui::PopStyleColor();
 }

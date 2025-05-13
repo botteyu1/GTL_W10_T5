@@ -3,8 +3,8 @@
 
 void ACharacter::HandleAnimNotify(const FAnimNotifyEvent& Notify)
 {
-    if (Notify.NotifyName == FName(TEXT("Fire")))
+    if (Notify.NotifyName == FName(TEXT("Jump")))
     {
-        //Fire();
+        AddActorLocation(FVector(0, 0, 10));
     }
 }
