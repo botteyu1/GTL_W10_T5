@@ -15,28 +15,56 @@ void FSequenceInterface::CustomDrawCompact(int index, ImDrawList* draw_list, con
         return;
     }
 
-    // 패널로부터 FramePixelWidth와 FirstFrame 값이 최신 상태인지 확인
-    // (이 값들은 패널에서 ImSequencer::Sequencer 호출 *전에* 설정되어야 함)
+    int frameMin = GetFrameMin();
+    int frameMax = GetFrameMax();
+    int totalFrames = frameMax - frameMin;
+    if (totalFrames <= 0) return; // 프레임 수가 유효하지 않으면 그리지 않음
 
-    float markerSize = 8.0f; // 다이아몬드 마커 크기
+    float frameRate = CurrentSequence->GetFrameRate().AsDecimal();
+    if (frameRate <= 0.0f) return;
+    float markerSize = 12.0f; // 다이아몬드 마커 크기
+
+    // rc의 너비는 현재 줌 레벨에서 전체 프레임(totalFrames)이 차지하는 총 픽셀 너비와 같습니다.
+    float totalPixelWidth = rc.Max.x - rc.Min.x - markerSize;
+
+    // 따라서 현재 프레임 당 픽셀 너비(framePixelWidth)는 다음과 같이 계산할 수 있습니다.
+    // (totalFrames가 0일 경우 대비)
+    float framePixelWidth = (totalFrames > 0) ? (totalPixelWidth / (float)totalFrames) : 10.0f;
+
+    // rc.Min.x는 frameMin 프레임이 현재 화면에 그려지는 x 좌표입니다.
+
+    // 마커가 클리핑 영역(실제로 보이는 영역) 내에 있는지 확인합니다.
+    // Y 좌표는 트랙의 상단을 기준으로 합니다 (rc.Min.y ).
+    float markerPosY = rc.Min.y + markerSize / 2.f; // 트랙 상단에 그리기
+    
+    float startScreenX = rc.Min.x; // 시작점의 화면 X 좌표
     ImU32 markerColor = IM_COL32(255, 255, 0, 255); // 노란색 마커
     ImU32 selectedMarkerColor = IM_COL32(0, 255, 0, 255); // 녹색 선택된 마커
+
+    
 
     // 시퀀스의 모든 노티파이 순회
     for (int notifyIndex = 0; notifyIndex < CurrentSequence->GetAnimNotifies().Num(); ++notifyIndex)
     {
         const FAnimNotifyEvent& notify = CurrentSequence->GetAnimNotifies()[notifyIndex];
-        // 노티파이 시간을 화면 X 좌표로 변환
-        float markerScreenX = GetScreenXFromTime(notify.TriggerTime, clippingRect);
+        int notifyFrame = static_cast<int>(notify.TriggerTime * frameRate);
+        // notifyFrame이 화면에 그려져야 할 x 좌표 계산:
+        // 시작점(frameMin의 화면 X 좌표) + (프레임 차이 * 프레임 당 픽셀 너비)
+        float markerScreenX = startScreenX + (notifyFrame - frameMin) * framePixelWidth;
 
-        // 마커가 보이는 클리핑 영역 내에 있을 때만 그림
+
+
+        // X 좌표가 보이는 영역 내에 있는지 확인
         if (markerScreenX >= clippingRect.Min.x && markerScreenX <= clippingRect.Max.x)
         {
             // 마커 포인트 계산 (markerScreenX를 중심으로, 상단 가장자리는 rc.Min.y에 위치하는 다이아몬드 모양)
-            ImVec2 p1 = ImVec2(markerScreenX, rc.Min.y);
-            ImVec2 p2 = ImVec2(markerScreenX + markerSize / 2, rc.Min.y + markerSize / 2);
-            ImVec2 p3 = ImVec2(markerScreenX, rc.Min.y + markerSize);
-            ImVec2 p4 = ImVec2(markerScreenX - markerSize / 2, rc.Min.y + markerSize / 2);
+            // 간단한 다이아몬드 모양 마커 그리기
+
+            
+            ImVec2 p1 = ImVec2(markerScreenX, markerPosY);
+            ImVec2 p2 = ImVec2(markerScreenX + markerSize / 2, markerPosY + markerSize / 2);
+            ImVec2 p3 = ImVec2(markerScreenX, markerPosY + markerSize);
+            ImVec2 p4 = ImVec2(markerScreenX - markerSize / 2, markerPosY + markerSize / 2);
 
             // 선택 상태에 따라 색상 결정 (OwnerPanel이 관리)
             bool isSelected = (OwnerPanel->GetSelectedNotifyIndex() == notifyIndex);
@@ -50,17 +78,26 @@ void FSequenceInterface::CustomDrawCompact(int index, ImDrawList* draw_list, con
             markerHitbox.Min.y = rc.Min.y; // 클릭하기 쉽도록 히트박스를 트랙 전체 높이로 설정
             markerHitbox.Max.y = rc.Max.y;
 
-            // 마우스 호버 시 툴팁 표시
-            if (markerHitbox.Contains(ImGui::GetMousePos()))
+            // 마우스 오버 시 툴팁으로 노티파이 이름 표시
+            ImRect markerRect(ImVec2(markerScreenX - markerSize / 2, markerPosY), ImVec2(markerScreenX + markerSize / 2, markerPosY + markerSize));
+
+
+            
+            if (markerRect.Contains(ImGui::GetMousePos()))
             {
                 ImGui::BeginTooltip();
-                ImGui::Text("Notify: %s", (*notify.NotifyName.ToString())); // 노티파이 이름 표시
-                ImGui::Text("Time: %.3fs", notify.TriggerTime); // 트리거 시간 표시
+                ImGui::Text("Notify: %s", (*notify.NotifyName.ToString()));
+                ImGui::Text("Time: %.2fs (Frame: %d)", notify.TriggerTime, notifyFrame);
                 ImGui::EndTooltip();
 
                 // 클릭 시 선택
                 if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
                 {
+                    OwnerPanel->DraggingNotifyIndex = notifyIndex; // 드래그 시작
+                    OwnerPanel->DraggingNotifyOriginalTime = notify.TriggerTime;
+                    // TODO: 선택된 노티파이 정보 업데이트 (예: PropertyEditor에 표시)
+                    // OwnerPanel->SelectNotify(¬ify);
+                    
                     OwnerPanel->SetSelectedNotifyIndex(notifyIndex); // 패널에 선택된 인덱스 알림
                     //ImGui::CaptureMouseFromApp(true); // 다른 상호작용 방지
                     ImGui::SetNextFrameWantCaptureMouse(true); //대신 사용
@@ -69,23 +106,24 @@ void FSequenceInterface::CustomDrawCompact(int index, ImDrawList* draw_list, con
         }
     }
 
-    // 선택 사항: 빈 공간 클릭 시 선택 해제 처리
+    // 빈 공간 클릭 시 선택 해제 처리
     if (ImGui::IsMouseClicked(ImGuiMouseButton_Left) && clippingRect.Contains(ImGui::GetMousePos()))
     {
         bool clickedOnMarker = false;
         // 마우스 위치가 기존 마커 위에 있는지 확인
         for (int notifyIndex = 0; notifyIndex < CurrentSequence->GetAnimNotifies().Num(); ++notifyIndex)
         {
-             const FAnimNotifyEvent& notify = CurrentSequence->GetAnimNotifies()[notifyIndex];
-             float markerScreenX = GetScreenXFromTime(notify.TriggerTime, clippingRect);
-             ImRect markerHitbox(
-                 ImVec2(markerScreenX - markerSize / 2, rc.Min.y),
-                 ImVec2(markerScreenX + markerSize / 2, rc.Max.y)
-             );
-             if (markerHitbox.Contains(ImGui::GetMousePos())) {
-                 clickedOnMarker = true;
-                 break;
-             }
+            const FAnimNotifyEvent& notify = CurrentSequence->GetAnimNotifies()[notifyIndex];
+            int notifyFrame = static_cast<int>(notify.TriggerTime * frameRate);
+            float markerScreenX = startScreenX + (notifyFrame - frameMin) * framePixelWidth;
+            ImRect markerHitbox(
+                ImVec2(markerScreenX - markerSize / 2, rc.Min.y),
+                ImVec2(markerScreenX + markerSize / 2, rc.Max.y)
+            );
+            if (markerHitbox.Contains(ImGui::GetMousePos())) {
+                clickedOnMarker = true;
+                break;
+            }
         }
         // 마커 위가 아닌 빈 공간을 클릭했다면 선택 해제
         if (!clickedOnMarker) {
@@ -93,44 +131,109 @@ void FSequenceInterface::CustomDrawCompact(int index, ImDrawList* draw_list, con
         }
     }
 
+    // --- 드래그 중인 노티파이 위치 업데이트 ---
+    if (OwnerPanel && OwnerPanel->DraggingNotifyIndex != -1)
+    {
+        if (ImGui::IsMouseDragging(ImGuiMouseButton_Left, 0.0f)) // 임계값 없이 드래그 감지
+        {
+            if (OwnerPanel->DraggingNotifyIndex >= 0 && OwnerPanel->DraggingNotifyIndex < CurrentSequence->GetAnimNotifies().Num())
+            {
+                FAnimNotifyEvent& draggedNotify = CurrentSequence->GetAnimNotifies()[OwnerPanel->DraggingNotifyIndex];
+                float mouseX = ImGui::GetMousePos().x;
+
+                // 화면 X 좌표를 시간으로 변환 (더블 클릭 로직과 유사)
+                if (framePixelWidth > 0.0f)
+                {
+                    float relativeClickX = mouseX - rc.Min.x;
+                    int newFrame = frameMin + static_cast<int>(relativeClickX / framePixelWidth);
+                    newFrame = std::max(frameMin, std::min(newFrame, frameMax)); // 프레임 범위 제한
+
+                    float newTime = static_cast<float>(newFrame) / frameRate;
+                    newTime = std::max(0.0f, std::min(newTime, CurrentSequence->GetPlayLength())); // 시간 범위 제한
+
+                    draggedNotify.TriggerTime = newTime; // 노티파이 시간 직접 업데이트
+
+                    // TODO: 변경 사항을 즉시 반영하거나, 에셋을 더티 상태로 표시
+                    // CurrentSequence->MarkPackageDirty();
+                }
+            }
+        }
+        else if (ImGui::IsMouseReleased(ImGuiMouseButton_Left))
+        {
+            OwnerPanel->DraggingNotifyIndex = -1; // 드래그 종료
+        }
+    }
+
+
+
      // 더블 클릭으로 해당 시간에 새 노티파이 추가 요청
-     if (ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left) && clippingRect.Contains(ImGui::GetMousePos()))
-     {
-         bool clickedOnMarker = false;
-         // (기존 마커 위 더블클릭인지 확인하는 유사한 루프)
-         // ...
-         if (!clickedOnMarker) // 빈 공간 더블클릭 시
-         {
-             float clickX = ImGui::GetMousePos().x; // 클릭된 X 좌표
-             // 화면 X 좌표를 시간으로 다시 변환
-             float time = 0.0f;
-             if (FramePixelWidth > 0.0f) { // FramePixelWidth가 유효할 때
-                 // 클릭된 위치에 해당하는 프레임 계산
-                 int frame = FirstFrame + static_cast<int>((clickX - clippingRect.Min.x) / FramePixelWidth);
-                 if (CurrentSequence && CurrentSequence->GetFrameRate().IsValid()) {
-                     // 프레임을 시간으로 변환
-                     time = static_cast<float>(frame) / CurrentSequence->GetFrameRate().AsDecimal();
-                     // 시간을 시퀀스 길이 내로 제한
-                     time = std::max(0.0f, std::min(time, CurrentSequence->GetPlayLength()));
-                     // 패널에 해당 시간에 노티파이 추가 요청
-                     OwnerPanel->RequestAddNotifyAtTime(time);
-                 }
-             }
-         }
-     }
-}
+    // --- 더블 클릭으로 새 노티파이 추가 요청 ---
+    if (OwnerPanel && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left) && clippingRect.Contains(ImGui::GetMousePos()))
+    {
+        bool clickedOnExistingMarker = false;
+        float mouseX = ImGui::GetMousePos().x;
 
-float FSequenceInterface::GetScreenXFromTime(float time, const ImRect& clippingRect) const
-{
-    if (!CurrentSequence || !CurrentSequence->GetFrameRate().IsValid()) return 0.0f;
+        if (CurrentSequence && CurrentSequence->GetFrameRate().AsDecimal() > 0.0f)
+        {
+            int frameMin = GetFrameMin();
+            int totalFrames = GetFrameMax() - frameMin;
+            float currentFramePixelWidth = (totalFrames > 0) ? ((rc.Max.x - rc.Min.x) / (float)totalFrames) : 10.0f;
+            float startScreenX = rc.Min.x;
 
-    float frameRate = CurrentSequence->GetFrameRate().AsDecimal();
-    int frame = static_cast<int>(time * frameRate); // 시간을 프레임으로 변환
+            for (const FAnimNotifyEvent& notify : CurrentSequence->GetAnimNotifies())
+            {
+                int notifyFrame = static_cast<int>(notify.TriggerTime * CurrentSequence->GetFrameRate().AsDecimal());
+                float markerScreenX = startScreenX + (notifyFrame - frameMin) * currentFramePixelWidth;
+                ImRect markerRect(ImVec2(markerScreenX - markerSize / 2, markerPosY), ImVec2(markerScreenX + markerSize / 2, markerPosY + markerSize));
+            
+                //ImRect markerRect(ImVec2(markerScreenX - markerSize, rc.Min.y - markerSize), ImVec2(markerScreenX + markerSize, rc.Min.y + markerSize + markerSize)); // 클릭 영역을 좀 더 넓게
+                if (markerRect.Contains(ImGui::GetMousePos()))
+                {
+                    clickedOnExistingMarker = true;
+                    // TODO: 기존 노티파이 편집 로직 호출
+                    break;
+                }
+            }
+        }
 
-    // 클리핑 사각형의 왼쪽 가장자리를 기준으로 화면 X 좌표 계산
-    // 소유 패널로부터 FramePixelWidth와 FirstFrame 값이 필요함
-    float screenX = clippingRect.Min.x + (frame - FirstFrame) * FramePixelWidth;
-    return screenX;
+        if (!clickedOnExistingMarker) // 빈 공간을 더블 클릭한 경우
+        {
+            // 화면 X 좌표를 프레임으로 변환
+            int frameMin = GetFrameMin();
+            int totalFrames = GetFrameMax() - frameMin;
+            if (totalFrames <= 0) return; // 유효하지 않으면 중단
+
+            // rc.Min.x는 frameMin 프레임이 현재 화면에 그려지는 x 좌표.
+            // rc.Max.x는 frameMax 프레임이 현재 화면에 그려지는 x 좌표.
+            float totalPixelWidthForSequence = rc.Max.x - rc.Min.x;
+            float currentFramePixelWidth = totalPixelWidthForSequence / (float)totalFrames;
+
+            if (currentFramePixelWidth > 0.0f)
+            {
+                // 클릭된 X 좌표(mouseX)에서 트랙 시작 X 좌표(rc.Min.x)를 빼서
+                // 트랙 내에서의 상대적인 X 픽셀 위치를 구함.
+                float relativeClickX = mouseX - rc.Min.x;
+
+                // 상대적인 X 픽셀 위치를 프레임으로 변환하고, 시퀀스 시작 프레임(frameMin)을 더함.
+                int clickedFrame = frameMin + static_cast<int>(relativeClickX / currentFramePixelWidth);
+
+                // 계산된 프레임이 유효한 범위 내에 있는지 확인
+                clickedFrame = std::max(frameMin, std::min(clickedFrame, GetFrameMax()));
+
+                if (CurrentSequence && CurrentSequence->GetFrameRate().IsValid())
+                {
+                    // 프레임을 시간으로 변환
+                    float clickedTime = static_cast<float>(clickedFrame) / CurrentSequence->GetFrameRate().AsDecimal();
+
+                    // 시간을 시퀀스 길이 내로 최종 제한 (부동소수점 오차 등 고려)
+                    clickedTime = std::max(0.0f, std::min(clickedTime, CurrentSequence->GetPlayLength()));
+
+                    // 패널에 해당 시간에 노티파이 추가 요청
+                    OwnerPanel->RequestAddNotifyAtTime(clickedTime);
+                }
+            }
+        }
+    }
 }
 
 AnimationSequenceViewerPanel::AnimationSequenceViewerPanel()
@@ -157,6 +260,8 @@ AnimationSequenceViewerPanel::AnimationSequenceViewerPanel()
     bIsPlayingReverse = false;
     SelectedNotifyIndex = -1; // 선택 해제
     bShowAddNotifyPopup = false; // 팝업 닫기
+    
+    DraggingNotifyIndex = -1; // 시퀀스 변경 시 드래그 상태 초기화
 
     delete SequencerData; // 기존 SequencerData 삭제
     if (CurrentAnimSequence)
@@ -350,62 +455,62 @@ void AnimationSequenceViewerPanel::Render()
 
 
     
-     static char NotifyName[256] = "";
-     if (CurrentAnimSequence)
-     {
-         ImGui::InputText("NotifyName", NotifyName, sizeof(NotifyName));
-
-         if (ImGui::Button("Add Notify"))
-         {
-             FAnimNotifyEvent NewNotify;
-             NewNotify.NotifyName = FName(FString(NotifyName));
-             NewNotify.TriggerTime = PlaybackTime;
-             NewNotify.Duration = 0.0f;
-             CurrentAnimSequence->AddAnimNotifyEvent(NewNotify);
-
-             NotifyName[0] = '\0';
-         }
-     }
-
-     if(CurrentAnimSequence->GetAnimNotifies().Num()>0)
-         ImGui::Text("Edit Notify Trigger Time:");
-
-     int NotifyIndex = 0;
-     //삭제할 Notify 담아둘 리스트
-     TArray<FAnimNotifyEvent> DeletedNotify;
-
-     for(auto& Notify : CurrentAnimSequence->GetAnimNotifies())
-     {
-         ImGui::PushID(NotifyIndex);
-         float FrameRate = CurrentAnimSequence->GetFrameRate().AsDecimal();
-         float TimeInSeconds = Notify.TriggerTime;
-
-         ImGui::Separator();
-         ImGui::Text(*Notify.NotifyName.ToString());
-         ImGui::SameLine();
-         if (ImGui::SliderFloat("##TriggerTime", &TimeInSeconds, 0.0f, CurrentAnimSequence->GetPlayLength(), "%.2f s"))
-         {
-             Notify.TriggerTime = TimeInSeconds;
-         }
-         ImGui::SameLine();
-         if (ImGui::Button("Delete"))
-         {
-             DeletedNotify.Add(Notify);
-         }
-         ImGui::PopID();
-         ++NotifyIndex;
-     }
-     //삭제할 Notify 일괄 처리
-     for (auto& Notify : DeletedNotify)
-     {
-         CurrentAnimSequence->RemoveAnimNotifyEvent(Notify);
-     }
-
-     // 선택된 트랙 정보 표시 (예시)
-     if (SelectedSequencerEntry != -1)
-     {
-         ImGui::Text("Selected Track: %s", SequencerData->GetItemLabel(SelectedSequencerEntry));
-     }
+     // static char NotifyName[256] = "";
+     // if (CurrentAnimSequence)
+     // {
+     //     ImGui::InputText("NotifyName", NotifyName, sizeof(NotifyName));
+     //
+     //     if (ImGui::Button("Add Notify"))
+     //     {
+     //         FAnimNotifyEvent NewNotify;
+     //         NewNotify.NotifyName = FName(FString(NotifyName));
+     //         NewNotify.TriggerTime = PlaybackTime;
+     //         NewNotify.Duration = 0.0f;
+     //         CurrentAnimSequence->AddAnimNotifyEvent(NewNotify);
+     //
+     //         NotifyName[0] = '\0';
+     //     }
+     // }
+     //
+     // if(CurrentAnimSequence->GetAnimNotifies().Num()>0)
+     //     ImGui::Text("Edit Notify Trigger Time:");
+     //
+     // int NotifyIndex = 0;
+     // //삭제할 Notify 담아둘 리스트
+     // TArray<FAnimNotifyEvent> DeletedNotify;
+     //
+     // for(auto& Notify : CurrentAnimSequence->GetAnimNotifies())
+     // {
+     //     ImGui::PushID(NotifyIndex);
+     //     float FrameRate = CurrentAnimSequence->GetFrameRate().AsDecimal();
+     //     float TimeInSeconds = Notify.TriggerTime;
+     //
+     //     ImGui::Separator();
+     //     ImGui::Text(*Notify.NotifyName.ToString());
+     //     ImGui::SameLine();
+     //     if (ImGui::SliderFloat("##TriggerTime", &TimeInSeconds, 0.0f, CurrentAnimSequence->GetPlayLength(), "%.2f s"))
+     //     {
+     //         Notify.TriggerTime = TimeInSeconds;
+     //     }
+     //     ImGui::SameLine();
+     //     if (ImGui::Button("Delete"))
+     //     {
+     //         DeletedNotify.Add(Notify);
+     //     }
+     //     ImGui::PopID();
+     //     ++NotifyIndex;
+     // }
+     // //삭제할 Notify 일괄 처리
+     // for (auto& Notify : DeletedNotify)
+     // {
+     //     CurrentAnimSequence->RemoveAnimNotifyEvent(Notify);
+     // }
+     //
+     // // 선택된 트랙 정보 표시 (예시)
+     // if (SelectedSequencerEntry != -1)
+     // {
+     //     ImGui::Text("Selected Track: %s", SequencerData->GetItemLabel(SelectedSequencerEntry));
+     // }
 
      ImGui::End();
  }
@@ -744,9 +849,14 @@ void AnimationSequenceViewerPanel::RenderNotifyControls()
     {
         ImGui::SameLine(); // 같은 줄에 배치
         // 선택된 노티파이 이름과 시간 표시
-        ImGui::Text(" | Selected: %s @ %.3fs",
+        
+        float frameRate = CurrentAnimSequence->GetFrameRate().AsDecimal();
+        int notifyFrame = static_cast<int>(CurrentAnimSequence->GetAnimNotifies()[SelectedNotifyIndex].TriggerTime * frameRate);
+        
+        ImGui::Text(" | Selected: %s @ %.3fs (Frame: %d)",
             (*CurrentAnimSequence->GetAnimNotifies()[SelectedNotifyIndex].NotifyName.ToString()),
-            CurrentAnimSequence->GetAnimNotifies()[SelectedNotifyIndex].TriggerTime);
+            CurrentAnimSequence->GetAnimNotifies()[SelectedNotifyIndex].TriggerTime,
+            notifyFrame);
     }
     
 }
@@ -761,7 +871,8 @@ void AnimationSequenceViewerPanel::RenderAddNotifyPopup()
     if (ImGui::BeginPopupModal("Add New Notify", &bShowAddNotifyPopup, ImGuiWindowFlags_AlwaysAutoResize))
     {
         // 추가될 시간 표시
-        ImGui::Text("Add new notify at %.3f seconds", AddNotifyTimeRequest);
+        int notifyFrame = static_cast<int>(AddNotifyTimeRequest * CurrentAnimSequence->GetFrameRate().AsDecimal());
+        ImGui::Text("Add new notify at %.3f seconds (Frame: %d)", AddNotifyTimeRequest, notifyFrame);
         ImGui::Separator(); // 구분선
 
         // 노티파이 이름 입력 필드

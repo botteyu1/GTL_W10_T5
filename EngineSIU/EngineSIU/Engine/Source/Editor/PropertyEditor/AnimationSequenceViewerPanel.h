@@ -107,8 +107,6 @@ public:
     virtual void CustomDrawCompact(int index, ImDrawList* draw_list, const ImRect& rc, const ImRect& clippingRect) override ;
 
 private:
-    // 시간을 컴팩트 트랙 영역 내의 화면 X 좌표로 변환하는 헬퍼 함수
-    float GetScreenXFromTime(float time, const ImRect& clippingRect) const;
 };
 
 class AnimationSequenceViewerPanel : public UEditorPanel
@@ -130,12 +128,17 @@ public:
     void RequestAddNotifyAtTime(float time); // MySequence가 더블클릭 시 호출
     void AddNewNotify(FName notifyName, float triggerTime); // 실제로 노티파이를 추가하는 함수
     void DeleteSelectedNotify(); // 선택된 노티파이 삭제 함수
+    
+    int DraggingNotifyIndex = -1; // 현재 드래그 중인 노티파이의 인덱스 (-1이면 드래그 중 아님)
+    float DraggingNotifyOriginalTime = 0.0f; // 드래그 시작 시 노티파이의 원래 시간
 
 
 private:
     float Width = 0, Height = 0;
     UAnimSequence* CurrentAnimSequence = nullptr;
     FSequenceInterface* SequencerData = nullptr; // ImSequencer에 전달할 데이터
+
+    
 
     
 
