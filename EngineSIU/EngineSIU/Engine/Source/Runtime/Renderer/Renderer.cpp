@@ -468,10 +468,10 @@ void FRenderer::RenderEditorOverlay(const std::shared_ptr<FEditorViewportClient>
     const uint64 ShowFlag = Viewport->GetShowFlag();
     const EViewModeIndex ViewMode = Viewport->GetViewMode();
     
-    if (GEngine->ActiveWorld->WorldType != EWorldType::Editor)
-    {
-        return;
-    }
+    // if (GEngine->ActiveWorld->WorldType != EWorldType::Editor)
+    // {
+    //     return;
+    // }
     
     // Render Editor Billboard
     /**

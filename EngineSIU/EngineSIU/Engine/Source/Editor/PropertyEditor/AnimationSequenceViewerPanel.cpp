@@ -90,6 +90,7 @@ void FSequenceInterface::CustomDrawCompact(int index, ImDrawList* draw_list, con
                 ImGui::BeginTooltip();
                 ImGui::Text("Notify: %s", (*notify.NotifyName.ToString()));
                 ImGui::Text("Time: %.2fs (Frame: %d)", notify.TriggerTime, notifyFrame);
+                ImGui::Text("Duration: %.2fs", notify.Duration);
                 ImGui::EndTooltip();
 
                 // 클릭 시 선택
@@ -154,6 +155,7 @@ void FSequenceInterface::CustomDrawCompact(int index, ImDrawList* draw_list, con
                     newTime = std::max(0.0f, std::min(newTime, CurrentSequence->GetPlayLength())); // 시간 범위 제한
 
                     draggedNotify.TriggerTime = newTime; // 노티파이 시간 직접 업데이트
+                    draggedNotify.Duration = FMath::Min(draggedNotify.Duration, CurrentSequence->GetPlayLength() - newTime); // 노티파이 시간에 맞게 duration 변경
 
                     // TODO: 변경 사항을 즉시 반영하거나, 에셋을 더티 상태로 표시
                     // CurrentSequence->MarkPackageDirty();
@@ -241,7 +243,8 @@ void FSequenceInterface::CustomDrawCompact(int index, ImDrawList* draw_list, con
 AnimationSequenceViewerPanel::AnimationSequenceViewerPanel()
  {
      // 이 패널이 어떤 월드 타입에서 활성화될지 설정 (예: SkeletalViewer 전용)
-     SetSupportedWorldTypes(EWorldTypeBitFlag::Editor|EWorldTypeBitFlag::PIE|EWorldTypeBitFlag::SkeletalViewer);
+    //EWorldTypeBitFlag::Editor|EWorldTypeBitFlag::PIE|
+     SetSupportedWorldTypes(EWorldTypeBitFlag::SkeletalViewer);
      // 초기화 시 LastFrameTime 설정
      LastFrameTime = static_cast<float>(ImGui::GetTime());
  }
@@ -286,7 +289,7 @@ void AnimationSequenceViewerPanel::RequestAddNotifyAtTime(float time)
     //ImGui::OpenPopup("Add New Notify"); // 이름으로 팝업 열기
 }
 
-void AnimationSequenceViewerPanel::AddNewNotify(FName notifyName, float triggerTime)
+void AnimationSequenceViewerPanel::AddNewNotify(FName notifyName, float triggerTime, float duration)
 {
     if (!CurrentAnimSequence) return; // 현재 시퀀스 없으면 중단
 
@@ -294,7 +297,7 @@ void AnimationSequenceViewerPanel::AddNewNotify(FName notifyName, float triggerT
     FAnimNotifyEvent newNotify;
     newNotify.NotifyName = notifyName;
     newNotify.TriggerTime = triggerTime;
-    newNotify.Duration = 0.0f; // 기본 지속 시간 설정
+    newNotify.Duration = duration;
 
     // 현재 시퀀스의 Notifies 배열에 새 노티파이 추가
     CurrentAnimSequence->GetAnimNotifies().Add(newNotify);
@@ -381,7 +384,7 @@ void AnimationSequenceViewerPanel::Render()
      ImGui::SetNextWindowPos(ImVec2(PanelPosX, PanelPosY), ImGuiCond_Always);
      ImGui::SetNextWindowSize(ImVec2(PanelWidth, PanelHeight), ImGuiCond_Always);
 
-     ImGuiWindowFlags PanelFlags = ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse;
+     ImGuiWindowFlags PanelFlags = ImGuiWindowFlags_MenuBar| ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove ;
      // ImGuiWindowFlags_MenuBar 플래그를 추가하여 메뉴바 공간 확보 가능
 
      ImGui::Begin("Animation Sequence Viewer", nullptr, PanelFlags);
@@ -917,13 +920,17 @@ void AnimationSequenceViewerPanel::RenderAddNotifyPopup()
         ImGui::InputText("Notify Name", AddNotifyNameBuffer, IM_ARRAYSIZE(AddNotifyNameBuffer));
         // TODO: 필요하다면 기존 노티파이 이름 드롭다운 또는 유효성 검사 추가
 
+        static float Duration = 0.f;
+        ImGui::InputFloat("Notify Duration", &Duration);
+        Duration = FMath::Clamp(Duration, 0.f, CurrentAnimSequence->GetPlayLength() - AddNotifyTimeRequest);
+
         // "OK" 버튼
         if (ImGui::Button("OK", ImVec2(120, 0)))
         {
             if (strlen(AddNotifyNameBuffer) > 0) // 이름이 비어있지 않으면
             {
                 // 새 노티파이 추가 함수 호출
-                AddNewNotify(FName(AddNotifyNameBuffer), AddNotifyTimeRequest);
+                AddNewNotify(FName(AddNotifyNameBuffer), AddNotifyTimeRequest, Duration);
                 bShowAddNotifyPopup = false; // 팝업 닫기 플래그 설정
                 ImGui::CloseCurrentPopup(); // ImGui 팝업 닫기
             } else {

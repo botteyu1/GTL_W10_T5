@@ -10,6 +10,8 @@ class UAnimSingleNodeInstance : public UAnimInstance
 public:
     UAnimSingleNodeInstance();
     virtual ~UAnimSingleNodeInstance() override;
+    UObject* Duplicate(UObject* InOuter) override;
+    
 
     virtual void NativeUpdateAnimation(float DeltaTime) override;
     void UpdateBone(float ElapsedTime);

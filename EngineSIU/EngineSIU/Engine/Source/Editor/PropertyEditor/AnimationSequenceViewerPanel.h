@@ -127,7 +127,7 @@ public:
 
     // --- 노티파이 수정 요청 관련 ---
     void RequestAddNotifyAtTime(float time); // MySequence가 더블클릭 시 호출
-    void AddNewNotify(FName notifyName, float triggerTime); // 실제로 노티파이를 추가하는 함수
+    void AddNewNotify(FName notifyName, float triggerTime, float duration); // 실제로 노티파이를 추가하는 함수
     void DeleteSelectedNotify(); // 선택된 노티파이 삭제 함수
     
     int DraggingNotifyIndex = -1; // 현재 드래그 중인 노티파이의 인덱스 (-1이면 드래그 중 아님)

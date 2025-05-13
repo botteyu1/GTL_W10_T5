@@ -14,6 +14,12 @@ UAnimInstance::~UAnimInstance()
 {
 }
 
+UObject* UAnimInstance::Duplicate(UObject* InOuter)
+{
+    ThisClass* NewObject = Cast<ThisClass>(Super::Duplicate(InOuter));
+    return NewObject;
+}
+
 void UAnimInstance::TriggerAnimNotifies(float DeltaTime)
 {
     for (const auto& PlaybackContext : AnimationPlaybackContexts)
@@ -23,7 +29,7 @@ void UAnimInstance::TriggerAnimNotifies(float DeltaTime)
         if (!AnimSequenceBase)
             continue;
 
-        for (const auto& Notify : AnimSequenceBase->GetAnimNotifies())
+        for (auto& Notify : AnimSequenceBase->GetAnimNotifies())
         {
             if (PlaybackContext->PlayRate > 0)
             {
@@ -31,7 +37,7 @@ void UAnimInstance::TriggerAnimNotifies(float DeltaTime)
                 {
                     SkeletalMeshComponent->HandleAnimNotify(Notify, ENotifyState::Start);
                 }
-                else if (PlaybackContext->PreviousTime > Notify.TriggerTime && Notify.Duration > 0)
+                else if (PlaybackContext->PlaybackTime >= Notify.TriggerTime && Notify.Duration > 0)
                 {
                     float EndTime = Notify.TriggerTime + Notify.Duration;
                     if (PlaybackContext->PlaybackTime - Notify.TriggerTime <= Notify.Duration)
@@ -51,7 +57,7 @@ void UAnimInstance::TriggerAnimNotifies(float DeltaTime)
                 {
                     SkeletalMeshComponent->HandleAnimNotify(Notify, ENotifyState::Start);
                 }
-                else if (PlaybackContext->PreviousTime < Notify.TriggerTime && Notify.Duration > 0)
+                else if (PlaybackContext->PreviousTime >= Notify.TriggerTime && Notify.Duration > 0)
                 {
                     float EndTime = Notify.TriggerTime + Notify.Duration;
                     if (Notify.TriggerTime - PlaybackContext->PlaybackTime <= Notify.Duration)
@@ -129,12 +135,19 @@ FAnimationPlaybackContext* UAnimInstance::GetAnimationPlaybackContext(UAnimation
 void UAnimInstance::Initialize(USkeletalMeshComponent* MeshComponent)
 {
     SkeletalMeshComponent = MeshComponent;
-    AnimationPlaybackContexts.Empty();
 }
 
 void UAnimInstance::ClearAnimationPlaybackContexts()
 {
     AnimationPlaybackContexts.Empty();
+}
+
+void UAnimInstance::PauseAnimations()
+{
+    for (auto& PlaybackContext : AnimationPlaybackContexts)
+    {
+        PlaybackContext->bIsPlaying = false;
+    }
 }
 
 FTransform UAnimInstance::GetCurrentAnimatedTransform(UAnimationAsset* AnimInstance, FName BoneName)

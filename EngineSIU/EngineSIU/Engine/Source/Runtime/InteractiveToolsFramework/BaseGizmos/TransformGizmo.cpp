@@ -139,16 +139,16 @@ void ATransformGizmo::Tick(float DeltaTime)
             {
                 int BoneIndex = Engine->SkeletalMeshViewerWorld->SelectBoneIndex;
                 TArray<FMatrix> GlobalBoneMatrices;
-                SkeletalMeshComp->GetCurrentGlobalBoneMatrices(GlobalBoneMatrices);
-
-                FTransform GlobalBoneTransform = FTransform(GlobalBoneMatrices[BoneIndex]);
-
-                AddActorLocation(GlobalBoneTransform.Translation);
-                if (EditorPlayer->GetCoordMode() == ECoordMode::CDM_LOCAL || EditorPlayer->GetControlMode() == EControlMode::CM_SCALE)
+                if (SkeletalMeshComp->GetCurrentGlobalBoneMatrices(GlobalBoneMatrices))
                 {
-                    AddActorRotation(GlobalBoneTransform.Rotation);
+                    FTransform GlobalBoneTransform = FTransform(GlobalBoneMatrices[BoneIndex]);
+
+                    AddActorLocation(GlobalBoneTransform.Translation);
+                    if (EditorPlayer->GetCoordMode() == ECoordMode::CDM_LOCAL || EditorPlayer->GetControlMode() == EControlMode::CM_SCALE)
+                    {
+                        AddActorRotation(GlobalBoneTransform.Rotation);
+                    }
                 }
-            
             }
         }
     }

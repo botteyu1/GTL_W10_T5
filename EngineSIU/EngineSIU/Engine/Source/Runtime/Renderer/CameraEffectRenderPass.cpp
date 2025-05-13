@@ -106,7 +106,14 @@ void FCameraEffectRenderPass::Render(const std::shared_ptr<FEditorViewportClient
         VignetteParams.VignetteIntensity = GEngine->ActiveWorld->GetPlayerController()->PlayerCameraManager->VignetteIntensity;
         LetterBoxParams.LetterBoxColor = FLinearColor(0.0f, 0.0f, 0.0f, 1.0f);
         LetterBoxParams.ScreenAspectRatio = Viewport->AspectRatio;
-        LetterBoxParams.LetterBoxAspectRatio = GEngine->ActiveWorld->GetPlayerController()->PlayerCameraManager->GetLetterBoxRatio();
+        if (GEngine->ActiveWorld->GetPlayerController()->PlayerCameraManager->bLetterBoxEnabled == true)
+        {
+            LetterBoxParams.LetterBoxAspectRatio = GEngine->ActiveWorld->GetPlayerController()->PlayerCameraManager->GetLetterBoxRatio();
+        }
+        else
+        {
+            LetterBoxParams.LetterBoxAspectRatio = Viewport->AspectRatio;
+        }
     }
     else
     {

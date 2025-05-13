@@ -632,4 +632,6 @@ void SLevelEditor::RegisterPIEInputDelegates()
         Handler->OnRawKeyboardInputDelegate.Remove(Handle);
     }
     // Add Delegate functions in PIE mode
+    // 에디터와 동일하게 
+    RegisterEditorInputDelegates();
 }

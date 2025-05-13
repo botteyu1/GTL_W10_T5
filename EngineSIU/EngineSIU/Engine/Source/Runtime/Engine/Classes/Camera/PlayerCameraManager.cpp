@@ -84,6 +84,7 @@ void APlayerCameraManager::InitializeFor(APlayerController* PC)
     VignetteIntensity = 0.0f;
     LetterBoxWidth = 2.35f;
     LetterBoxHeight = 1.0f;
+    bLetterBoxEnabled = false;
 }
 
 AActor* APlayerCameraManager::GetViewTarget() const

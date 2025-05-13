@@ -29,7 +29,7 @@ public:
     
 
     void StartPIE();
-    void StartSkeletalMeshViewer(FName SkeletalMeshName);
+    void StartSkeletalMeshViewer();
     void BindEssentialObjects();
     void EndPIE();
     void EndSkeletalMeshViewer();

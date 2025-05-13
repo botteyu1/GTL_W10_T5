@@ -106,6 +106,16 @@ public:
     bool AddActorRotation(const FRotator& DeltaRotation);
     bool AddActorRotation(const FQuat& DeltaRotation);
     bool AddActorScale(const FVector& DeltaScale);
+    
+    //TODO: 임시용
+    void ForceAddComponent(UActorComponent* InComponent)
+    {
+        if (InComponent)
+        {
+            OwnedComponents.Add(InComponent);
+            InComponent->OwnerPrivate = this;
+        }
+    }
 
 protected:
     UPROPERTY

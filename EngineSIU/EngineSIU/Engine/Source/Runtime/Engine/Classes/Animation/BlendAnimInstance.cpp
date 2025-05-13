@@ -15,6 +15,14 @@ UBlendAnimInstance::~UBlendAnimInstance()
 {
 }
 
+UObject* UBlendAnimInstance::Duplicate(UObject* InOuter)
+{
+    ThisClass* NewObject = Cast<ThisClass>(Super::Duplicate(InOuter));
+    
+    NewObject->SetAnimSequences(AnimA, AnimB);
+    return NewObject;
+}
+
 void UBlendAnimInstance::NativeUpdateAnimation(float DeltaTime)
 {
     Super::NativeUpdateAnimation(DeltaTime);
