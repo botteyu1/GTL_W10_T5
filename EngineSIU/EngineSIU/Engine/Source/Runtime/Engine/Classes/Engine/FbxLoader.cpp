@@ -1738,6 +1738,19 @@ void FFbxLoader::SaveAnimationSequenceToBinary(const UAnimSequence* AnimSequence
     SaveAnimDataModelToBinary(AnimDataModel, File);
 
     // !TODO 3. AnimNofityData, AnimCurveData, TargetSkeleton 등도 저장
+    // 3. AnimationNofity들을 바이너리로 저장
+    auto& Notifies = AnimSequence->GetAnimNotifies();
+    int32 NotifyCount = Notifies.Num();
+    File.write(reinterpret_cast<const char*>(&NotifyCount), sizeof(NotifyCount));
+
+    for (const auto& Notify : Notifies)
+    {
+        // !TODO : Notify를 바이너리로 저장하는 로직 추가
+        Serializer::WriteFString(File, Notify.NotifyName.ToString());
+        File.write(reinterpret_cast<const char*>(&Notify.TriggerTime), sizeof(Notify.TriggerTime));
+        File.write(reinterpret_cast<const char*>(&Notify.Duration), sizeof(Notify.Duration));
+    }
+
     File.close();
 }
 
@@ -1846,7 +1859,20 @@ bool FFbxLoader::LoadAnimationSequenceFromBinary(const FString& FilePath, UAnimS
 
 
     // !TODO : 2. AnimNotifyData, AnimCurveData, TargetSkeleton 등도 로드
+    // nofities
+    uint32 NotifyCount = 0;
+    File.read(reinterpret_cast<char*>(&NotifyCount), sizeof(NotifyCount));
+    for (uint32 i = 0; i < NotifyCount; i++)
+    {
+        FAnimNotifyEvent NotifyEvent;
+        FString NofityName;
+        Serializer::ReadFString(File, NofityName);
+        NotifyEvent.NotifyName = FName(NofityName);
+        File.read(reinterpret_cast<char*>(&NotifyEvent.TriggerTime), sizeof(NotifyEvent.TriggerTime));
+        File.read(reinterpret_cast<char*>(&NotifyEvent.Duration), sizeof(NotifyEvent.Duration));
 
+        OutAnimSequence->AddAnimNotifyEvent(NotifyEvent);
+    }
     File.close();
     return true;
 }

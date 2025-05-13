@@ -6,6 +6,7 @@
 #include "Font/IconDefs.h"
 #include "Animation/AnimSingleNodeInstance.h"
 #include "ImGui/imgui_internal.h"
+#include "Engine/FbxLoader.h"
 
 
 void FSequenceInterface::CustomDrawCompact(int index, ImDrawList* draw_list, const ImRect& rc, const ImRect& clippingRect)
@@ -387,6 +388,7 @@ void AnimationSequenceViewerPanel::Render()
 
      // 1. 재생 컨트롤 UI (버튼 등)
      RenderTimelineControls(SkeletalMeshComponent);
+
      ImGui::Separator();
 
    // 노티파이 추가/삭제 컨트롤 UI
@@ -461,6 +463,8 @@ void AnimationSequenceViewerPanel::Render()
         // 새로운 가시 범위에 따라 필요한 업데이트 수행 (예: 다시 그리기)
     }
 
+    // SaveButton
+
 
     
      // static char NotifyName[256] = "";
@@ -519,6 +523,32 @@ void AnimationSequenceViewerPanel::Render()
      // {
      //     ImGui::Text("Selected Track: %s", SequencerData->GetItemLabel(SelectedSequencerEntry));
      // }
+    // --- Save 버튼 추가 ---
+    const char* saveButtonText = "Save"; // 버튼 텍스트 (한국어)
+    // 버튼의 크기 계산 (주로 너비가 중요)
+    ImVec2 saveButtonSize = ImGui::CalcTextSize(saveButtonText);
+    saveButtonSize.x += ImGui::GetStyle().FramePadding.x * 2.0f; // 양쪽 프레임 패딩 추가
+
+    // 버튼을 현재 창의 내용 영역 가장 우측으로 이동시키기 위한 X 좌표 계산
+    float buttonPosX = ImGui::GetWindowContentRegionMax().x - saveButtonSize.x;
+
+    if (buttonPosX < ImGui::GetWindowContentRegionMin().x) 
+    {
+        buttonPosX = ImGui::GetWindowContentRegionMin().x;
+    }
+
+    float buttonPosY = ImGui::GetWindowContentRegionMin().y;
+
+    ImGui::SetCursorPos(ImVec2(buttonPosX, buttonPosY));
+
+    if (ImGui::Button(saveButtonText))
+    {
+         if (CurrentAnimSequence)
+         {
+             FFbxLoader Loader;
+             Loader.SaveAnimationSequenceToBinary(CurrentAnimSequence);
+         }
+    }
 
      ImGui::End();
  }

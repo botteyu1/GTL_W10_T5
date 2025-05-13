@@ -30,6 +30,7 @@ public:
     void ClearAnimNotifyEvents();
     void SortNotifyEvents();
     TArray<FAnimNotifyEvent>& GetAnimNotifies(){ return Notifies; }
+    const TArray<FAnimNotifyEvent>& GetAnimNotifies() const { return Notifies; }
 
 protected:
     UAnimDataModel* AnimDataModel = nullptr;
