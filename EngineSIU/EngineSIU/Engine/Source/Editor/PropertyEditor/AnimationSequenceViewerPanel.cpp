@@ -919,7 +919,8 @@ void AnimationSequenceViewerPanel::RenderAddNotifyPopup()
         // TODO: 필요하다면 기존 노티파이 이름 드롭다운 또는 유효성 검사 추가
 
         static float Duration = 0.f;
-        ImGui::SliderFloat("Notify Duration", &Duration, 0.f, CurrentAnimSequence->GetPlayLength() - AddNotifyTimeRequest);
+        ImGui::InputFloat("Notify Duration", &Duration);
+        Duration = FMath::Clamp(Duration, 0.f, CurrentAnimSequence->GetPlayLength() - AddNotifyTimeRequest);
 
         // "OK" 버튼
         if (ImGui::Button("OK", ImVec2(120, 0)))
