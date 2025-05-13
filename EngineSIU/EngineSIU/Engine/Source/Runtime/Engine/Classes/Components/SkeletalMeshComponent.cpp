@@ -24,6 +24,30 @@ USkeletalMeshComponent::~USkeletalMeshComponent()
 {
 }
 
+UObject* USkeletalMeshComponent::Duplicate(UObject* InOuter)
+{
+    ThisClass* NewComponent = Cast<ThisClass>(Super::Duplicate(InOuter));
+    NewComponent->AnimInstance = static_cast<UAnimInstance*>(AnimInstance->Duplicate(InOuter));
+    NewComponent->AnimInstance->Initialize(NewComponent);
+
+    SkeletalMeshAsset->GetSkeleton()->GetReferenceSkeleton();
+    NewComponent->BoneTransforms = BoneTransforms;
+    NewComponent->BoneBindPoseTransforms = BoneBindPoseTransforms;
+    NewComponent->SkeletalMeshAsset = SkeletalMeshAsset;
+
+    return NewComponent;
+}
+
+void USkeletalMeshComponent::GetProperties(TMap<FString, FString>& OutProperties) const
+{
+    Super::GetProperties(OutProperties);
+}
+
+void USkeletalMeshComponent::SetProperties(const TMap<FString, FString>& InProperties)
+{
+    Super::SetProperties(InProperties);
+}
+
 void USkeletalMeshComponent::TickComponent(float DeltaTime)
 {
     USkinnedMeshComponent::TickComponent(DeltaTime);
@@ -74,6 +98,12 @@ void USkeletalMeshComponent::GetCurrentGlobalBoneMatrices(TArray<FMatrix>& OutBo
         // 결과 행렬 저장
         OutBoneMatrices[BoneIndex] = LocalMatrix;
     }
+}
+
+ void USkeletalMeshComponent::BeginPlay()
+{
+    USkinnedMeshComponent::BeginPlay();
+    bPlayAnimation = true;
 }
 
 void USkeletalMeshComponent::SetAnimationEnabled(bool bEnable)

@@ -14,6 +14,14 @@ UAnimSingleNodeInstance::~UAnimSingleNodeInstance()
 {
 }
 
+UObject* UAnimSingleNodeInstance::Duplicate(UObject* InOuter)
+{
+    ThisClass* NewObject = Cast<ThisClass>(Super::Duplicate(InOuter));
+    NewObject->SetAnimationAsset(CurrentAsset, bIsPlaying);
+    NewObject->bIsPlaying = bIsPlaying;
+    return NewObject;
+}
+
 void UAnimSingleNodeInstance::NativeUpdateAnimation(float DeltaTime)
 {
     if (CurrentAsset && bIsPlaying)

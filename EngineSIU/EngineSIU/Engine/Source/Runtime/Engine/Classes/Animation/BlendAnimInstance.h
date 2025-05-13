@@ -12,6 +12,8 @@ public:
     UBlendAnimInstance();
     virtual ~UBlendAnimInstance() override;
 
+    UObject* Duplicate(UObject* InOuter) override;
+
     virtual void NativeUpdateAnimation(float DeitaTime) override;
     void SetAnimSequences(UAnimSequence* InAnimA, UAnimSequence* InAnimB);
 

@@ -17,6 +17,10 @@ public:
     USkeletalMeshComponent();
     virtual ~USkeletalMeshComponent() override;
 
+    virtual UObject* Duplicate(UObject* InOuter) override;
+
+    virtual void GetProperties(TMap<FString, FString>& OutProperties) const override;
+    virtual void SetProperties(const TMap<FString, FString>& InProperties) override;
     void TickComponent(float DeltaTime) override;
 
     USkeletalMesh* GetSkeletalMeshAsset() const { return SkeletalMeshAsset; }
@@ -39,6 +43,8 @@ public:
 
     void SetAnimInstanceClass(UClass* InstanceClass);
 
+    void BeginPlay() override;
+
     UAnimInstance* GetAnimInstance() const { return AnimInstance; }
 
 private:
@@ -52,3 +58,7 @@ private:
 
     bool bPlayAnimation = false;
 };
+
+
+
+
