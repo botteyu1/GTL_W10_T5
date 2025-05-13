@@ -1664,6 +1664,17 @@
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Engine\Asset\AnimationAsset.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Animation\AnimSequenceBase.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Actors\Character.cpp" />
+    <ClCompile Include="Engine\Source\Editor\PropertyEditor\AnimationSequenceViewerPanel.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Animation\AnimInstance.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Animation\AnimSingleNodeInstance.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Animation\BlendAnimInstance.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\ImGui\include\ImGui\GraphEditor.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\ImGui\include\ImGui\ImCurveEdit.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\ImGui\include\ImGui\ImGradient.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\ImGui\include\ImGui\ImGuizmo.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\ImGui\include\ImGui\ImSequencer.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Animation\FiniteStateMachineAnimInstance.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Animation\AnimationStateMachine.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="EngineSIU.natvis" />
@@ -1704,6 +1715,19 @@
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Engine\Asset\AnimationAsset.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Animation\AnimSequenceBase.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Actors\Character.h" />
+    <ClInclude Include="Engine\Source\Editor\PropertyEditor\AnimationSequenceViewerPanel.h" />
+    <ClInclude Include="Engine\Source\Editor\UnrealEd\IconsFeather.h" />
+    <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Animation\AnimInstance.h" />
+    <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Animation\AnimSingleNodeInstance.h" />
+    <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Animation\BlendAnimInstance.h" />
+    <ClInclude Include="Engine\Source\ThirdParty\ImGui\include\ImGui\GraphEditor.h" />
+    <ClInclude Include="Engine\Source\ThirdParty\ImGui\include\ImGui\ImCurveEdit.h" />
+    <ClInclude Include="Engine\Source\ThirdParty\ImGui\include\ImGui\ImGradient.h" />
+    <ClInclude Include="Engine\Source\ThirdParty\ImGui\include\ImGui\ImGuizmo.h" />
+    <ClInclude Include="Engine\Source\ThirdParty\ImGui\include\ImGui\ImSequencer.h" />
+    <ClInclude Include="Engine\Source\ThirdParty\ImGui\include\ImGui\ImZoomSlider.h" />
+    <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Animation\FiniteStateMachineAnimInstance.h" />
+    <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Animation\AnimationStateMachine.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\CompositingShader.hlsl" />

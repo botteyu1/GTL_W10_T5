@@ -272,12 +272,14 @@ xcopy /y /d "$(SolutionDir)$(ProjectName)\Engine\Source\ThirdParty\FBX\lib\x64\$
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Actors\PointLightActor.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Actors\SphereActor.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Actors\SpotLightActor.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Animation\AnimationStateMachine.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Animation\AnimDataModel.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Animation\AnimInstance.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Animation\AnimSequence.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Animation\AnimSequenceBase.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Animation\AnimSingleNodeInstance.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Animation\BlendAnimInstance.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Animation\FiniteStateMachineAnimInstance.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Animation\SkeletalMeshActor.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Animation\Skeleton.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Camera\CameraComponent.cpp" />
@@ -581,6 +583,7 @@ xcopy /y /d "$(SolutionDir)$(ProjectName)\Engine\Source\ThirdParty\FBX\lib\x64\$
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Actors\PointLightActor.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Actors\SphereActor.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Actors\SpotLightActor.h" />
+    <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Animation\AnimationStateMachine.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Animation\AnimDataModel.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Animation\AnimInstance.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Animation\AnimRawData.h" />
@@ -588,6 +591,7 @@ xcopy /y /d "$(SolutionDir)$(ProjectName)\Engine\Source\ThirdParty\FBX\lib\x64\$
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Animation\AnimSequenceBase.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Animation\AnimSingleNodeInstance.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Animation\BlendAnimInstance.h" />
+    <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Animation\FiniteStateMachineAnimInstance.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Animation\SkeletalMeshActor.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Animation\Skeleton.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Camera\CameraComponent.h" />

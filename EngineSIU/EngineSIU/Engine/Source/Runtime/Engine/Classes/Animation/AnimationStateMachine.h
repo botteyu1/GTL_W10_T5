@@ -2,7 +2,8 @@
 #include "UObject/Object.h"
 #include "UObject/ObjectMacros.h"
 #include "AnimInstance.h"
-
+#include "FiniteStateMachineAnimInstance.h"
+#include "Container/Map.h"
 class UFiniteStateMachineAnimInstance;
 
 class UAnimationStateMachine : public UObject
@@ -22,9 +23,13 @@ public:
     // 입력 등에 의해 바로 상태 전활을 원할 때 호출
     void ForceState(EAnimState NewState);
 
+    void AddState(EAnimState State /*Lambda*/);
 private:
-    UFiniteStateMachineAnimInstance* Owner; = nullptr;
     EAnimState CurrentState = EAnimState::Idle;
     FOnAnimStateChanged OnStateChanged;
+    //TMap<EAnimState, std::function> StateMap;
+    //TMAp<TPair<State,State>, Lamda>;
 };
+
+
 

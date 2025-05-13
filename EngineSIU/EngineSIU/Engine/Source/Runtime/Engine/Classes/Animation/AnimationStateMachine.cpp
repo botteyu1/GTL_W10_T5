@@ -2,7 +2,7 @@
 #include "FiniteStateMachineAnimInstance.h"
 
 UAnimationStateMachine::UAnimationStateMachine()
-    : Owner(nullptr), CurrentState(EAnimState::Idle)
+    : CurrentState(EAnimState::Idle)
 {
 }
 
@@ -12,7 +12,6 @@ UAnimationStateMachine::~UAnimationStateMachine()
 
 void UAnimationStateMachine::Initialize(UFiniteStateMachineAnimInstance* OwnerInstance, const FOnAnimStateChanged& Delegate)
 {
-    Owner = OwnerInstance;
     CurrentState = EAnimState::Idle;
     OnStateChanged = Delegate;
 }
@@ -45,14 +44,21 @@ void UAnimationStateMachine::ProcessState(float DeltaTime)
     {
         NewState = EAnimState::Fly;
 
-    if (NewState != CurrentState)
-    {
-        ForceState(NewState);
+        if (NewState != CurrentState)
+        {
+            ForceState(NewState);
 
-        EAnimState Previous = CurrentState;
-        CurrentState = NewState;
-        if (OnStateChanged.IsBound())
-            OnStateChanged.Execute(Previous, NewState);
+            EAnimState Previous = CurrentState;
+            CurrentState = NewState;
+            if (OnStateChanged.IsBound())
+                OnStateChanged.Execute(Previous, NewState);
+        }
+
+    }
+
+
 }
 
-
+void UAnimationStateMachine::ForceState(EAnimState NewState)
+{
+}

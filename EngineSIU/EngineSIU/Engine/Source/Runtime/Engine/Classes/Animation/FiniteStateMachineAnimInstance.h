@@ -6,6 +6,21 @@
 
 class UAnimationStateMachine;
 
+// 애니메이션 상태를 나타내는 enum
+
+enum class EAnimState
+{
+    Idle,
+    Walk,
+    Run,
+    Fly
+};
+
+
+// Delegate 타입 선언 (이전 상태, 현재 상태 전달)
+#include "Delegates/Delegate.h"
+DECLARE_DELEGATE_TwoParams(FOnAnimStateChanged, EAnimState /*Previous*/, EAnimState /*Current*/);
+
 // 1:N 상태 머신 기반 애니메이션
 class UFiniteStateMachineAnimInstance : public UAnimInstance
 {
@@ -15,9 +30,10 @@ public:
     virtual ~UFiniteStateMachineAnimInstance();
 
     // 상태 머신 초기화
+    // StateMachine 객체를 생성하고 델리게이트를 연결(Bind)
     virtual void Initialize(USkeletalMeshComponent* MeshComponent) override;
 
-    // 매 프레임 상태 머신 업데이트
+    // 매 틱(프레임) 상태 머신 업데이트
     virtual void TriggerAnimNotifies(float DeltaTime) override;
 
     // ③ 입력에 따른 상태 강제 변경 API
