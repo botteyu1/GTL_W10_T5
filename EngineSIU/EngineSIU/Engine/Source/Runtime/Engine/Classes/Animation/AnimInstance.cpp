@@ -15,22 +15,23 @@ UAnimInstance::~UAnimInstance()
 
 void UAnimInstance::TriggerAnimNotifies(float DeltaTime)
 {
-    for (const auto& PlaybackContexts : AnimationPlaybackContexts)
+    for (const auto& PlaybackContext : AnimationPlaybackContexts)
     {
-        UAnimSequence* AnimSequenceBase = Cast<UAnimSequence>(PlaybackContexts->AnimationAsset);
+        UAnimSequence* AnimSequenceBase = Cast<UAnimSequence>(PlaybackContext->AnimationAsset);
+        
         for (const auto& Notify : AnimSequenceBase->GetAnimNotifies())
         {
-            if (PlaybackContexts->PlayRate > 0)
+            if (PlaybackContext->PlayRate > 0)
             {
-                if (PlaybackContexts->PreviousTime <= Notify.TriggerTime && PlaybackContexts->PlaybackTime >= Notify.TriggerTime)
+                if (PlaybackContext->PreviousTime <= Notify.TriggerTime && PlaybackContext->PlaybackTime >= Notify.TriggerTime)
                 {
                     SkeletalMeshComponent->HandleAnimNotify(Notify);
                 }
             }
             //역방향 재생시 반대로 계산
-            else if (PlaybackContexts->PlayRate < 0)
+            else if (PlaybackContext->PlayRate < 0)
             {
-                if (PlaybackContexts->PreviousTime >= Notify.TriggerTime && PlaybackContexts->PlaybackTime <= Notify.TriggerTime)
+                if (PlaybackContext->PreviousTime >= Notify.TriggerTime && PlaybackContext->PlaybackTime <= Notify.TriggerTime)
                 {
                     SkeletalMeshComponent->HandleAnimNotify(Notify);
                 }

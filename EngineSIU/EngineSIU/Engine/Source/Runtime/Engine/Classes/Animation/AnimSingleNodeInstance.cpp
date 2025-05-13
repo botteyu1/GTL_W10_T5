@@ -208,7 +208,28 @@ void UAnimSingleNodeInstance::SetAnimationTime(float InTime)
         {
             return;
         }
+        PlaybackContext->PreviousTime = PlaybackContext->PlaybackTime;
         PlaybackContext->PlaybackTime = InTime;
+        float Diff = PlaybackContext->PlaybackTime - PlaybackContext->PreviousTime;
+        
+        if (FMath::Abs(Diff) >= PlaybackContext->AnimationLength - 0.01f)
+        {
+            if (Diff < 0)
+            {
+                PlaybackContext->PlayRate = 1;
+            }
+            else if (Diff > 0)
+            {
+                PlaybackContext->PlayRate = -1;
+            }
+        }
+        else
+        {
+            if (Diff >= 0)
+                PlaybackContext->PlayRate = 1;
+            else
+                PlaybackContext->PlayRate = -1;
+        }
         TriggerAnimNotifies(0);
         UpdateBone(InTime);
     }
