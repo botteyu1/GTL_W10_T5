@@ -3,6 +3,7 @@
 #include "Animation/AnimSequenceBase.h"
 #include "UObject/Casts.h"
 #include "Components/SkeletalMeshComponent.h"
+#include "Animation/AnimSequence.h"
 
 UAnimInstance::UAnimInstance()
 {
@@ -14,35 +15,66 @@ UAnimInstance::~UAnimInstance()
 
 void UAnimInstance::TriggerAnimNotifies(float DeltaTime)
 {
-    for (const auto& PlaybackContexts : AnimationPlaybackContexts)
+    for (const auto& PlaybackContext : AnimationPlaybackContexts)
     {
-        UAnimSequenceBase* AnimSequenceBase = Cast<UAnimSequenceBase>(PlaybackContexts->AnimationAsset);
+        UAnimSequence* AnimSequenceBase = Cast<UAnimSequence>(PlaybackContext->AnimationAsset);
+        
         for (const auto& Notify : AnimSequenceBase->GetAnimNotifies())
         {
-            if (PlaybackContexts->PreviousTime <= Notify.TriggerTime && PlaybackContexts->PlaybackTime >= Notify.TriggerTime)
+            if (PlaybackContext->PlayRate > 0)
             {
-                SkeletalMeshComponent->HandleAnimNotify(Notify);
+                if (PlaybackContext->PreviousTime <= Notify.TriggerTime && PlaybackContext->PlaybackTime >= Notify.TriggerTime)
+                {
+                    SkeletalMeshComponent->HandleAnimNotify(Notify);
+                }
+            }
+            //역방향 재생시 반대로 계산
+            else if (PlaybackContext->PlayRate < 0)
+            {
+                if (PlaybackContext->PreviousTime >= Notify.TriggerTime && PlaybackContext->PlaybackTime <= Notify.TriggerTime)
+                {
+                    SkeletalMeshComponent->HandleAnimNotify(Notify);
+                }
             }
         }
     }
+}
+
+void UAnimInstance::NativeUpdateAnimation(float DeltaTime)
+{
+
 }
 
 void UAnimInstance::AddAnimationPlaybackContext(UAnimationAsset* InAnimAsset, bool IsLoop, float InPlayRate, float InStartPosition)
 {
     if (InAnimAsset)
     {
+        bool bIsExist = false;
+        for (const auto& PlaybackContext : AnimationPlaybackContexts)
+        {
+            if (PlaybackContext->AnimationAsset == InAnimAsset)
+            {
+                bIsExist = true;
+                break;
+            }
+        }
+        if (bIsExist)
+        {
+            return;
+        }
         auto PlaybackContext = std::make_shared<FAnimationPlaybackContext>(InAnimAsset, IsLoop, InPlayRate, InStartPosition);
         AnimationPlaybackContexts.Add(PlaybackContext);
     }
 }
 
-std::shared_ptr<FAnimationPlaybackContext>& UAnimInstance::GetAnimationPlaybackContext(UAnimationAsset* InAnimAsset)
+FAnimationPlaybackContext* UAnimInstance::GetAnimationPlaybackContext(UAnimationAsset* InAnimAsset)
 {
     for (auto& PlaybackContext : AnimationPlaybackContexts)
     {
         if (PlaybackContext->AnimationAsset == InAnimAsset)
-            return PlaybackContext;
+            return PlaybackContext.get();
     }
+    return nullptr;
 }
 
 void UAnimInstance::Initialize(USkeletalMeshComponent* MeshComponent)
@@ -51,9 +83,15 @@ void UAnimInstance::Initialize(USkeletalMeshComponent* MeshComponent)
     AnimationPlaybackContexts.Empty();
 }
 
+void UAnimInstance::ClearAnimationPlaybackContexts()
+{
+    AnimationPlaybackContexts.Empty();
+}
+
 FAnimationPlaybackContext::FAnimationPlaybackContext(UAnimationAsset* InAnimAsset, bool IsLoop, float InPlayRate, float InStartPosition)
     : AnimationAsset(InAnimAsset), bIsLooping(IsLoop), PlayRate(InPlayRate), StartPosition(InStartPosition)
 {
     PreviousTime = 0.f;
     PlaybackTime = 0.f;
+    AnimationLength = Cast<UAnimSequence>(InAnimAsset)->GetPlayLength();
 }
