@@ -14,7 +14,7 @@ public:
     
     void AddAnimState(const FString& StateName, const FString& AnimName);
     void RemoveAnimState(const FString& StateName);
-    void ChangeAnimState(const FString& PrevStateName, const FString& CurrStateName, float BlendTime);
+    void ChangeAnimState(const FString& CurrStateName, float BlendTime, bool bIsLooping);
 
 protected:
     TMap<FName, UAnimSequence*> AnimStateMap; // 애니메이션 상태와 애니메이션 시퀀스 매핑
@@ -35,10 +35,6 @@ protected:
     float AlphaForSnapshot = 0.0f; // 스냅샷 블렌드 알파
 
     bool bIsPlaying = true; // 전체적인 재생 여부
-
-public:
-    void Play();
-    void Stop();
 
 private:
     void CaptureCurrentPoseAsSnapshot();

@@ -123,7 +123,8 @@ void UFSMAnimInstance::RemoveAnimState(const FString& StateName)
     }
 }
 
-void UFSMAnimInstance::ChangeAnimState(const FString& PrevStateName, const FString& TargetStateName, float BlendTime)
+// !TODO : 추가 파라미터 적용
+void UFSMAnimInstance::ChangeAnimState(const FString& TargetStateName, float BlendTime, bool bIsLooping)
 {
     if (!AnimStateMap.Contains(TargetStateName))
     {
@@ -149,7 +150,7 @@ void UFSMAnimInstance::ChangeAnimState(const FString& PrevStateName, const FStri
 
         // 새 애니메이션의 PlaybackContext 설정 (루핑, 재생 속도 등은 기본값 사용 또는 파라미터화)
         // AddAnimationPlaybackContext는 기존 컨텍스트를 지우고 새로 추가하거나, 업데이트해야 함
-        AddAnimationPlaybackContext(CurrentAnimSequence, true, 1.0f, 0.0f);
+        AddAnimationPlaybackContext(CurrentAnimSequence, bIsLooping, 1.0f, 0.0f);
     }
     else // 블렌딩 시작
     {
@@ -171,17 +172,9 @@ void UFSMAnimInstance::ChangeAnimState(const FString& PrevStateName, const FStri
         bIsBlending = true;
 
         // 새 타겟 애니메이션의 PlaybackContext 설정
-        AddAnimationPlaybackContext(TargetAnimSequence, true, 1.0f, 0.0f);
+        AddAnimationPlaybackContext(TargetAnimSequence, bIsLooping, 1.0f, 0.0f);
     }
     bIsPlaying = true; // 상태 변경 시 재생 시작 (필요에 따라 조절)
-}
-
-void UFSMAnimInstance::Play()
-{
-}
-
-void UFSMAnimInstance::Stop()
-{
 }
 
 void UFSMAnimInstance::CaptureCurrentPoseAsSnapshot()

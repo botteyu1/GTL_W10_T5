@@ -1,5 +1,5 @@
 #include "AnimFSMLuaScriptComponent.h"
-
+#include "Animation/FSMAnimInstance.h"
 
 UAnimFSMLuaScriptComponent::UAnimFSMLuaScriptComponent()
 {
@@ -23,22 +23,45 @@ void UAnimFSMLuaScriptComponent::BindEngineAPI()
             RemoveAnimState_LuaImpl(StateName.c_str());
         }
     );
-    LuaState.set_function("changeAnimState", [&](const std::string& PrevStateName, const std::string& CurrStateName, float BlendTime)
+    LuaState.set_function("changeAnimState", [&](const std::string& NewStateName, float BlendTime, bool bLooping)
         {
-            ChangeAnimState_LuaImpl(PrevStateName.c_str(), CurrStateName.c_str(), BlendTime);
+            ChangeAnimState_LuaImpl(NewStateName.c_str(), BlendTime, bLooping);
         }
     );
 }
 
 void UAnimFSMLuaScriptComponent::AddAnimState_LuaImpl(const FString& StateName, const FString& AnimName)
 {
-    
+    if (AnimInstance)
+    {
+        AnimInstance->AddAnimState(StateName, AnimName);
+    }
+    else
+    {
+        UE_LOG(ELogLevel::Error, TEXT("AnimInstance is not valid"));
+    }
 }
 
 void UAnimFSMLuaScriptComponent::RemoveAnimState_LuaImpl(const FString& StateName)
 {
+    if (AnimInstance)
+    {
+        AnimInstance->RemoveAnimState(StateName);
+    }
+    else
+    {
+        UE_LOG(ELogLevel::Error, TEXT("AnimInstance is not valid"));
+    }
 }
 
-void UAnimFSMLuaScriptComponent::ChangeAnimState_LuaImpl(const FString& PrevStateName, const FString& CurrStateName, float BlendTime)
+void UAnimFSMLuaScriptComponent::ChangeAnimState_LuaImpl(const FString& NewStateName, float BlendTime, bool bLooping)
 {
+    if (AnimInstance)
+    {
+        AnimInstance->ChangeAnimState(NewStateName, BlendTime, bLooping);
+    }
+    else
+    {
+        UE_LOG(ELogLevel::Error, TEXT("AnimInstance is not valid"));
+    }
 }

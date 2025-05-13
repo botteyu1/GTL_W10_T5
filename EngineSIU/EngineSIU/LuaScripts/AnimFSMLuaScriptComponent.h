@@ -16,7 +16,7 @@ protected:
 private:
     void AddAnimState_LuaImpl(const FString& StateName, const FString& AnimName);
     void RemoveAnimState_LuaImpl(const FString& StateName);
-    void ChangeAnimState_LuaImpl(const FString& PrevStateName, const FString& CurrStateName, float BlendTime);
+    void ChangeAnimState_LuaImpl(const FString& NewStateName, float BlendTime, bool bLooping);
 
     UFSMAnimInstance* AnimInstance = nullptr;
 };
