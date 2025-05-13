@@ -160,7 +160,7 @@ AnimationSequenceViewerPanel::AnimationSequenceViewerPanel()
          ImGui::SameLine();
          if (ImGui::SliderFloat("##TriggerTime", &TimeInSeconds, 0.0f, CurrentAnimSequence->GetPlayLength(), "%.2f s"))
          {
-             Notify.ChangeTriggerTime(TimeInSeconds);
+             Notify.TriggerTime = TimeInSeconds;
          }
          ImGui::SameLine();
          if (ImGui::Button("Delete"))

@@ -29,11 +29,12 @@ void UAnimInstance::TriggerAnimNotifies(float DeltaTime)
                 }
                 else if (PlaybackContext->PreviousTime > Notify.TriggerTime && Notify.Duration > 0)
                 {
+                    float EndTime = Notify.TriggerTime + Notify.Duration;
                     if (PlaybackContext->PlaybackTime - Notify.TriggerTime <= Notify.Duration)
                     {
                         SkeletalMeshComponent->TickAnimNotify(Notify, DeltaTime);
                     }
-                    else if(PlaybackContext->PreviousTime <= Notify.EndTime && PlaybackContext->PlaybackTime >= Notify.EndTime)
+                    else if(PlaybackContext->PreviousTime <= EndTime && PlaybackContext->PlaybackTime >= EndTime)
                     {
                         SkeletalMeshComponent->EndAnimNotify(Notify);
                     }
@@ -48,11 +49,12 @@ void UAnimInstance::TriggerAnimNotifies(float DeltaTime)
                 }
                 else if (PlaybackContext->PreviousTime < Notify.TriggerTime && Notify.Duration > 0)
                 {
+                    float EndTime = Notify.TriggerTime + Notify.Duration;
                     if (Notify.TriggerTime - PlaybackContext->PlaybackTime <= Notify.Duration)
                     {
                         SkeletalMeshComponent->TickAnimNotify(Notify, DeltaTime);
                     }
-                    else if (PlaybackContext->PreviousTime >= Notify.EndTime && PlaybackContext->PlaybackTime <= Notify.EndTime)
+                    else if (PlaybackContext->PreviousTime >= EndTime && PlaybackContext->PlaybackTime <= EndTime)
                     {
                         SkeletalMeshComponent->EndAnimNotify(Notify);
                     }

@@ -15,15 +15,3 @@ bool FAnimNotifyEvent::operator==(const FAnimNotifyEvent& Other) const
         TriggerTime == Other.TriggerTime &&
         Duration == Other.Duration;
 }
-
-void FAnimNotifyEvent::ChangeTriggerTime(float InTriggerTime)
-{
-    TriggerTime = InTriggerTime;
-    EndTime = TriggerTime + Duration;
-}
-
-void FAnimNotifyEvent::ChangeDuration(float InDuration)
-{
-    Duration = InDuration;
-    EndTime = TriggerTime + Duration;
-}
