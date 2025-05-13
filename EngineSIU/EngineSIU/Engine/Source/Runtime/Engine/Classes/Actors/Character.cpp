@@ -1,26 +1,27 @@
 #include "Character.h"
 #include "Animation/AnimDataModel.h"
+#include <LuaScripts/LuaScriptComponent.h>
 
 void ACharacter::StartAnimNotify(const FAnimNotifyEvent& Notify)
 {
-    if (Notify.NotifyName == FName(TEXT("Up")))
+    if (ULuaScriptComponent* LuaComp = GetComponentByClass<ULuaScriptComponent>())
     {
-        UE_LOG(ELogLevel::Display, "Start Notify: %s", *Notify.NotifyName.ToString());
+        LuaComp->CallLuaFunction("StartAnimNotify", *Notify.NotifyName.ToString());
     }
 }
 
 void ACharacter::TickAnimNotify(const FAnimNotifyEvent& Notify, float DeltaTime)
 {
-    if (Notify.NotifyName == FName(TEXT("Up")))
+    if (ULuaScriptComponent* LuaComp = GetComponentByClass<ULuaScriptComponent>())
     {
-        AddActorLocation(FVector(0, 0, 0.2f));
+        LuaComp->CallLuaFunction("TickAnimNotify", *Notify.NotifyName.ToString(), DeltaTime);
     }
 }
 
 void ACharacter::EndAnimNotify(const FAnimNotifyEvent& Notify)
 {
-    if (Notify.NotifyName == FName(TEXT("Up")))
+    if (ULuaScriptComponent* LuaComp = GetComponentByClass<ULuaScriptComponent>())
     {
-        SetActorLocation(FVector(0));
+        LuaComp->CallLuaFunction("EndAnimNotify", *Notify.NotifyName.ToString());
     }
 }

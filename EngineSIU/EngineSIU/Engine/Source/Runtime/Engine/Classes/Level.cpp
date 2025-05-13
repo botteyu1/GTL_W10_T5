@@ -1,12 +1,24 @@
 #include "Level.h"
 #include "GameFramework/Actor.h"
 #include "UObject/Casts.h"
+#include "Engine/Engine.h"
+#include "Engine/World/World.h"
 
 
 void ULevel::InitLevel(UWorld* InOwningWorld)
 {
     OwningWorld = InOwningWorld;
-
+    //Notify Lua 테스트용 임시 코드
+    if (OwningWorld->WorldType == EWorldType::Editor)
+    {
+        if (!OwningWorld->GetPlayerController())
+        {
+            APlayerController* PlayerController = OwningWorld->SpawnActor<APlayerController>();
+            PlayerController->SetActorLabel(TEXT("OBJ_PLAYER_CONTROLLER"));
+            PlayerController->SetActorTickInEditor(false);
+            OwningWorld->SetPlayerController(PlayerController);
+        }
+    }
 }
 
 void ULevel::Release()
