@@ -34,6 +34,7 @@ public:
     virtual void NativeUpdateAnimation(float DeltaTime);
 
     virtual void AddAnimationPlaybackContext(UAnimationAsset* InAnimAsset = nullptr, bool IsLoop = false, float InPlayRate = 1.f, float InStartPosition = 0.f);
+    void RemoveAnimationPlaybackContext(UAnimationAsset* InAnimAsset = nullptr);
 
     FAnimationPlaybackContext* GetAnimationPlaybackContext(UAnimationAsset* InAnimAsset);
 

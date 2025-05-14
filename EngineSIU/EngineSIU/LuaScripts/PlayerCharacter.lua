@@ -72,11 +72,11 @@ function Tick(dt)
 
     if time >= transitionTime then
         if currentState == "Walk" then
-            changeAnimState("Jump", 0, false)
+            changeAnimState("Jump", 0.2, false)
             currentState = "Jump"
             
         else
-            changeAnimState("Walk", 0, true)
+            changeAnimState("Walk", 0.2, true)
             currentState = "Walk"
         end
         time = 0

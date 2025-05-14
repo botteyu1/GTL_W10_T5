@@ -142,6 +142,15 @@ void UAnimInstance::AddAnimationPlaybackContext(UAnimationAsset* InAnimAsset, bo
     }
 }
 
+void UAnimInstance::RemoveAnimationPlaybackContext(UAnimationAsset* InAnimAsset)
+{
+    AnimationPlaybackContexts.RemoveAll([&](const auto& ContextToRemove)
+        {
+            return ContextToRemove->AnimationAsset == InAnimAsset;
+        }
+    );
+}
+
 FAnimationPlaybackContext* UAnimInstance::GetAnimationPlaybackContext(UAnimationAsset* InAnimAsset)
 {
     for (auto& PlaybackContext : AnimationPlaybackContexts)

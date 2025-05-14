@@ -66,6 +66,17 @@ void UFSMAnimInstance::NativeUpdateAnimation(float DeltaTime)
             bIsBlendingFromSnapshot = false;
 
             SourceSnapshotPose.Empty();
+
+            // Source 애니메이션의 PlaybackContext를 제거
+            if (BlendSourceAnimForSnapshot)
+            {
+                FAnimationPlaybackContext* SourceContext = GetAnimationPlaybackContext(BlendSourceAnimForSnapshot);
+                if (SourceContext)
+                {
+                    SourceContext->bIsRemove = true;
+                    //RemoveAnimationPlaybackContext(BlendSourceAnimForSnapshot);
+                }
+            }
         }
     }
     else if (CurrentAnimSequence) // 블렌딩 중이 아니고, 현재 상태 애니메이션이 있다면 단독 재생
