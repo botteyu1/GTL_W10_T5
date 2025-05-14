@@ -106,7 +106,7 @@ function Tick(dt)
         time = 0
         transitionTime = randomFloat(2, 5)  
 
-        print("Changed to:", currentState)
+        --print("Changed to:", currentState)
     end
 end
 

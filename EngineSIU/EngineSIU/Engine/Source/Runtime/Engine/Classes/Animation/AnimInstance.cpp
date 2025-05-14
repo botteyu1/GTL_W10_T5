@@ -31,6 +31,8 @@ void UAnimInstance::TriggerAnimNotifies(float DeltaTime)
 
         for (auto& Notify : AnimSequenceBase->GetAnimNotifies())
         {
+            if (Notify.TriggerTime < 0.005f)
+                Notify.TriggerTime = 0.005f;
             if (PlaybackContext->PlayRate > 0)
             {
                 if (PlaybackContext->PreviousTime <= Notify.TriggerTime && PlaybackContext->PlaybackTime >= Notify.TriggerTime)
@@ -40,13 +42,16 @@ void UAnimInstance::TriggerAnimNotifies(float DeltaTime)
                 else if (PlaybackContext->PlaybackTime >= Notify.TriggerTime && Notify.Duration > 0)
                 {
                     float EndTime = Notify.TriggerTime + Notify.Duration;
-                    if (PlaybackContext->PlaybackTime - Notify.TriggerTime <= Notify.Duration)
-                    {
-                        SkeletalMeshComponent->HandleAnimNotify(Notify, ENotifyState::Tick, DeltaTime);
-                    }
-                    else if(PlaybackContext->PreviousTime <= EndTime && PlaybackContext->PlaybackTime >= EndTime)
+                    float AnimLength = AnimSequenceBase->GetPlayLength() - 0.005f;
+                    EndTime = FMath::Min(EndTime, AnimLength);
+                    UE_LOG(ELogLevel::Display, "\nPlaybackTime: %f\nPrevious Time: %f\nEndTime: %f", PlaybackContext->PlaybackTime, PlaybackContext->PreviousTime, EndTime);
+                    if (PlaybackContext->PreviousTime <= EndTime && PlaybackContext->PlaybackTime >= EndTime)
                     {
                         SkeletalMeshComponent->HandleAnimNotify(Notify, ENotifyState::End);
+                    }
+                    else if (PlaybackContext->PlaybackTime - Notify.TriggerTime <= Notify.Duration)
+                    {
+                        SkeletalMeshComponent->HandleAnimNotify(Notify, ENotifyState::Tick, DeltaTime);
                     }
                 }
             }
@@ -60,13 +65,14 @@ void UAnimInstance::TriggerAnimNotifies(float DeltaTime)
                 else if (PlaybackContext->PreviousTime >= Notify.TriggerTime && Notify.Duration > 0)
                 {
                     float EndTime = Notify.TriggerTime + Notify.Duration;
-                    if (Notify.TriggerTime - PlaybackContext->PlaybackTime <= Notify.Duration)
-                    {
-                        SkeletalMeshComponent->HandleAnimNotify(Notify, ENotifyState::Tick, DeltaTime);
-                    }
-                    else if (PlaybackContext->PreviousTime >= EndTime && PlaybackContext->PlaybackTime <= EndTime)
+                    EndTime = FMath::Min(EndTime, AnimSequenceBase->GetPlayLength() - 0.005f);
+                    if (PlaybackContext->PreviousTime >= EndTime && PlaybackContext->PlaybackTime <= EndTime)
                     {
                         SkeletalMeshComponent->HandleAnimNotify(Notify, ENotifyState::End);
+                    }
+                    else if (Notify.TriggerTime - PlaybackContext->PlaybackTime <= Notify.Duration)
+                    {
+                        SkeletalMeshComponent->HandleAnimNotify(Notify, ENotifyState::Tick, DeltaTime);
                     }
                 }
             }
@@ -76,6 +82,17 @@ void UAnimInstance::TriggerAnimNotifies(float DeltaTime)
 
 void UAnimInstance::NativeUpdateAnimation(float DeltaTime)
 {
+    // Remove contexts that are marked for removal
+    AnimationPlaybackContexts.RemoveAll([](const auto& ContextToRemove)
+        {
+            if (!ContextToRemove)
+            {
+                return false;
+            }
+            return ContextToRemove->bIsRemove;
+        }
+    );
+
     for (auto& Context : AnimationPlaybackContexts)
     {
         if (!Context)
@@ -105,18 +122,6 @@ void UAnimInstance::NativeUpdateAnimation(float DeltaTime)
             }
         }
     }
-
-    // Remove contexts that are marked for removal
-    AnimationPlaybackContexts.RemoveAll([](const auto& ContextToRemove)
-        {
-            if (!ContextToRemove)
-            {
-                return false;
-            }
-            return ContextToRemove->bIsRemove;
-        }
-    );
-
     TriggerAnimNotifies(DeltaTime);
 }
 
