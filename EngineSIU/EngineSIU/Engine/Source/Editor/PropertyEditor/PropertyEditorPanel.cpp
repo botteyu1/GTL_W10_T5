@@ -675,7 +675,7 @@ void PropertyEditorPanel::RenderForSkeletalMesh(USkeletalMeshComponent* Skeletal
                                 // UAnimSingleNodeInstance가 활성화된 모드라면 해당 인스턴스에 설정
                                 if (SingleNodeInst) 
                                 {
-                                    SingleNodeInst->SetAnimationAsset(SelectedSeq);
+                                    SingleNodeInst->SetAnimationAsset(SelectedSeq, true);
                                     // 필요시 SingleNodeInst->PlayAnimation(); 등 호출
                                 }
                             }

@@ -358,6 +358,14 @@ void AnimationSequenceViewerPanel::Render()
          return;
      }
 
+    if (SelectedNotifyIndex != -1)
+    {
+        if (GetKeyState(VK_DELETE) & 0x8000)
+        {
+            DeleteSelectedNotify();
+        }
+    }
+
      // 현재 시간 가져오기 및 델타 타임 계산
      float currentTime = static_cast<float>(ImGui::GetTime());
      float deltaTime = currentTime - LastFrameTime;

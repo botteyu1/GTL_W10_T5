@@ -11,7 +11,7 @@ struct FAnimationPlaybackContext
     UAnimationAsset* AnimationAsset = nullptr;
     float PreviousTime = 0.f;
     float PlaybackTime = 0.f;
-    bool bIsLooping = false;
+    bool bIsLooping = true;
     float PlayRate = 1.f;
     float StartPosition = 0.f;
     float AnimationLength = 0.f;

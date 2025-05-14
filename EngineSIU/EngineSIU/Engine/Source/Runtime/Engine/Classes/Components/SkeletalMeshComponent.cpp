@@ -41,6 +41,11 @@ UObject* USkeletalMeshComponent::Duplicate(UObject* InOuter)
 void USkeletalMeshComponent::GetProperties(TMap<FString, FString>& OutProperties) const
 {
     Super::GetProperties(OutProperties);
+    OutProperties.Add(TEXT("SkeletalMeshAsset"), SkeletalMeshAsset ? SkeletalMeshAsset->GetName() : TEXT("None"));
+
+
+    OutProperties.Add(TEXT("AnimInstance"), AnimInstance ? AnimInstance->GetName() : TEXT("None"));
+    
 }
 
 void USkeletalMeshComponent::SetProperties(const TMap<FString, FString>& InProperties)

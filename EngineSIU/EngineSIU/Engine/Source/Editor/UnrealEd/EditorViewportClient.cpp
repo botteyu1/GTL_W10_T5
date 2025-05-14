@@ -259,6 +259,10 @@ void FEditorViewportClient::InputKey(const FKeyEvent& InKeyEvent)
             UEditorEngine* Engine = Cast<UEditorEngine>(GEngine);
             if (Engine)
             {
+                if (Engine->ActiveWorld->WorldType == EWorldType::SkeletalViewer)
+                {
+                    break;
+                }
                 USceneComponent* SelectedComponent = Engine->GetSelectedComponent();
                 AActor* SelectedActor = Engine->GetSelectedActor();
 

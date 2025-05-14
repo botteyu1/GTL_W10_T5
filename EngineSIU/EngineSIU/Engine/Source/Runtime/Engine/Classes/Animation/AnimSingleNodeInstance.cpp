@@ -118,7 +118,7 @@ void UAnimSingleNodeInstance::SetPlaying(bool bInPlaying)
     FAnimationPlaybackContext* Context = GetAnimationPlaybackContext(CurrentAsset);
     if (!Context)
     {
-        AddAnimationPlaybackContext(CurrentAsset);
+        AddAnimationPlaybackContext(CurrentAsset, true);
         Context = GetAnimationPlaybackContext(CurrentAsset);
     }
     Context->bIsPlaying = bInPlaying;
