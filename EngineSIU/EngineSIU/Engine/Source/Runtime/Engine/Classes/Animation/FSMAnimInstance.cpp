@@ -158,7 +158,6 @@ void UFSMAnimInstance::ChangeAnimState(const FString& TargetStateName, float Ble
     if (BlendTime <= 0.0f) // 블렌드 없이 즉시 변경
     {
         CurrentAnimSequence = NewTargetAnimSequence;
-        TargetAnimSequence = nullptr; // 이전 블렌드 타겟 정리
         bIsBlending = false;
         bIsBlendingFromSnapshot = false;
         SourceSnapshotPose.Empty();
@@ -168,6 +167,16 @@ void UFSMAnimInstance::ChangeAnimState(const FString& TargetStateName, float Ble
         // 새 애니메이션의 PlaybackContext 설정 (루핑, 재생 속도 등은 기본값 사용 또는 파라미터화)
         // AddAnimationPlaybackContext는 기존 컨텍스트를 지우고 새로 추가하거나, 업데이트해야 함
         AddAnimationPlaybackContext(CurrentAnimSequence, bIsLooping, 1.0f, 0.0f);
+        if (TargetAnimSequence)
+        {
+            FAnimationPlaybackContext* SourceContext = GetAnimationPlaybackContext(TargetAnimSequence);
+            if (SourceContext)
+            {
+                SourceContext->bIsRemove = true;
+            }
+        }
+        TargetAnimSequence = nullptr; // 이전 블렌드 타겟 정리
+
     }
     else // 블렌딩 시작
     {

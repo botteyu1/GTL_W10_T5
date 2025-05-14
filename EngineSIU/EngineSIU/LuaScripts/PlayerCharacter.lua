@@ -1,12 +1,12 @@
 turnSpeed = 80
 MoveSpeed = 10
 
-local transitionTime = 1
+local transitionTime = 2
 local time = 0
 local currentState = "None"
 function BeginPlay()
     print("Begin")
-    addAnimState("Walk","Armature|Walking")
+    addAnimState("Walk","Armature|Walking2")
     addAnimState("Jump","Armature|Jumping")
     changeAnimState("Walk", 0, true)
     currentState = "Walk"
