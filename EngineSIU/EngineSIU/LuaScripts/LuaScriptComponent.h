@@ -35,7 +35,7 @@ public:
     void SetScriptPath(const FString& InScriptPath);
 
     FString GetDisplayName() const { return DisplayName; }
-    void SetDisplayName(const FString& InDisplayName) { DisplayName = InDisplayName; }
+    void SetDisplayName(const FString& InDisplayName);
 
     void OnPressSpacebar()
     {
@@ -43,20 +43,21 @@ public:
     }
 
     FOnLocationTenUp FOnLocationTenUp;
+
+protected:
+    // Lua-Engine 바인딩
+    virtual void BindEngineAPI();
+    sol::state LuaState;
     
 private:
     // Lua 환경 초기화
     void InitializeLuaState();
-
-    // Lua-Engine 바인딩
-    void BindEngineAPI();
 
     FString ScriptPath;
     FString DisplayName;
 
     TArray<FDelegateHandle> DelegateHandles;
     
-    sol::state LuaState;
     bool bScriptValid = false;
 
     std::filesystem::file_time_type LastWriteTime;

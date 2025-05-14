@@ -61,7 +61,7 @@ void UInputComponent::ClearBindDelegate()
     {
         Handler->OnKeyUpDelegate.Remove(DelegateHandle);
     }
-    
+    KeyBindDelegate.Empty();
     BindKeyDownDelegateHandles.Empty();
     BindKeyUpDelegateHandles.Empty();
 }

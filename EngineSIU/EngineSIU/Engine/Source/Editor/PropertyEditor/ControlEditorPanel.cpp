@@ -48,6 +48,7 @@
 #include "Engine/Classes/Engine/AssetManager.h"
 #include "Engine/Classes/Animation/AnimDataModel.h"
 #include <Actors/Character.h>
+#include <LuaScripts/LuaScriptComponent.h>
 
 ControlEditorPanel::ControlEditorPanel()
 {
@@ -496,6 +497,11 @@ void ControlEditorPanel::CreateModifyButton(const ImVec2 ButtonSize, ImFont* Ico
                         SpawnedActor = World->SpawnActor<ACharacter>();
                         SpawnedActor->SetActorTickInEditor(true);
                         auto* MeshComp = SpawnedActor->AddComponent<USkeletalMeshComponent>();
+                        ULuaScriptComponent* LuaComp = SpawnedActor->GetComponentByClass<ULuaScriptComponent>();
+                        if (LuaComp)
+                        {
+                            LuaComp->SetDisplayName("PlayerCharacter.lua");
+                        }
                         SpawnedActor->SetRootComponent(MeshComp);
                         SpawnedActor->SetActorLabel(TEXT("OBJ_CHARACTER"));
                     }

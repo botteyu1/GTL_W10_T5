@@ -94,6 +94,14 @@ void ULuaScriptComponent::SetScriptPath(const FString& InScriptPath)
     bScriptValid = false;
 }
 
+void ULuaScriptComponent::SetDisplayName(const FString& InDisplayName)
+{
+    DisplayName = InDisplayName;
+    FString BasePath = FString(L"LuaScripts\\");
+    ScriptPath = BasePath + InDisplayName;
+    InitializeLuaState();
+}
+
 void ULuaScriptComponent::InitializeLuaState()
 {
     /*if (ScriptPath.IsEmpty()) {

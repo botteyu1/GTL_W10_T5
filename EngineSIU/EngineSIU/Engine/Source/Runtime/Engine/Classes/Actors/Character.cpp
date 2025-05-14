@@ -1,6 +1,16 @@
 #include "Character.h"
 #include "Animation/AnimDataModel.h"
-#include <LuaScripts/LuaScriptComponent.h>
+#include "LuaScripts/AnimFSMLuaScriptComponent.h"
+
+ACharacter::ACharacter()
+{
+}
+
+void ACharacter::PostSpawnInitialize()
+{
+    Super::PostSpawnInitialize();
+    LuaScriptComponent = AddComponent<UAnimFSMLuaScriptComponent>("UAnimFSMLuaScriptComponent");
+}
 
 void ACharacter::HandleAnimNotify(const FAnimNotifyEvent& Notify, ENotifyState NotifyState, float DeltaTime)
 {

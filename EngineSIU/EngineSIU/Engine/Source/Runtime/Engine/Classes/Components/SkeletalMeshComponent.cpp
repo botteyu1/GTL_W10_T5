@@ -13,6 +13,7 @@
 #include "Animation/AnimInstance.h"
 #include "Animation/AnimSingleNodeInstance.h"
 #include "Animation/BlendAnimInstance.h"
+#include "Animation/FSMAnimInstance.h"
 
 USkeletalMeshComponent::USkeletalMeshComponent()
 {
@@ -134,138 +135,6 @@ void USkeletalMeshComponent::SetAnimationEnabled(bool bEnable)
     }
 }
 
-//void USkeletalMeshComponent::ProcessAnimation(float DeltaTime)
-//{
-//    if (bPlayAnimation)
-//    {
-//        ElapsedTime += DeltaTime;
-//    }
-//
-//
-//    BoneTransforms = BoneBindPoseTransforms;
-//
-//    if (bPlayAnimation && AnimSequence && SkeletalMeshAsset && SkeletalMeshAsset->GetSkeleton())
-//    {
-//        const FReferenceSkeleton& RefSkeleton = SkeletalMeshAsset->GetSkeleton()->GetReferenceSkeleton();
-//
-//        const int32 AnimationFrameRate = AnimSequence->FrameRate;
-//        const int32 AnimationLength = AnimSequence->NumFrames;
-//
-//        const float TargetKeyFrame = ElapsedTime * static_cast<float>(AnimationFrameRate);
-//        const int32 CurrentKey = static_cast<int32>(TargetKeyFrame) % AnimationLength;
-//        const int32 NextKey = (CurrentKey + 1) % AnimationLength;
-//        const float Alpha = TargetKeyFrame - static_cast<float>(static_cast<int32>(TargetKeyFrame)); // [0 ~ 1]
-//
-//        TMap<int32, FTransform> CurrentFrameTransforms = AnimSequence->Anim[CurrentKey];
-//        TMap<int32, FTransform> NextFrameTransforms = AnimSequence->Anim[NextKey];
-//
-//        for (auto& [BoneIdx, CurrentTransform] : CurrentFrameTransforms)
-//        {
-//            // 다음 키프레임에 해당 본 데이터가 있는지 확인
-//            if (NextFrameTransforms.Contains(BoneIdx))
-//            {
-//                FTransform NextTransform = NextFrameTransforms[BoneIdx];
-//                // 두 트랜스폼 사이를 Alpha 비율로 선형 보간
-//                FTransform InterpolatedTransform = FTransform::Identity;
-//                InterpolatedTransform.Blend(CurrentTransform, NextTransform, Alpha);
-//
-//                // 보간된 트랜스폼 적용 (로컬 포즈 * 애니메이션 트랜스폼)
-//                BoneTransforms[BoneIdx] = BoneBindPoseTransforms[BoneIdx] * InterpolatedTransform;
-//            }
-//            else
-//            {
-//                // 다음 키프레임에 본 데이터가 없으면 현재 트랜스폼만 사용
-//                BoneTransforms[BoneIdx] = BoneBindPoseTransforms[BoneIdx] * CurrentTransform;
-//            }
-//        }
-//    }
-//}
-//
-//void USkeletalMeshComponent::ProcessAnimation2(float DeltaTime)
-//{
-//    if (!AnimSequence || !SkeletalMeshAsset || !SkeletalMeshAsset->GetSkeleton() || !AnimSequence->GetAnimDataModel()) 
-//    {
-//        return;
-//    }
-//
-//    if (bPlayAnimation)
-//    {
-//        ElapsedTime += DeltaTime;
-//    }
-//
-//    UAnimDataModel* AnimDataModel = AnimSequence->GetAnimDataModel();
-//
-//    float CurrentAnimTime = ElapsedTime;
-//    if (AnimSequence->GetPlayLength() > 0.f)
-//    {
-//        CurrentAnimTime = FMath::Fmod(ElapsedTime, AnimSequence->GetPlayLength());
-//    }
-//
-//    const USkeleton* Skeleton = SkeletalMeshAsset->GetSkeleton();
-//    const TArray<FMeshBoneInfo>& SkeletonBones = Skeleton->GetReferenceSkeleton().RawRefBoneInfo;
-//
-//    if (BoneTransforms.Num() != SkeletonBones.Num())
-//    {
-//        BoneTransforms.SetNum(SkeletonBones.Num());
-//        for (int32 i = 0; i < SkeletonBones.Num(); ++i)
-//        {
-//            BoneTransforms[i] = FTransform::Identity;
-//        }
-//    }
-//
-//    TArray<FTransform> LocalAnimatedTransforms;
-//    LocalAnimatedTransforms.SetNum(SkeletonBones.Num());
-//
-//    // 본 별 로컬 변환 계산
-//    for (int32 BoneIdx = 0; BoneIdx < SkeletonBones.Num(); ++BoneIdx)
-//    {
-//        const FName CurrentBoneName = SkeletonBones[BoneIdx].Name;
-//        const FBoneAnimationTrack* BoneTrack = nullptr;
-//
-//        // 트랙 찾기
-//        for (const FBoneAnimationTrack& Track : AnimDataModel->GetBoneAnimationTracks())
-//        {
-//            if (Track.Name == CurrentBoneName)
-//            {
-//                BoneTrack = &Track;
-//                break;
-//            }
-//        }
-//
-//        if (BoneTrack && !BoneTrack->InternalTrack.IsEmpty())
-//        {
-//            // 애니메이션의 Transform을 그대로 사용하는 것인지, 곱해주는 것인지 판단해야 함
-//            FVector FinalPos = FVectorKey::Interpolate(BoneTrack->InternalTrack.PosKeys, CurrentAnimTime);
-//            FQuat FinalRot = FQuatKey::Interpolate(BoneTrack->InternalTrack.RotKeys, CurrentAnimTime);
-//            FVector FinalScale = FVectorKey::Interpolate(BoneTrack->InternalTrack.ScaleKeys, CurrentAnimTime);
-//            
-//            // scale은 0이 되지 못하도록 예외
-//            if (FinalScale.IsZero())
-//            {
-//                FinalScale = FVector(1.f, 1.f, 1.f);
-//            }
-//
-//            LocalAnimatedTransforms[BoneIdx] = FTransform(FinalRot, FinalPos, FinalScale);
-//        }
-//        else
-//        {
-//            // 애니메이션 트랙이 없거나 비어있으면, 해당 뼈의 로컬 바인드 포즈 사용
-//            // USkeleton 또는 FBoneInfo에 로컬 바인드 포즈 정보가 있어야 함
-//            // 예: LocalAnimatedTransforms[BoneIdx] = SkeletonBones[BoneIdx].LocalBindTransform;
-//            // BoneBindPoseTransforms가 로컬 공간 기준이고, 인덱스가 일치한다면 사용 가능
-//
-//            LocalAnimatedTransforms[BoneIdx] = BoneBindPoseTransforms[BoneIdx]; // 안전장치
-//        }
-//    }
-//
-//    for (uint32 BoneIdx = 0; BoneIdx < SkeletonBones.Num(); ++BoneIdx)
-//    {
-//        uint32 ParentIndex = SkeletonBones[BoneIdx].ParentIndex;
-//
-//        BoneTransforms[BoneIdx] = LocalAnimatedTransforms[BoneIdx];
-//    }
-//}
-
 void USkeletalMeshComponent::SetAnimSequence(UAnimSequence* InAnimSequence)
 {
     //AnimSequence = InAnimSequence;
@@ -300,6 +169,11 @@ void USkeletalMeshComponent::SetAnimInstanceClass(UClass* InstanceClass)
     {
         CachedBlendAnimInstance = AnimInstance;
     }
+    else
+    {
+        GUObjectArray.MarkRemoveObject(AnimInstance);
+        AnimInstance = nullptr;
+    }
 
     if (InstanceClass && InstanceClass == UAnimSingleNodeInstance::StaticClass())
     {
@@ -327,5 +201,11 @@ void USkeletalMeshComponent::SetAnimInstanceClass(UClass* InstanceClass)
             AnimInstance = FObjectFactory::ConstructObject<UBlendAnimInstance>(this);
             AnimInstance->Initialize(this);
         }
+    }
+
+    if (InstanceClass && InstanceClass == UFSMAnimInstance::StaticClass())
+    {
+        AnimInstance = FObjectFactory::ConstructObject<UFSMAnimInstance>(this);
+        AnimInstance->Initialize(this);
     }
 }

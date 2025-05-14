@@ -44,6 +44,7 @@
 #include "Animation/AnimSingleNodeInstance.h"
 #include "Animation/BlendAnimInstance.h"
 #include "UObject/Casts.h"
+#include <Animation/FSMAnimInstance.h>
 
 PropertyEditorPanel::PropertyEditorPanel()
 {
@@ -344,8 +345,12 @@ void PropertyEditorPanel::RenderForActor(AActor* SelectedActor, USceneComponent*
             LuaDisplayPath = NewScript->GetDisplayName();
         }
     }
-    ImGui::InputText("Script File", GetData(LuaDisplayPath), IM_ARRAYSIZE(*LuaDisplayPath),
-        ImGuiInputTextFlags_ReadOnly);
+    static char LuaScript[256];
+    strcpy_s(LuaScript, *LuaDisplayPath);
+    if (ImGui::InputText("Script File", LuaScript, sizeof(LuaScript)))
+    {
+        SelectedActor->GetComponentByClass<ULuaScriptComponent>()->SetDisplayName(LuaScript);
+    }
 
     if (ImGui::TreeNodeEx("Component", ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_DefaultOpen)) // 트리 노드 생성
     {
@@ -495,13 +500,20 @@ void PropertyEditorPanel::RenderForSkeletalMesh(USkeletalMeshComponent* Skeletal
 
         if (CurrentAnimInst)
         {
-            if (Cast<UBlendAnimInstance>(CurrentAnimInst)) {
+            if (Cast<UBlendAnimInstance>(CurrentAnimInst)) 
+            {
                 CurrentModeStr = "BlendAnimInstance";
                 CurrentAnimMode = ECurrentAnimMode::BlendInstance;
             }
-            else if (Cast<UAnimSingleNodeInstance>(CurrentAnimInst)) {
+            else if (Cast<UAnimSingleNodeInstance>(CurrentAnimInst)) 
+            {
                 CurrentModeStr = "SingleNode";
                 CurrentAnimMode = ECurrentAnimMode::SingleNode;
+            }
+            else if (Cast<UFSMAnimInstance>(CurrentAnimInst)) 
+            {
+                CurrentModeStr = "AnimStateMachine";
+                CurrentAnimMode = ECurrentAnimMode::AnimStateMachine;
             }
             else
             {
@@ -540,6 +552,13 @@ void PropertyEditorPanel::RenderForSkeletalMesh(USkeletalMeshComponent* Skeletal
                     }
                 }
             }
+            if (ImGui::Selectable("AnimStateMachine", CurrentAnimMode == ECurrentAnimMode::AnimStateMachine))
+            {
+                if (CurrentAnimMode != ECurrentAnimMode::AnimStateMachine)
+                {
+                    SkeletalMeshComp->SetAnimInstanceClass(UFSMAnimInstance::StaticClass());
+                }
+            }
             ImGui::EndCombo();
         }
         ImGui::Separator();
@@ -548,6 +567,7 @@ void PropertyEditorPanel::RenderForSkeletalMesh(USkeletalMeshComponent* Skeletal
         CurrentAnimInst = SkeletalMeshComp->GetAnimInstance(); // 중요: 모드 변경 시 인스턴스가 바뀔 수 있으므로 다시 가져옴
         UBlendAnimInstance* BlendInstance = Cast<UBlendAnimInstance>(CurrentAnimInst);
         UAnimSingleNodeInstance* SingleNodeInst = Cast<UAnimSingleNodeInstance>(CurrentAnimInst);
+        UFSMAnimInstance* FSMAnimInstance = Cast<UFSMAnimInstance>(CurrentAnimInst);
 
         const TMap<FName, FAssetInfo> AllAnimAssets = UAssetManager::Get().GetAssetRegistry();
 
@@ -604,7 +624,7 @@ void PropertyEditorPanel::RenderForSkeletalMesh(USkeletalMeshComponent* Skeletal
             ImGui::Text("Blend Alpha"); ImGui::SameLine(120);
             ImGui::SliderFloat("##BlendAlphaSlider", &BlendInstance->BlendAlpha, 0.0f, 1.0f);
         }
-        else
+        else if (SingleNodeInst)
         {
             ImGui::TextUnformatted("SingleNode Properties");
             ImGui::Text("AnimSequence"); ImGui::SameLine(120);
@@ -664,6 +684,10 @@ void PropertyEditorPanel::RenderForSkeletalMesh(USkeletalMeshComponent* Skeletal
                 }
                 ImGui::EndCombo();
             }
+        }
+        else if (FSMAnimInstance)
+        {
+            // TODO : fsm 인스턴스 관련된 프로퍼티 노출
         }
 
         ImGui::Separator();
