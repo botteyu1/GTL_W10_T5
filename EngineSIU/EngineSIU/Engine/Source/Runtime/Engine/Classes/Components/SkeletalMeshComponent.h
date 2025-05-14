@@ -6,6 +6,7 @@ class UAnimInstance;
 class UAnimSequence;
 class USkeletalMesh;
 struct FAnimNotifyEvent;
+enum ENotifyState;
 class UAnimSingleNodeInstance;
 class UBlendAnimInstance;
 
@@ -17,6 +18,10 @@ public:
     USkeletalMeshComponent();
     virtual ~USkeletalMeshComponent() override;
 
+    virtual UObject* Duplicate(UObject* InOuter) override;
+
+    virtual void GetProperties(TMap<FString, FString>& OutProperties) const override;
+    virtual void SetProperties(const TMap<FString, FString>& InProperties) override;
     void TickComponent(float DeltaTime) override;
 
     USkeletalMesh* GetSkeletalMeshAsset() const { return SkeletalMeshAsset; }
@@ -27,17 +32,19 @@ public:
 
     TArray<FTransform> BoneBindPoseTransforms; // 원본 BindPose에서 복사해온 에디팅을 위한 Transform
 
-    void GetCurrentGlobalBoneMatrices(TArray<FMatrix>& OutBoneMatrices) const;
+    bool GetCurrentGlobalBoneMatrices(TArray<FMatrix>& OutBoneMatrices) const;
 
     void SetAnimationEnabled(bool bEnable);
 
     void SetAnimSequence(UAnimSequence* InAnimSequence);
-       
-    void HandleAnimNotify(const FAnimNotifyEvent& Notify);
+
+    void HandleAnimNotify(const FAnimNotifyEvent& Notify, ENotifyState NotifyState, float DeltaTime = 0.f);
 
     void SetAnimationTime(float InTime); 
 
     void SetAnimInstanceClass(UClass* InstanceClass);
+
+    void BeginPlay() override;
 
     UAnimInstance* GetAnimInstance() const { return AnimInstance; }
 
@@ -52,3 +59,7 @@ private:
 
     bool bPlayAnimation = false;
 };
+
+
+
+

@@ -3,6 +3,13 @@
 #include "UObject/ObjectMacros.h"
 #include "AnimRawData.h"
 
+enum ENotifyState
+{
+    Start,
+    Tick,
+    End
+};
+
 struct FAnimNotifyEvent
 {
     float TriggerTime;

@@ -204,6 +204,7 @@ public:
     float LetterBoxWidth;
 
     float LetterBoxHeight;
+    bool bLetterBoxEnabled = false;
 
     uint32 bEnableFading : 1;
     uint32 bAnimateVignette : 1;

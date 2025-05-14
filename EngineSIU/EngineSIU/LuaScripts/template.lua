@@ -57,3 +57,22 @@ end
 
 function EndOverlap()
 end
+
+function StartAnimNotify(NotifyName)
+    if(NotifyName == "LuaJump") then
+        actor.Location = FVector(0,0,0)
+    end
+    
+end
+
+function TickAnimNotify(NotifyName, DeltaTime)
+    if(NotifyName == "LuaJump") then
+        actor.Location = actor.Location + FVector(0,0,0.2)
+    end
+end
+
+function EndAnimNotify(NotifyName)
+    if(NotifyName == "LuaJump") then
+        actor.Location = FVector(0,0,0)
+    end
+end

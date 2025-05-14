@@ -14,8 +14,17 @@ UAnimSingleNodeInstance::~UAnimSingleNodeInstance()
 {
 }
 
+UObject* UAnimSingleNodeInstance::Duplicate(UObject* InOuter)
+{
+    ThisClass* NewObject = Cast<ThisClass>(Super::Duplicate(InOuter));
+    NewObject->SetAnimationAsset(CurrentAsset, bIsPlaying);
+    NewObject->bIsPlaying = bIsPlaying;
+    return NewObject;
+}
+
 void UAnimSingleNodeInstance::NativeUpdateAnimation(float DeltaTime)
 {
+    Super::NativeUpdateAnimation(DeltaTime);
     if (CurrentAsset && bIsPlaying)
     {
         FAnimationPlaybackContext* PlaybackContext = GetAnimationPlaybackContext(CurrentAsset);
@@ -24,22 +33,8 @@ void UAnimSingleNodeInstance::NativeUpdateAnimation(float DeltaTime)
             return;
         }
 
-        if (PlaybackContext->PlayRate > 0)
-        {
-            PlaybackContext->PreviousTime = PlaybackContext->PlaybackTime;
-            PlaybackContext->PlaybackTime += DeltaTime;
-        }
-        else if (PlaybackContext->PlayRate < 0)
-        {
-            PlaybackContext->PreviousTime = PlaybackContext->PlaybackTime;
-            PlaybackContext->PlaybackTime -= DeltaTime;
-        }
-
-        PlaybackContext->PlaybackTime = fmodf(PlaybackContext->PlaybackTime, PlaybackContext->AnimationLength);
-
         float ElapsedTime = PlaybackContext->PlaybackTime;
         UpdateBone(ElapsedTime);
-        TriggerAnimNotifies(DeltaTime);
     }
 }
 
@@ -59,14 +54,6 @@ void UAnimSingleNodeInstance::UpdateBone(float ElapsedTime)
         return;
     }
 
-    UAnimDataModel* AnimDataModel = AnimSequence->GetAnimDataModel();
-
-    float CurrentAnimTime = ElapsedTime;
-    if (AnimSequence->GetPlayLength() > 0.f)
-    {
-        CurrentAnimTime = FMath::Fmod(ElapsedTime, AnimSequence->GetPlayLength());
-    }
-
     const USkeleton* Skeleton = SkeletalMeshAsset->GetSkeleton();
     const TArray<FMeshBoneInfo>& SkeletonBones = Skeleton->GetReferenceSkeleton().RawRefBoneInfo;
 
@@ -83,64 +70,19 @@ void UAnimSingleNodeInstance::UpdateBone(float ElapsedTime)
         }
     }
 
-    TArray<FTransform> LocalAnimatedTransforms;
-    LocalAnimatedTransforms.SetNum(SkeletonBones.Num());
-
-    // 본 별 로컬 변환 계산
-    for (int32 BoneIdx = 0; BoneIdx < SkeletonBones.Num(); ++BoneIdx)
-    {
-        const FName CurrentBoneName = SkeletonBones[BoneIdx].Name;
-        const FBoneAnimationTrack* BoneTrack = nullptr;
-
-        // 트랙 찾기
-        for (const FBoneAnimationTrack& Track : AnimDataModel->GetBoneAnimationTracks())
-        {
-            if (Track.Name == CurrentBoneName)
-            {
-                BoneTrack = &Track;
-                break;
-            }
-        }
-
-        if (BoneTrack && !BoneTrack->InternalTrack.IsEmpty())
-        {
-            // 애니메이션의 Transform을 그대로 사용하는 것인지, 곱해주는 것인지 판단해야 함
-            FVector FinalPos = FVectorKey::Interpolate(BoneTrack->InternalTrack.PosKeys, CurrentAnimTime);
-            FQuat FinalRot = FQuatKey::Interpolate(BoneTrack->InternalTrack.RotKeys, CurrentAnimTime);
-            FVector FinalScale = FVectorKey::Interpolate(BoneTrack->InternalTrack.ScaleKeys, CurrentAnimTime);
-
-            // scale은 0이 되지 못하도록 예외
-            if (FinalScale.IsZero())
-            {
-                FinalScale = FVector(1.f, 1.f, 1.f);
-            }
-
-            LocalAnimatedTransforms[BoneIdx] = FTransform(FinalRot, FinalPos, FinalScale);
-        }
-        else
-        {
-            // 애니메이션 트랙이 없거나 비어있으면, 해당 뼈의 로컬 바인드 포즈 사용
-            // USkeleton 또는 FBoneInfo에 로컬 바인드 포즈 정보가 있어야 함
-            // 예: LocalAnimatedTransforms[BoneIdx] = SkeletonBones[BoneIdx].LocalBindTransform;
-            // BoneBindPoseTransforms가 로컬 공간 기준이고, 인덱스가 일치한다면 사용 가능
-
-            LocalAnimatedTransforms[BoneIdx] = BoneBindPoseTransforms[BoneIdx]; // 안전장치
-        }
-    }
-
     for (uint32 BoneIdx = 0; BoneIdx < SkeletonBones.Num(); ++BoneIdx)
     {
-        uint32 ParentIndex = SkeletonBones[BoneIdx].ParentIndex;
+        const FName CurrentBoneName = SkeletonBones[BoneIdx].Name;
+        FTransform AnimatedTransform = GetCurrentAnimatedTransform(CurrentAsset, CurrentBoneName);
 
-        BoneTransforms[BoneIdx] = LocalAnimatedTransforms[BoneIdx];
+        BoneTransforms[BoneIdx] = AnimatedTransform;
     }
-
 }
 
 void UAnimSingleNodeInstance::SetAnimationAsset(UAnimationAsset* InAnimationAsset, bool IsLoop, float InPlayRate, float InStartPosition)
 {
     CurrentAsset = InAnimationAsset;
-    AddAnimationPlaybackContext(CurrentAsset);
+    AddAnimationPlaybackContext(CurrentAsset, IsLoop, InPlayRate, InStartPosition);
 }
 
 void UAnimSingleNodeInstance::PlayAnim(bool bIsLooping, float InPlayRate, float InStartPosition)
@@ -173,6 +115,11 @@ void UAnimSingleNodeInstance::SetPlaying(bool bInPlaying)
     {
         StopAnim();
     }
+    FAnimationPlaybackContext* Context = GetAnimationPlaybackContext(CurrentAsset);
+    if (Context)
+    {
+        Context->bIsPlaying = bInPlaying;
+    }
 }
 
 bool UAnimSingleNodeInstance::IsPlaying() const
@@ -183,6 +130,11 @@ bool UAnimSingleNodeInstance::IsPlaying() const
 void UAnimSingleNodeInstance::PauseAnim()
 {
     bIsPlaying = false;
+    FAnimationPlaybackContext* Context = GetAnimationPlaybackContext(CurrentAsset);
+    if (Context)
+    {
+        Context->bIsPlaying = false;
+    }
 }
 
 void UAnimSingleNodeInstance::SetLooping(bool bInLooping)
@@ -210,9 +162,10 @@ void UAnimSingleNodeInstance::SetAnimationTime(float InTime)
         }
         PlaybackContext->PreviousTime = PlaybackContext->PlaybackTime;
         PlaybackContext->PlaybackTime = InTime;
-        float Diff = PlaybackContext->PlaybackTime - PlaybackContext->PreviousTime;
         
-        if (FMath::Abs(Diff) >= PlaybackContext->AnimationLength - 0.01f)
+        float Diff = PlaybackContext->PlaybackTime - PlaybackContext->PreviousTime;
+        //루프 확인
+        if (FMath::Abs(Diff) >= PlaybackContext->AnimationLength - 0.005f)
         {
             if (Diff < 0)
             {

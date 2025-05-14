@@ -658,11 +658,6 @@ void PropertyEditorPanel::RenderForSkeletalMesh(USkeletalMeshComponent* Skeletal
                                     SingleNodeInst->SetAnimationAsset(SelectedSeq);
                                     // 필요시 SingleNodeInst->PlayAnimation(); 등 호출
                                 }
-                                else 
-                                {
-                                    // 아니면 SkeletalMeshComponent의 기본 단일 애니메이션 재생 함수 사용
-                                    SkeletalMeshComp->SetAnimSequence(SelectedSeq); // 이 함수가 내부적으로 처리한다고 가정
-                                }
                             }
                         }
                     }
