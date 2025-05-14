@@ -105,6 +105,16 @@ void UAnimSingleNodeInstance::PlayAnim(bool bIsLooping, float InPlayRate, float 
 void UAnimSingleNodeInstance::StopAnim()
 {
     bIsPlaying = false;
+    for (const auto& PlaybackContext : AnimationPlaybackContexts)
+    {
+        PlaybackContext->PlaybackTime = 0;
+        PlaybackContext->PreviousTime = 0;
+        TArray<FAnimNotifyEvent> Notifies = Cast<UAnimSequence>(PlaybackContext->AnimationAsset)->GetAnimNotifies();
+        for (auto& Notify : Notifies)
+        {
+            SkeletalMeshComponent->HandleAnimNotify(Notify, ENotifyState::End);
+        }
+    }
     SetAnimationTime(0); //정지하고 시간 0으로 리셋
 }
 
