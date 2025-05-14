@@ -4,13 +4,21 @@ MoveSpeed = 100
 local transitionTime = 2
 local time = 0
 local currentState = "None"
+local currentIndex = 0
+local animStates = {
+    "Idle",
+    "Walk",
+    "Jump",
+    "Punch"
+}
 function BeginPlay()
     print("Begin")
+    addAnimState("Idle", "Armature|Idle")
     addAnimState("Walk","Armature|Walking2")
     addAnimState("Jump","Armature|Jumping")
     addAnimState("Punch", "Armature|Punch")
-    changeAnimState("Walk", 0, true)
-    currentState = "Walk"
+    changeAnimState("Idle", 0, true)
+    currentState = "Idle"
     startAnim()
 end
 
@@ -80,18 +88,25 @@ function OnPressG(dt)
 end
 
 function Tick(dt)
-    time = time + dt
+    time = time + dt 
+
+    local randomAnim = animStates[1]
 
     if time >= transitionTime then
-        if currentState == "Walk" then
-            changeAnimState("Punch", 1, false)
-            currentState = "Punch"
-        else
-            changeAnimState("Walk", 1, true)
-            currentState = "Walk"
+        if #animStates > 1 then
+            repeat
+                local index = math.random(1, #animStates)
+                randomAnim = animStates[index]
+            until randomAnim ~= currentState  
         end
+
+        changeAnimState(randomAnim, 0.2, true)
+
+        currentState = randomAnim
         time = 0
-        print(currentState)
+        transitionTime = randomFloat(2, 5)  
+
+        print("Changed to:", currentState)
     end
 end
 
@@ -105,7 +120,6 @@ function StartAnimNotify(NotifyName)
     -- if(NotifyName == "LuaJump") then
     --     actor.Location = FVector(0,0,0)
     -- end
-    
 end
 
 function TickAnimNotify(NotifyName, DeltaTime)
@@ -118,4 +132,8 @@ function EndAnimNotify(NotifyName)
     -- if(NotifyName == "LuaJump") then
     --     actor.Location = FVector(0,0,0)
     -- end
+end
+
+function randomFloat(min, max)
+    return min + math.random() * (max - min)
 end
