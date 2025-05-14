@@ -16,10 +16,10 @@ UFSMAnimInstance::~UFSMAnimInstance()
 
 void UFSMAnimInstance::NativeUpdateAnimation(float DeltaTime)
 {
-    Super::NativeUpdateAnimation(DeltaTime);
-
     if (!bIsPlaying)
         return;
+
+    Super::NativeUpdateAnimation(DeltaTime);
 
     TArray<FTransform> FinalLocalSpacePose;
     USkeletalMeshComponent* SkelComp = GetSkeletalMeshComponent();
@@ -77,11 +77,17 @@ void UFSMAnimInstance::NativeUpdateAnimation(float DeltaTime)
         FinalLocalSpacePose.SetNum(SkeletonBones.Num());
 
         FAnimationPlaybackContext* Context = GetAnimationPlaybackContext(CurrentAnimSequence);
-        float CurrentTime = Context ? Context->PlaybackTime : 0.f;
 
-        for (int32 BoneIdx = 0; BoneIdx < SkeletonBones.Num(); ++BoneIdx)
+        if (Context)
         {
-            FinalLocalSpacePose[BoneIdx] = GetCurrentAnimatedTransform(CurrentAnimSequence, SkeletonBones[BoneIdx].Name);
+            for (int32 BoneIdx = 0; BoneIdx < SkeletonBones.Num(); ++BoneIdx)
+            {
+                FinalLocalSpacePose[BoneIdx] = GetCurrentAnimatedTransform(CurrentAnimSequence, SkeletonBones[BoneIdx].Name);
+            }
+        }
+        else
+        {
+            FinalLocalSpacePose = SourceBindPose;
         }
     }
     else // 재생할 애니메이션이 없음 (바인드 포즈)
@@ -177,6 +183,15 @@ void UFSMAnimInstance::ChangeAnimState(const FString& TargetStateName, float Ble
     bIsPlaying = true; // 상태 변경 시 재생 시작 (필요에 따라 조절)
 }
 
+void UFSMAnimInstance::SetPlaying(bool bInPlaying)
+{
+    for (auto& PlaybackContext : AnimationPlaybackContexts)
+    {
+        PlaybackContext->bIsPlaying = bInPlaying;
+    }
+    bIsPlaying = bInPlaying;
+}
+
 void UFSMAnimInstance::CaptureCurrentPoseAsSnapshot()
 {
     USkeletalMeshComponent* SkeletalMeshComponent = GetSkeletalMeshComponent();
@@ -235,15 +250,19 @@ void UFSMAnimInstance::CaptureCurrentPoseAsSnapshot()
         {
             const FName BoneName = SkeletonBones[BoneIdx].Name;
             FAnimationPlaybackContext* Context = GetAnimationPlaybackContext(CurrentAnimSequence);
-            SourceSnapshotPose[BoneIdx] = GetCurrentAnimatedTransform(CurrentAnimSequence, BoneName);
+            if (Context)
+            {
+                SourceSnapshotPose[BoneIdx] = GetCurrentAnimatedTransform(CurrentAnimSequence, BoneName);
+            }
+            else
+            {
+                SourceSnapshotPose = SkeletalMeshComponent->BoneTransforms; // 원본 바인드포즈
+            }
         }
     }
     else
     {
-        for (int32 BoneIdx = 0; BoneIdx < SkeletonBones.Num(); ++BoneIdx)
-        {
-            SourceSnapshotPose[BoneIdx] = FTransform::Identity; // 또는 SkelComp에서 바인드 포즈 가져오기
-        }
+        SourceSnapshotPose = SkeletalMeshComponent->BoneTransforms; // 원본 바인드포즈
     }
 
     bIsBlendingFromSnapshot = true; // 다음 블렌드는 이 스냅샷에서 시작

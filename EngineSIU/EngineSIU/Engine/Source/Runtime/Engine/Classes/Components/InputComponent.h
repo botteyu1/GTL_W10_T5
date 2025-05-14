@@ -14,7 +14,6 @@ class UInputComponent : public UActorComponent
 
 public:
     UInputComponent() = default;
-    ~UInputComponent() = default;
     void BindAction(const FString& Key, const std::function<void(float)>& Callback);
 
     void ProcessInput(float DeltaTime);
