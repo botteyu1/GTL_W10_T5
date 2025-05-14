@@ -1,5 +1,5 @@
 turnSpeed = 80
-MoveSpeed = 10
+MoveSpeed = 100
 
 local transitionTime = 2
 local time = 0
@@ -32,24 +32,40 @@ function InitializeLua()
 end
 
 function OnPressW(dt)
+    if currentState == "Punch" then 
+        return
+    end
+
     local currentPos = actor.Location
     currentPos = currentPos + actor:Forward() * dt * MoveSpeed
     actor.Location = currentPos
 end
 
 function OnPressS(dt)
+    if currentState == "Punch" then 
+        return
+    end
+
     local currentPos = actor.Location
     currentPos = currentPos - actor:Forward() * dt * MoveSpeed
     actor.Location = currentPos    
 end
 
 function OnPressA(dt)
+    if currentState == "Punch" then 
+        return
+    end
+
     local rot = actor.Rotator
     rot.Yaw = rot.Yaw - turnSpeed * dt
     actor.Rotator = rot
 end
 
 function OnPressD(dt)
+    if currentState == "Punch" then 
+        return
+    end
+
     local rot = actor.Rotator
     rot.Yaw = rot.Yaw + turnSpeed * dt
     actor.Rotator = rot
@@ -62,14 +78,9 @@ end
 function OnPressG(dt)
     changeAnimState("Walk", 0, true)
 end
-function Tick(dt)
-    -- actor:SetLocation(newPos)
-    -- actor:SetLocation(FVector(200, 0, 0))
-    -- UE_LOG("Error", "actor:SetLocation")
 
-    -- actor.Location = FVector(0, 0, 0)
-    -- actor.Location.X = actor.Location.X + dt
-        time = time + dt
+function Tick(dt)
+    time = time + dt
 
     if time >= transitionTime then
         if currentState == "Walk" then
@@ -82,7 +93,6 @@ function Tick(dt)
         time = 0
         print(currentState)
     end
-
 end
 
 function BeginOverlap()
