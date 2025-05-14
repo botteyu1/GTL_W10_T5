@@ -131,6 +131,7 @@ public:
     void DeleteSelectedNotify(); // 선택된 노티파이 삭제 함수
     
     int DraggingNotifyIndex = -1; // 현재 드래그 중인 노티파이의 인덱스 (-1이면 드래그 중 아님)
+    int DraggingNotifyEndIndex = -1;
     float DraggingNotifyOriginalTime = 0.0f; // 드래그 시작 시 노티파이의 원래 시간
 
 

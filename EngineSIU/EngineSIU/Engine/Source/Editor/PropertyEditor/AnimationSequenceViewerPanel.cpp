@@ -106,6 +106,42 @@ void FSequenceInterface::CustomDrawCompact(int index, ImDrawList* draw_list, con
                     ImGui::SetNextFrameWantCaptureMouse(true); //대신 사용
                 }
             }
+
+            if (notify.Duration > 0.f)
+            {
+                int endNotifyFrame = static_cast<int>((notify.TriggerTime + notify.Duration) * frameRate);
+                float endMarkerScreenX = startScreenX + (endNotifyFrame - frameMin) * framePixelWidth;
+
+                if (endMarkerScreenX >= clippingRect.Min.x && endMarkerScreenX <= clippingRect.Max.x)
+                {
+                    ImVec2 e1 = ImVec2(endMarkerScreenX, markerPosY);
+                    ImVec2 e2 = ImVec2(endMarkerScreenX + markerSize / 2, markerPosY + markerSize / 2);
+                    ImVec2 e3 = ImVec2(endMarkerScreenX, markerPosY + markerSize);
+                    ImVec2 e4 = ImVec2(endMarkerScreenX - markerSize / 2, markerPosY + markerSize / 2);
+
+                    // 선택 상태에 따라 색상 변경하지 않고 약간 연한 색으로 표시할 수도 있음
+                    ImU32 endColor = IM_COL32(255, 200, 100, 180); // 또는 markerColor 그대로 사용
+
+                    draw_list->AddQuadFilled(e1, e2, e3, e4, endColor);
+
+                    // 종료 마커에 대한 툴팁 (선택은 안 함)
+                    ImRect endMarkerRect(ImVec2(endMarkerScreenX - markerSize / 2, markerPosY),
+                        ImVec2(endMarkerScreenX + markerSize / 2, markerPosY + markerSize));
+
+                    if (endMarkerRect.Contains(ImGui::GetMousePos()))
+                    {
+                        ImGui::BeginTooltip();
+                        ImGui::Text("End of Notify: %s", (*notify.NotifyName.ToString()));
+                        ImGui::Text("Time: %.2fs (Frame: %d)", notify.TriggerTime + notify.Duration, endNotifyFrame);
+                        ImGui::EndTooltip();
+                        if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+                        {
+                            OwnerPanel->DraggingNotifyEndIndex = notifyIndex; // 종료 마커 드래그 시작
+                            ImGui::SetNextFrameWantCaptureMouse(true);
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -168,7 +204,35 @@ void FSequenceInterface::CustomDrawCompact(int index, ImDrawList* draw_list, con
         }
     }
 
+    if (OwnerPanel && OwnerPanel->DraggingNotifyEndIndex != -1)
+    {
+        if (ImGui::IsMouseDragging(ImGuiMouseButton_Left, 0.0f))
+        {
+            if (OwnerPanel->DraggingNotifyEndIndex >= 0 && OwnerPanel->DraggingNotifyEndIndex < CurrentSequence->GetAnimNotifies().Num())
+            {
+                FAnimNotifyEvent& notify = CurrentSequence->GetAnimNotifies()[OwnerPanel->DraggingNotifyEndIndex];
+                float mouseX = ImGui::GetMousePos().x;
 
+                if (framePixelWidth > 0.0f)
+                {
+                    float relativeX = mouseX - rc.Min.x;
+                    int newFrame = frameMin + static_cast<int>(relativeX / framePixelWidth);
+                    float newTime = static_cast<float>(newFrame) / frameRate;
+
+                    float minEndTime = notify.TriggerTime;
+                    float maxEndTime = CurrentSequence->GetPlayLength();
+
+                    // 클램핑된 종료 시점
+                    float clampedEndTime = std::max(minEndTime, std::min(newTime, maxEndTime));
+                    notify.Duration = clampedEndTime - notify.TriggerTime;
+                }
+            }
+        }
+        else if (ImGui::IsMouseReleased(ImGuiMouseButton_Left))
+        {
+            OwnerPanel->DraggingNotifyEndIndex = -1;
+        }
+    }
 
      // 더블 클릭으로 해당 시간에 새 노티파이 추가 요청
     // --- 더블 클릭으로 새 노티파이 추가 요청 ---
