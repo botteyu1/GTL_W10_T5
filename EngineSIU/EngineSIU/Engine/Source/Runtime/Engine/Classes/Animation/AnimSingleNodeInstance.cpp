@@ -83,6 +83,7 @@ void UAnimSingleNodeInstance::SetAnimationAsset(UAnimationAsset* InAnimationAsse
 {
     CurrentAsset = InAnimationAsset;
     AddAnimationPlaybackContext(CurrentAsset, IsLoop, InPlayRate, InStartPosition);
+    GetAnimationPlaybackContext(CurrentAsset)->bIsPlaying = false;
 }
 
 void UAnimSingleNodeInstance::PlayAnim(bool bIsLooping, float InPlayRate, float InStartPosition)
