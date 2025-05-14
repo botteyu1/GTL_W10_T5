@@ -115,23 +115,33 @@ end
 
 function EndOverlap()
 end
-
+PlayerLocation = FVector(0,0,0)
 function StartAnimNotify(NotifyName)
     -- if(NotifyName == "LuaJump") then
     --     actor.Location = FVector(0,0,0)
     -- end
+    if(NotifyName == "Teleport") then
+        PlayerLocation = actor.Location
+        actor.Location = actor.Location + FVector(50,0,0)
+    end
 end
 
 function TickAnimNotify(NotifyName, DeltaTime)
     -- if(NotifyName == "LuaJump") then
     --     actor.Location = actor.Location + FVector(0,0,0.2)
     -- end
+    if(NotifyName == "Teleport") then
+        actor.Location = actor.Location + FVector(DeltaTime*100, 0, 0)
+    end
 end
 
 function EndAnimNotify(NotifyName)
     -- if(NotifyName == "LuaJump") then
     --     actor.Location = FVector(0,0,0)
     -- end
+    if(NotifyName == "Teleport") then
+        actor.Location = PlayerLocation
+    end
 end
 
 function randomFloat(min, max)
