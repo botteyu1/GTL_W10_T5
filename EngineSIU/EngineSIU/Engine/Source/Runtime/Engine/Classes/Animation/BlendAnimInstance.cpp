@@ -30,7 +30,6 @@ void UBlendAnimInstance::NativeUpdateAnimation(float DeltaTime)
         return;
     if (AnimA && AnimB)
     {
-        // !TODO : 구데기 코드 고치기
         FAnimationPlaybackContext* PlaybackContextA = GetAnimationPlaybackContext(AnimA);
         FAnimationPlaybackContext* PlaybackContextB = GetAnimationPlaybackContext(AnimB);
 

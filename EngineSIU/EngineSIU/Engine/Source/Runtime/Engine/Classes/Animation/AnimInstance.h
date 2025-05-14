@@ -15,7 +15,8 @@ struct FAnimationPlaybackContext
     float PlayRate = 1.f;
     float StartPosition = 0.f;
     float AnimationLength = 0.f;
-    bool bIsPlaying = false; // Pause 여부 처리. Stop시에는 그냥 배열에서 제거
+    bool bIsPlaying = true; // Pause 여부 처리. Stop시에는 그냥 배열에서 제거
+    bool bIsRemove = false;
 
     FAnimationPlaybackContext(UAnimationAsset* InAnimAsset, bool IsLoop = false, float InPlayRate = 1.f, float InStartPosition = 0.f);
 };

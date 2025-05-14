@@ -94,9 +94,29 @@ void UAnimInstance::NativeUpdateAnimation(float DeltaTime)
         }
         else
         {
-            Context->PlaybackTime = FMath::Clamp(Context->PlaybackTime, 0.f, Context->AnimationLength);
+            // 애니메이션이 끝나면 Contexts 배열에서 제거
+            if (Context->PlaybackTime >= Context->AnimationLength)
+            {
+                Context->bIsRemove = true;
+            }
+            else
+            {
+                Context->PlaybackTime = FMath::Clamp(Context->PlaybackTime, 0.f, Context->AnimationLength);
+            }
         }
     }
+
+    // Remove contexts that are marked for removal
+    AnimationPlaybackContexts.RemoveAll([](const auto& ContextToRemove)
+        {
+            if (!ContextToRemove)
+            {
+                return false;
+            }
+            return ContextToRemove->bIsRemove;
+        }
+    );
+
     TriggerAnimNotifies(DeltaTime);
 }
 
