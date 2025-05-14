@@ -116,10 +116,12 @@ void UAnimSingleNodeInstance::SetPlaying(bool bInPlaying)
         StopAnim();
     }
     FAnimationPlaybackContext* Context = GetAnimationPlaybackContext(CurrentAsset);
-    if (Context)
+    if (!Context)
     {
-        Context->bIsPlaying = bInPlaying;
+        AddAnimationPlaybackContext(CurrentAsset);
+        Context = GetAnimationPlaybackContext(CurrentAsset);
     }
+    Context->bIsPlaying = bInPlaying;
 }
 
 bool UAnimSingleNodeInstance::IsPlaying() const
@@ -158,6 +160,8 @@ void UAnimSingleNodeInstance::SetAnimationTime(float InTime)
         FAnimationPlaybackContext* PlaybackContext = GetAnimationPlaybackContext(CurrentAsset);
         if (!PlaybackContext)
         {
+            AddAnimationPlaybackContext(CurrentAsset); 
+            PlaybackContext = GetAnimationPlaybackContext(CurrentAsset);
             return;
         }
         PlaybackContext->PreviousTime = PlaybackContext->PlaybackTime;

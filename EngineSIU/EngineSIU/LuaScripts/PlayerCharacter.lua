@@ -8,6 +8,7 @@ function BeginPlay()
     print("Begin")
     addAnimState("Walk","Armature|Walking2")
     addAnimState("Jump","Armature|Jumping")
+    addAnimState("Punch", "Armature|Punch")
     changeAnimState("Walk", 0, true)
     currentState = "Walk"
     startAnim()
@@ -72,11 +73,10 @@ function Tick(dt)
 
     if time >= transitionTime then
         if currentState == "Walk" then
-            changeAnimState("Jump", 0.2, false)
-            currentState = "Jump"
-            
+            changeAnimState("Punch", 1, false)
+            currentState = "Punch"
         else
-            changeAnimState("Walk", 0.2, true)
+            changeAnimState("Walk", 1, true)
             currentState = "Walk"
         end
         time = 0
