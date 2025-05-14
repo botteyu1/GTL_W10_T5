@@ -345,8 +345,12 @@ void PropertyEditorPanel::RenderForActor(AActor* SelectedActor, USceneComponent*
             LuaDisplayPath = NewScript->GetDisplayName();
         }
     }
-    ImGui::InputText("Script File", GetData(LuaDisplayPath), IM_ARRAYSIZE(*LuaDisplayPath),
-        ImGuiInputTextFlags_ReadOnly);
+    static char LuaScript[256];
+    strcpy_s(LuaScript, *LuaDisplayPath);
+    if (ImGui::InputText("Script File", LuaScript, sizeof(LuaScript)))
+    {
+        SelectedActor->GetComponentByClass<ULuaScriptComponent>()->SetDisplayName(LuaScript);
+    }
 
     if (ImGui::TreeNodeEx("Component", ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_DefaultOpen)) // 트리 노드 생성
     {
